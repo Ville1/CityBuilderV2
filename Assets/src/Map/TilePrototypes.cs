@@ -10,8 +10,8 @@ public class TilePrototypes {
     {
         prototypes = new List<Tile>();
 
-        prototypes.Add(new Tile("grass", "Grass", "grass"));
-        prototypes.Add(new Tile("sparse_forest", "Sparse forest", "sparse_forest"));
+        prototypes.Add(new Tile("grass", "Grass", "grass", true));
+        prototypes.Add(new Tile("sparse_forest", "Sparse forest", "sparse_forest", false));
     }
 
     public static TilePrototypes Instance

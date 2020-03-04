@@ -4,6 +4,7 @@ public class PrefabManager : MonoBehaviour {
     public static PrefabManager Instance { get; private set; }
 
     public GameObject Tile;
+    public GameObject Building_2x2;
 
     /// <summary>
     /// Initialization

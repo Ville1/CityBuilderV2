@@ -17,7 +17,9 @@ public class Tile
     public GameObject GameObject { get; private set; }
     public SpriteRenderer SpriteRenderer { get { return GameObject.GetComponent<SpriteRenderer>(); } }
     public bool Destroyed { get; private set; }
+    public bool Buildable { get; private set; }
     public bool Is_Prototype { get { return Id < 0; } }
+    public Building Building { get; set; }
 
     protected Color highlight_color;
     protected bool show_coordinates;
@@ -37,7 +39,7 @@ public class Tile
             PrefabManager.Instance.Tile,
             new Vector3(X, Y, Map.Z_LEVEL),
             Quaternion.identity,
-            Map.Instance.Tile_GameObject.transform
+            Map.Instance.Tile_Container.transform
         );
         GameObject.name = string.Format("{0}{1}_#{2}", GAME_OBJECT_NAME_PREFIX, Coordinates.Parse_Text(true, false), Id);
 
@@ -50,12 +52,13 @@ public class Tile
         Change_To(prototype);
     }
     
-    public Tile(string internal_name, string terrain, string sprite)
+    public Tile(string internal_name, string terrain, string sprite, bool buildable)
     {
         Id = -1;
         Internal_Name = internal_name;
         Terrain = terrain;
         Sprite = sprite;
+        Buildable = buildable;
     }
     
     public void Change_To(Tile prototype)
@@ -63,7 +66,8 @@ public class Tile
         Internal_Name = prototype.Internal_Name;
         Terrain = prototype.Terrain;
         Sprite = prototype.Sprite;
-        SpriteRenderer.sprite = SpriteManager.Instance.Get_Sprite(Sprite, SpriteManager.SpriteType.Terrain);
+        Buildable = prototype.Buildable;
+        SpriteRenderer.sprite = SpriteManager.Instance.Get(Sprite, SpriteManager.SpriteType.Terrain);
     }
 
     public Coordinates Coordinates

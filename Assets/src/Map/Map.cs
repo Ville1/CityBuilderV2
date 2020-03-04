@@ -9,7 +9,8 @@ public class Map : MonoBehaviour
 
     public static Map Instance { get; private set; }
     
-    public GameObject Tile_GameObject;
+    public GameObject Tile_Container;
+    public GameObject Building_Container;
 
     public int Width { get; private set; }
     public int Height { get; private set; }
@@ -138,6 +139,7 @@ public class Map : MonoBehaviour
     {
         State = MapState.Normal;
         ProgressBarManager.Instance.Active = false;
+        City.Instance.Start_New();
         Active = true;
         CameraManager.Instance.Set_Camera_Location(Get_Tile_At(Width / 2, Height / 2).Coordinates.Vector);
         BuildMenuManager.Instance.Interactable = true;
@@ -329,13 +331,13 @@ public class Map : MonoBehaviour
     public bool Active
     {
         get {
-            return Tile_GameObject.activeSelf;
+            return Tile_Container.activeSelf;
         }
         set {
-            if (Tile_GameObject.activeSelf == value) {
+            if (Tile_Container.activeSelf == value) {
                 return;
             }
-            Tile_GameObject.SetActive(value);
+            Tile_Container.SetActive(value);
         }
     }
 

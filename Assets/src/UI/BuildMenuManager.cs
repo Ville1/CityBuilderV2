@@ -21,6 +21,8 @@ public class BuildMenuManager : MonoBehaviour
     private Dictionary<Building.UI_Category, Button> tab_buttons;
     private Dictionary<Building.UI_Category, GameObject> tabs;
 
+    private Building preview_building;
+
     /// <summary>
     /// Initializiation
     /// </summary>
@@ -47,7 +49,14 @@ public class BuildMenuManager : MonoBehaviour
     /// </summary>
     private void Update()
     {
-
+        if (Preview_Active && MouseManager.Instance.Tile_Under_Cursor != null) {
+            Tile tile = MouseManager.Instance.Tile_Under_Cursor;
+            if (preview_building.Is_Prototype) {
+                preview_building = new Building(preview_building, tile, true);
+            } else {
+                preview_building.Move(tile);
+            }
+        }
     }
 
     public bool Active
@@ -83,6 +92,37 @@ public class BuildMenuManager : MonoBehaviour
             foreach(KeyValuePair<Building.UI_Category, Button> pair in tab_buttons) {
                 pair.Value.interactable = value;
             }
+        }
+    }
+
+    public bool Preview_Active
+    {
+        get {
+            return preview_building != null;
+        }
+        set {
+            if (value) {
+                return;
+            } else {
+                End_Preview();
+            }
+        }
+    }
+
+    public void Build()
+    {
+        if (!Preview_Active && MouseManager.Instance.Tile_Under_Cursor != null) {
+            return;
+        }
+        Tile tile = MouseManager.Instance.Tile_Under_Cursor;
+        string message;
+        if(!City.Instance.Can_Build(preview_building, tile, out message)) {
+            MessageManager.Instance.Show_Message(message);
+            return;
+        }
+        City.Instance.Build(preview_building, tile);
+        if (!KeyboardManager.Instance.Keep_Building) {
+            End_Preview();
         }
     }
 
@@ -148,7 +188,7 @@ public class BuildMenuManager : MonoBehaviour
                 container.name = string.Format("{0}_container", category.ToString());
 
                 container.GetComponentInChildren<Text>().text = building.Name;
-                container.GetComponentInChildren<Image>().sprite = SpriteManager.Instance.Get_Sprite(building.Sprite, SpriteManager.SpriteType.Buildings);
+                container.GetComponentInChildren<Image>().sprite = SpriteManager.Instance.Get(building.Sprite, SpriteManager.SpriteType.Buildings);
 
                 Button.ButtonClickedEvent click = new Button.ButtonClickedEvent();
                 click.AddListener(new UnityAction(delegate () { Select_Building(building); }));
@@ -174,6 +214,20 @@ public class BuildMenuManager : MonoBehaviour
 
     private void Select_Building(Building building)
     {
+        string message = null;
+        if (!City.Instance.Can_Build(building, out message)) {
+            MessageManager.Instance.Show_Message(message);
+            return;
+        }
         Active = false;
+        preview_building = building;
+    }
+
+    private void End_Preview()
+    {
+        if (preview_building.Is_Preview) {
+            preview_building.Delete();
+        }
+        preview_building = null;
     }
 }

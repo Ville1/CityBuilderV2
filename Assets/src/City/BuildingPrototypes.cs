@@ -10,7 +10,8 @@ public class BuildingPrototypes {
     {
         prototypes = new List<Building>();
 
-        prototypes.Add(new Building("Hut", "hut", Building.UI_Category.Housing, "hut"));
+        prototypes.Add(new Building("Townhall", Building.TOWN_HALL_INTERNAL_NAME, Building.UI_Category.Admin, "town_hall", 2, 2));
+        prototypes.Add(new Building("Hut", "hut", Building.UI_Category.Housing, "hut", 2, 2));
     }
 
     public static BuildingPrototypes Instance

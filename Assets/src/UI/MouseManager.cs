@@ -36,8 +36,15 @@ public class MouseManager : MonoBehaviour
         //Buttons
         if (Input.GetMouseButtonDown(0)) {
             if (!EventSystem.current.IsPointerOverGameObject()) {
-                Tile t = Tile_Under_Cursor;
+                Tile tile = Tile_Under_Cursor;
                 MasterUIManager.Instance.Close_Others(string.Empty);
+                if(tile != null && BuildMenuManager.Instance.Preview_Active) {
+                    BuildMenuManager.Instance.Build();
+                }
+            }
+        } else if (Input.GetMouseButtonDown(1)) {
+            if (BuildMenuManager.Instance.Preview_Active) {
+                BuildMenuManager.Instance.Preview_Active = false;
             }
         }
         //Scrolling
