@@ -53,12 +53,16 @@ public class Map : MonoBehaviour
                     break;
             }
             return;
+        } else if(State == MapState.Normal) {
+            City.Instance.Update(Time.deltaTime);
         }
     }
     
     public void Start_Generation(int width, int height)
     {
         Delete();
+        TopGUIManager.Instance.Active = false;
+        TimeManager.Instance.Paused = true;
         Active = false;
         State = MapState.Generating;
         Width = width;

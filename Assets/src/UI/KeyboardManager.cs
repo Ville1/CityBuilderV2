@@ -62,6 +62,15 @@ public class KeyboardManager : MonoBehaviour
             if (Input.GetAxis("Horizontal") > 0.0f) {
                 CameraManager.Instance.Move_Camera(Coordinates.Direction.East);
             }
+            if (Input.GetButtonDown("Speed up")) {
+                TimeManager.Instance.Speed_Up();
+            }
+            if (Input.GetButtonDown("Speed down")) {
+                TimeManager.Instance.Speed_Down();
+            }
+            if (Input.GetButtonDown("Pause")) {
+                TimeManager.Instance.Toggle_Pause();
+            }
         } else {
             MasterUIManager.Instance.Read_Keyboard_Input();
         }

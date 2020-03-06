@@ -10,8 +10,11 @@ public class BuildingPrototypes {
     {
         prototypes = new List<Building>();
 
-        prototypes.Add(new Building("Townhall", Building.TOWN_HALL_INTERNAL_NAME, Building.UI_Category.Admin, "town_hall", 2, 2));
-        prototypes.Add(new Building("Hut", "hut", Building.UI_Category.Housing, "hut", 2, 2));
+        prototypes.Add(new Building("Townhall", Building.TOWN_HALL_INTERNAL_NAME, Building.UI_Category.Admin, "town_hall", Building.BuildingSize.s2x2, new Dictionary<Resource, int>(), 0, new List<Resource>() { Resource.Lumber, Resource.Stone, Resource.Tools, Resource.Wood },
+            2000, 0, new Dictionary<Resource, float>(), 1.0f, 50.0f));
+        prototypes.Add(new Building("Cabin", "hut", Building.UI_Category.Housing, "hut", Building.BuildingSize.s2x2, new Dictionary<Resource, int>() {
+            { Resource.Wood, 100 }, { Resource.Stone, 15 }, { Resource.Tools, 10 }
+        }, 100, new List<Resource>(), 0, 115, new Dictionary<Resource, float>(), 0.0f, 0.0f));
     }
 
     public static BuildingPrototypes Instance

@@ -95,6 +95,7 @@
     <Compile Include="Assets\src\PrefabManager.cs" />
     <Compile Include="Assets\src\RNG.cs" />
     <Compile Include="Assets\src\SpriteManager.cs" />
+    <Compile Include="Assets\src\TimeManager.cs" />
     <Compile Include="Assets\src\UI\BuildMenuManager.cs" />
     <Compile Include="Assets\src\UI\CameraManager.cs" />
     <Compile Include="Assets\src\UI\ConsoleManager.cs" />
@@ -106,6 +107,7 @@
     <Compile Include="Assets\src\UI\MouseManager.cs" />
     <Compile Include="Assets\src\UI\ProgressBarManager.cs" />
     <Compile Include="Assets\src\UI\TooltipManager.cs" />
+    <Compile Include="Assets\src\UI\TopGUIManager.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="GenerateTargetFrameworkMonikerAttribute" />

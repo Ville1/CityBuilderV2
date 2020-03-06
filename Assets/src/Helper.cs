@@ -37,6 +37,15 @@ public class Helper {
         return string.Format("{0}{1}", (show_plus_sign ? "+" : string.Empty), rounded_s);
     }
 
+    public static List<T> Clone_List<T>(List<T> list)
+    {
+        List<T> clone = new List<T>();
+        foreach (T item in list) {
+            clone.Add(item);
+        }
+        return clone;
+    }
+
     public static Dictionary<T1, T2> Clone_Dictionary<T1, T2>(Dictionary<T1, T2> dictionary)
     {
         Dictionary<T1, T2> clone = new Dictionary<T1, T2>();
