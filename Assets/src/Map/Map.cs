@@ -63,6 +63,7 @@ public class Map : MonoBehaviour
         Delete();
         TopGUIManager.Instance.Active = false;
         TimeManager.Instance.Paused = true;
+        TimeManager.Instance.Reset_Time();
         Active = false;
         State = MapState.Generating;
         Width = width;

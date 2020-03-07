@@ -39,7 +39,8 @@ public class Building {
     public GameObject GameObject { get; private set; }
     public SpriteRenderer Renderer { get { return GameObject != null ? GameObject.GetComponent<SpriteRenderer>() : null; } }
 
-    private float update_cooldown;
+    protected float update_cooldown;
+    protected bool update_on_last_call;
 
     public Building(Building prototype, Tile tile, bool is_preview)
     {
@@ -163,13 +164,16 @@ public class Building {
     {
         update_cooldown -= delta_time;
         if(update_cooldown > 0.0f) {
+            update_on_last_call = false;
             return;
         }
         update_cooldown += UPDATE_INTERVAL;
         if (TimeManager.Instance.Paused || !Is_Built) {
+            update_on_last_call = false;
             return;
         }
         delta_time = update_cooldown * TimeManager.Instance.Multiplier;
+        update_on_last_call = true;
 
         if(Construction_Speed > 0.0f && Construction_Range > 0.0f) {
             float construction_progress = Efficency * delta_time;

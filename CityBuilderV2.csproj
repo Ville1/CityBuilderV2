@@ -81,6 +81,7 @@
     <Compile Include="Assets\src\City\Building.cs" />
     <Compile Include="Assets\src\City\BuildingPrototypes.cs" />
     <Compile Include="Assets\src\City\City.cs" />
+    <Compile Include="Assets\src\City\Residence.cs" />
     <Compile Include="Assets\src\ConsoleScriptManager.cs" />
     <Compile Include="Assets\src\Coordinates.cs" />
     <Compile Include="Assets\src\CustomLogger.cs" />

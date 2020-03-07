@@ -4,7 +4,7 @@ using UnityEngine;
 public class TimeManager : MonoBehaviour
 {
     public enum Speed { Paused, Normal, Fast, Very_Fast }
-    public static readonly float DAYS_IN_REALTIME_SECOND = 0.01f;
+    public static readonly float REALTIME_SECONDS_PER_DAY = 30.0f;
     public static readonly int DAYS_IN_MONTH = 30;
     public static readonly int MONTHS_IN_YEAR = 12;
 
@@ -17,8 +17,13 @@ public class TimeManager : MonoBehaviour
         { Speed.Very_Fast, 5.0f }
     };
 
+    private int day;
+    private int month;
+    private int year;
+
     private Speed saved_speed;
     private Speed speed;
+    private float day_progress;
 
     /// <summary>
     /// Initializiation
@@ -38,8 +43,26 @@ public class TimeManager : MonoBehaviour
     /// </summary>
     private void Update()
     {
+        if(!Paused && Map.Instance.State == Map.MapState.Normal) {
+            day_progress += Time.deltaTime * Multiplier * (1.0f / REALTIME_SECONDS_PER_DAY);
+            int days_passed = (int)day_progress;
+            if(days_passed > 0) {
+                day_progress -= days_passed;
+                day += days_passed;
+                if(day > DAYS_IN_MONTH) {
+                    day -= DAYS_IN_MONTH;
+                    month++;
+                    if(month > MONTHS_IN_YEAR) {
+                        month -= MONTHS_IN_YEAR;
+                        year++;
+                    }
+                }
+            }
+        }
+
         if(TopGUIManager.Instance != null && TopGUIManager.Instance.Active) {
             TopGUIManager.Instance.Update_Speed(speed);
+            TopGUIManager.Instance.Update_Time(day, month, year);
         }
     }
 
@@ -100,5 +123,13 @@ public class TimeManager : MonoBehaviour
     public void Toggle_Pause()
     {
         Paused = !Paused;
+    }
+
+    public void Reset_Time()
+    {
+        day_progress = 0.0f;
+        day = 1;
+        month = 1;
+        year = 1;
     }
 }
