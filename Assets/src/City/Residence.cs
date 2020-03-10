@@ -9,7 +9,7 @@ public class Residence : Building {
 
     private float migration_progress;
 
-    public Residence(Residence prototype, Tile tile, bool is_preview) : base(prototype, tile, is_preview)
+    public Residence(Residence prototype, Tile tile, List<Tile> tiles, bool is_preview) : base(prototype, tile, tiles, is_preview)
     {
         Resident_Space = Helper.Clone_Dictionary(prototype.Resident_Space);
         Current_Residents = new Dictionary<Resident, int>();
@@ -23,9 +23,9 @@ public class Residence : Building {
         migration_progress = 0.0f;
     }
 
-    public Residence(string name, string internal_name, UI_Category category, string sprite, BuildingSize size, Dictionary<Resource, int> cost, int cash_cost, List<Resource> allowed_resources, int storage_limit, int construction_time,
-        Dictionary<Resource, float> upkeep, float construction_speed, float construction_range, Dictionary<Resident, int> resident_space) : base(name, internal_name, category, sprite, size, cost, cash_cost,
-            allowed_resources, storage_limit, construction_time, upkeep, construction_speed, construction_range)
+    public Residence(string name, string internal_name, UI_Category category, string sprite, BuildingSize size, int hp, Dictionary<Resource, int> cost, int cash_cost, List<Resource> allowed_resources, int storage_limit, int construction_time,
+        Dictionary<Resource, float> upkeep, float cash_upkeep, float construction_speed, float construction_range, Dictionary<Resident, int> resident_space) : base(name, internal_name, category, sprite, size, hp, cost, cash_cost,
+            allowed_resources, storage_limit, construction_time, upkeep, cash_upkeep, construction_speed, construction_range, new Dictionary<Resident, int>(), 0, false)
     {
         Resident_Space = Helper.Clone_Dictionary(resident_space);
         foreach (Resident resident in Enum.GetValues(typeof(Resident))) {
@@ -46,6 +46,13 @@ public class Residence : Building {
             return;
         }
         delta_time = update_cooldown * TimeManager.Instance.Multiplier;
+
+        if (!Is_Operational) {
+            Current_Residents[Resident.Peasant] = 0;
+            Current_Residents[Resident.Citizen] = 0;
+            Current_Residents[Resident.Noble] = 0;
+            return;
+        }
 
         if(Resident_Space[Resident.Peasant] != 0) {
             if (City.Instance.Grace_Time) {

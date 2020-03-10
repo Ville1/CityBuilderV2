@@ -30,16 +30,22 @@ public class MouseManager : MonoBehaviour
             Vector3 difference = last_position - current_position;
             CameraManager.Instance.Move_Camera(-1.0f * difference);
             //Close stuff
-            MasterUIManager.Instance.Close_Others(string.Empty);
+            if (!BuildMenuManager.Instance.Preview_Active) {
+                MasterUIManager.Instance.Close_Others(typeof(InspectorManager).Name);
+            }
         }
 
         //Buttons
         if (Input.GetMouseButtonDown(0)) {
             if (!EventSystem.current.IsPointerOverGameObject()) {
                 Tile tile = Tile_Under_Cursor;
-                MasterUIManager.Instance.Close_Others(string.Empty);
                 if(tile != null && BuildMenuManager.Instance.Preview_Active) {
                     BuildMenuManager.Instance.Build();
+                } else if(tile != null) {
+                    InspectorManager.Instance.Building = tile.Building;
+                    MasterUIManager.Instance.Close_Others(typeof(InspectorManager).Name);
+                } else {
+                    MasterUIManager.Instance.Close_Others(string.Empty);
                 }
             }
         } else if (Input.GetMouseButtonDown(1)) {

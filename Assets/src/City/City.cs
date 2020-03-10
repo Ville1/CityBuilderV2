@@ -13,16 +13,17 @@ public class City {
     public bool Has_Town_Hall { get; private set; }
     public List<Building> Buildings { get; private set; }
     public float Cash { get; private set; }
-    public Dictionary<Resource, int> Resource_Totals { get; private set; }
+    public Dictionary<Resource, float> Resource_Totals { get; private set; }
     public bool Grace_Time { get { return grace_time_remaining > 0.0f; } }
 
     private float grace_time_remaining;
+    private List<Building> removed_buildings;
 
     private City()
     {
-        Resource_Totals = new Dictionary<Resource, int>();
+        Resource_Totals = new Dictionary<Resource, float>();
         foreach (Resource resource in Enum.GetValues(typeof(Resource))) {
-            Resource_Totals.Add(resource, 0);
+            Resource_Totals.Add(resource, 0.0f);
         }
     }
 
@@ -32,6 +33,7 @@ public class City {
         Buildings = new List<Building>();
         Name = "PLACEHOLDER";
         grace_time_remaining = GRACE_TIME;
+        removed_buildings = new List<Building>();
     }
     
     public static City Instance
@@ -57,9 +59,13 @@ public class City {
                 building.Update(delta_time);
             }
         }
+        foreach(Building building in removed_buildings) {
+            Buildings.Remove(building);
+        }
+        removed_buildings.Clear();
         
         foreach(Resource resource in Enum.GetValues(typeof(Resource))) {
-            Resource_Totals[resource] = 0;
+            Resource_Totals[resource] = 0.0f;
         }
         Dictionary<Building.Resident, int> current_population = new Dictionary<Building.Resident, int>();
         Dictionary<Building.Resident, int> max_population = new Dictionary<Building.Resident, int>();
@@ -70,7 +76,7 @@ public class City {
             happiness.Add(resident, 0.0f);
         }
         foreach (Building building in Buildings) {
-            foreach(KeyValuePair<Resource, int> pair in building.Storage) {
+            foreach(KeyValuePair<Resource, float> pair in building.Storage) {
                 Resource_Totals[pair.Key] = Resource_Totals[pair.Key] + pair.Value;
             }
             if (building is Residence && building.Is_Built) {
@@ -99,9 +105,18 @@ public class City {
         float noble_happiness = noble_current > 0 ? happiness[Building.Resident.Noble] / noble_current : 0.0f;
         float noble_employment_relative = 0.0f;
         int noble_employment = 0;
-        TopGUIManager.Instance.Update_City_Info(Name, Cash, 0.0f, Resource_Totals[Resource.Wood], Resource_Totals[Resource.Lumber], Resource_Totals[Resource.Stone], Resource_Totals[Resource.Tools], peasant_current,
-            peasant_max, peasant_happiness, peasant_employment_relative, peasant_employment, citizen_current, citizen_max, citizen_happiness, citizen_employment_relative, citizen_employment, noble_current, noble_max,
-            noble_happiness, noble_employment_relative, noble_employment);
+        TopGUIManager.Instance.Update_City_Info(Name, Cash, 0.0f, Mathf.RoundToInt(Resource_Totals[Resource.Wood]), Mathf.RoundToInt(Resource_Totals[Resource.Lumber]), Mathf.RoundToInt(Resource_Totals[Resource.Stone]),
+            Mathf.RoundToInt(Resource_Totals[Resource.Tools]), peasant_current, peasant_max, peasant_happiness, peasant_employment_relative, peasant_employment, citizen_current, citizen_max, citizen_happiness,
+            citizen_employment_relative, citizen_employment, noble_current, noble_max, noble_happiness, noble_employment_relative, noble_employment);
+    }
+
+    public void Add_Cash(float amount)
+    {
+        if(amount <= 0.0f) {
+            CustomLogger.Instance.Warning(string.Format("amount = {0}", amount));
+            return;
+        }
+        Cash += amount;
     }
 
     public bool Can_Build(Building prototype, out string message)
@@ -128,6 +143,16 @@ public class City {
             message = "Invalid terrain";
             return false;
         }
+        foreach(Tile t in Map.Instance.Get_Tiles(tile.Coordinates, prototype.Width, prototype.Height)) {
+            if (!t.Buildable) {
+                message = "Invalid terrain";
+                return false;
+            }
+            if (t.Building != null) {
+                message = "Obstructed";
+                return false;
+            }
+        }
         if (tile.Building != null) {
             message = "Obstructed";
             return false;
@@ -151,13 +176,14 @@ public class City {
         if(!Can_Build(prototype, out message)) {
             return;
         }
+        List<Tile> tiles = Map.Instance.Get_Tiles(tile.Coordinates, prototype.Width, prototype.Height);
         if (prototype.Is_Town_Hall) {
             Has_Town_Hall = true;
-            Building town_hall = new Building(prototype, tile, false);
+            Building town_hall = new Building(prototype, tile, tiles, false);
             Cash = 5000.0f;
-            town_hall.Store_Resources(Resource.Wood, 750);
-            town_hall.Store_Resources(Resource.Stone, 750);
-            town_hall.Store_Resources(Resource.Tools, 500);
+            town_hall.Store_Resources(Resource.Wood, 750.0f);
+            town_hall.Store_Resources(Resource.Stone, 750.0f);
+            town_hall.Store_Resources(Resource.Tools, 500.0f);
 
             Buildings.Add(town_hall);
             TopGUIManager.Instance.Active = true;
@@ -170,17 +196,24 @@ public class City {
             }
         }
         if(BuildingPrototypes.Instance.Is_Residence(prototype.Internal_Name)) {
-            Buildings.Add(new Residence(BuildingPrototypes.Instance.Get_Residence(prototype.Internal_Name) as Residence, tile, false));
+            Buildings.Add(new Residence(BuildingPrototypes.Instance.Get_Residence(prototype.Internal_Name) as Residence, tile, tiles, false));
         } else {
-            Buildings.Add(new Building(prototype, tile, false));
+            Buildings.Add(new Building(prototype, tile, tiles, false));
         }
     }
 
-    private bool Take_From_Storage(Resource resouce, int amount)
+    public void Remove_Building(Building building)
     {
-        int amount_taken = 0;
+        if (!removed_buildings.Contains(building)) {
+            removed_buildings.Add(building);
+        }
+    }
+
+    private bool Take_From_Storage(Resource resouce, float amount)
+    {
+        float amount_taken = 0.0f;
         foreach(Building building in Buildings) {
-            int from_building = building.Take_Resources(resouce, amount - amount_taken);
+            float from_building = building.Take_Resources(resouce, amount - amount_taken);
             amount_taken += from_building;
             if(amount_taken == amount) {
                 break;

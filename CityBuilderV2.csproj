@@ -100,6 +100,7 @@
     <Compile Include="Assets\src\UI\BuildMenuManager.cs" />
     <Compile Include="Assets\src\UI\CameraManager.cs" />
     <Compile Include="Assets\src\UI\ConsoleManager.cs" />
+    <Compile Include="Assets\src\UI\InspectorManager.cs" />
     <Compile Include="Assets\src\UI\KeyboardManager.cs" />
     <Compile Include="Assets\src\UI\MainMenuManager.cs" />
     <Compile Include="Assets\src\UI\MasterUIManager.cs" />
