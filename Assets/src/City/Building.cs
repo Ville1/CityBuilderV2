@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Building {
@@ -96,10 +97,10 @@ public class Building {
         Construction_Progress = 0.0f;
         Construction_Speed = prototype.Construction_Speed;
         Construction_Range = prototype.Construction_Range;
-        Max_Workers = Helper.Clone_Dictionary(prototype.Max_Workers);
+        Max_Workers = Make_Resident_Dictionary(prototype.Max_Workers);
         Max_Workers_Total = prototype.Max_Workers_Total;
-        Worker_Settings = Helper.Clone_Dictionary(prototype.Max_Workers);
-        Current_Workers = new Dictionary<Resident, int>();
+        Worker_Settings = Make_Resident_Dictionary(prototype.Max_Workers);
+        Current_Workers = Make_Resident_Dictionary();
         Can_Be_Paused = prototype.can_be_paused;
         Is_Paused = false;
 
@@ -145,7 +146,7 @@ public class Building {
         Construction_Progress = 0.0f;
         Construction_Speed = construction_speed;
         Construction_Range = construction_range;
-        Max_Workers = Helper.Clone_Dictionary(workers);
+        Max_Workers = Make_Resident_Dictionary(workers);
         Max_Workers_Total = max_workers;
         Worker_Settings = new Dictionary<Resident, int>();
         Current_Workers = new Dictionary<Resident, int>();
@@ -264,7 +265,7 @@ public class Building {
         }
 
         if(Construction_Speed > 0.0f && Construction_Range > 0.0f) {
-            float construction_progress = Efficency * delta_time;
+            float construction_progress = Efficency * Construction_Speed * delta_time;
             foreach(Building building in City.Instance.Buildings) {
                 if (building.Is_Built) {
                     continue;
@@ -324,6 +325,17 @@ public class Building {
         }
     }
 
+    public int Workers_Allocated
+    {
+        get {
+            int allocated = 0;
+            foreach (Resident resident in Enum.GetValues(typeof(Resident))) {
+                allocated += Worker_Settings[resident];
+            }
+            return allocated;
+        }
+    }
+
     public void Deconstruct()
     {
         Deconstruction_Progress = 0.0f;
@@ -370,6 +382,19 @@ public class Building {
         }
         CustomLogger.Instance.Error(string.Format("{0}x{1} prefab does not exist", Width, Height));
         return null;
+    }
+
+    private Dictionary<Resident, int> Make_Resident_Dictionary(Dictionary<Resident, int> param = null)
+    {
+        Dictionary<Resident, int> dictionary = new Dictionary<Resident, int>();
+        foreach(Resident resident in Enum.GetValues(typeof(Resident))) {
+            if(param != null && param.ContainsKey(resident)) {
+                dictionary.Add(resident, param[resident]);
+            } else {
+                dictionary.Add(resident, 0);
+            }
+        }
+        return dictionary;
     }
 
     private void Update_Sprite()

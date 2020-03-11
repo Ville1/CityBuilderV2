@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -20,6 +22,25 @@ public class InspectorManager : MonoBehaviour {
     public GameObject Storage_Row_Prototype;
     public Button Pause_Button;
     public Button Delete_Button;
+
+    public Text Residents_Label_Text;
+    public Text Residents_Text;
+
+    public GameObject Workers_Container;
+    public Text Worker_Peasant_Current;
+    public Text Worker_Peasant_Max;
+    public Button Worker_Peasant_Plus_Button;
+    public Button Worker_Peasant_Minus_Button;
+    public Text Worker_Citizen_Current;
+    public Text Worker_Citizen_Max;
+    public Button Worker_Citizen_Plus_Button;
+    public Button Worker_Citizen_Minus_Button;
+    public Text Worker_Noble_Current;
+    public Text Worker_Noble_Max;
+    public Button Worker_Noble_Plus_Button;
+    public Button Worker_Noble_Minus_Button;
+    public Text Worker_Allocated_Current;
+    public Text Worker_Allocated_Max;
 
     public GameObject Prototype_Container;
     public Text Size_Text;
@@ -61,6 +82,30 @@ public class InspectorManager : MonoBehaviour {
         Button.ButtonClickedEvent click2 = new Button.ButtonClickedEvent();
         click2.AddListener(new UnityAction(Delete));
         Delete_Button.onClick = click2;
+
+        Button.ButtonClickedEvent click3 = new Button.ButtonClickedEvent();
+        click3.AddListener(new UnityAction(Add_Peasant_Worker));
+        Worker_Peasant_Plus_Button.onClick = click3;
+
+        Button.ButtonClickedEvent click4 = new Button.ButtonClickedEvent();
+        click4.AddListener(new UnityAction(Add_Citizen_Worker));
+        Worker_Citizen_Plus_Button.onClick = click4;
+
+        Button.ButtonClickedEvent click5 = new Button.ButtonClickedEvent();
+        click5.AddListener(new UnityAction(Add_Noble_Worker));
+        Worker_Noble_Plus_Button.onClick = click5;
+
+        Button.ButtonClickedEvent click6 = new Button.ButtonClickedEvent();
+        click6.AddListener(new UnityAction(Remove_Peasant_Worker));
+        Worker_Peasant_Minus_Button.onClick = click6;
+
+        Button.ButtonClickedEvent click7 = new Button.ButtonClickedEvent();
+        click7.AddListener(new UnityAction(Remove_Citizen_Worker));
+        Worker_Citizen_Minus_Button.onClick = click7;
+
+        Button.ButtonClickedEvent click8 = new Button.ButtonClickedEvent();
+        click8.AddListener(new UnityAction(Remove_Noble_Worker));
+        Worker_Noble_Minus_Button.onClick = click8;
     }
 
     /// <summary>
@@ -232,7 +277,51 @@ public class InspectorManager : MonoBehaviour {
                 Status_Text.text = "ERROR";
             }
             Efficency_Text.text = string.Format("Efficency: {0}%", Helper.Float_To_String(100.0f * building.Efficency, 0));
-            
+
+            //Residents
+            Residents_Label_Text.gameObject.SetActive(building is Residence);
+            Residents_Text.gameObject.SetActive(building is Residence);
+            if (building is Residence) {
+                Residence residence = building as Residence;
+                StringBuilder builder = new StringBuilder("                       ");
+                bool has_residents = false;
+                foreach(Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
+                    if(residence.Current_Residents[resident] != 0) {
+                        builder.Append(residence.Current_Residents[resident]).Append(" ").Append(resident.ToString().ToLower()).Append(Helper.Plural(residence.Current_Residents[resident])).Append(",");
+                        has_residents = true;
+                    }
+                }
+                if (has_residents) {
+                    builder.Remove(builder.Length - 1, 1);
+                } else {
+                    builder.Append("None");
+                }
+                Residents_Text.text = builder.ToString();
+            }
+
+            //Workers
+            if (building.Is_Built && !building.Is_Deconstructing && building.Max_Workers_Total != 0) {
+                Workers_Container.SetActive(true);
+                Worker_Peasant_Current.text = building.Current_Workers[Building.Resident.Peasant].ToString();
+                Worker_Peasant_Max.text = building.Worker_Settings[Building.Resident.Peasant].ToString();
+                Worker_Citizen_Current.text = building.Current_Workers[Building.Resident.Citizen].ToString();
+                Worker_Citizen_Max.text = building.Worker_Settings[Building.Resident.Citizen].ToString();
+                Worker_Noble_Current.text = building.Current_Workers[Building.Resident.Noble].ToString();
+                Worker_Noble_Max.text = building.Worker_Settings[Building.Resident.Noble].ToString();
+                Worker_Allocated_Current.text = building.Workers_Allocated.ToString();
+                Worker_Allocated_Max.text = building.Max_Workers_Total.ToString();
+
+                Worker_Peasant_Plus_Button.interactable = building.Workers_Allocated < building.Max_Workers_Total && building.Worker_Settings[Building.Resident.Peasant] < building.Max_Workers[Building.Resident.Peasant];
+                Worker_Citizen_Plus_Button.interactable = building.Workers_Allocated < building.Max_Workers_Total && building.Worker_Settings[Building.Resident.Citizen] < building.Max_Workers[Building.Resident.Citizen];
+                Worker_Noble_Plus_Button.interactable = building.Workers_Allocated < building.Max_Workers_Total && building.Worker_Settings[Building.Resident.Noble] < building.Max_Workers[Building.Resident.Noble];
+                Worker_Peasant_Minus_Button.interactable = building.Workers_Allocated > 1 && building.Worker_Settings[Building.Resident.Peasant] > 0;
+                Worker_Citizen_Minus_Button.interactable = building.Workers_Allocated > 1 && building.Worker_Settings[Building.Resident.Citizen] > 0;
+                Worker_Noble_Minus_Button.interactable = building.Workers_Allocated > 1 && building.Worker_Settings[Building.Resident.Noble] > 0;
+            } else {
+                Workers_Container.SetActive(false);
+            }
+
+            //Storage
             foreach (GameObject row in storage_rows) {
                 GameObject.Destroy(row);
             }
@@ -258,6 +347,7 @@ public class InspectorManager : MonoBehaviour {
             }
             Storage_Content.GetComponentInChildren<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 15.0f * storage_rows.Count);
 
+
             Pause_Button.interactable = building.Can_Be_Paused;
             Pause_Button.GetComponentInChildren<Text>().text = building.Is_Paused ? "Unpause" : "Pause";
             Delete_Button.interactable = building.Can_Be_Deleted;
@@ -280,5 +370,47 @@ public class InspectorManager : MonoBehaviour {
         }
         building.Deconstruct();
         Update_GUI();
+    }
+
+    private void Add_Peasant_Worker()
+    {
+        if(building != null && building.Worker_Settings[Building.Resident.Peasant] < building.Max_Workers[Building.Resident.Peasant] && building.Workers_Allocated < building.Max_Workers_Total) {
+            building.Worker_Settings[Building.Resident.Peasant]++;
+        }
+    }
+
+    private void Remove_Peasant_Worker()
+    {
+        if (building != null && building.Worker_Settings[Building.Resident.Peasant] > 0 && building.Workers_Allocated > 1) {
+            building.Worker_Settings[Building.Resident.Peasant]--;
+        }
+    }
+
+    private void Add_Citizen_Worker()
+    {
+        if (building != null && building.Worker_Settings[Building.Resident.Citizen] < building.Max_Workers[Building.Resident.Citizen] && building.Workers_Allocated < building.Max_Workers_Total) {
+            building.Worker_Settings[Building.Resident.Citizen]++;
+        }
+    }
+
+    private void Remove_Citizen_Worker()
+    {
+        if (building != null && building.Worker_Settings[Building.Resident.Citizen] > 0 && building.Workers_Allocated > 1) {
+            building.Worker_Settings[Building.Resident.Citizen]--;
+        }
+    }
+
+    private void Add_Noble_Worker()
+    {
+        if (building != null && building.Worker_Settings[Building.Resident.Noble] < building.Max_Workers[Building.Resident.Noble] && building.Workers_Allocated < building.Max_Workers_Total) {
+            building.Worker_Settings[Building.Resident.Noble]++;
+        }
+    }
+
+    private void Remove_Noble_Worker()
+    {
+        if (building != null && building.Worker_Settings[Building.Resident.Noble] > 0 && building.Workers_Allocated > 1) {
+            building.Worker_Settings[Building.Resident.Noble]--;
+        }
     }
 }

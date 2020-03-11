@@ -37,6 +37,11 @@ public class Helper {
         return string.Format("{0}{1}", (show_plus_sign ? "+" : string.Empty), rounded_s);
     }
 
+    public static string Plural(int i)
+    {
+        return i == 1 ? string.Empty : "s";
+    }
+
     public static List<T> Clone_List<T>(List<T> list)
     {
         List<T> clone = new List<T>();
