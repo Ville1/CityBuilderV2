@@ -188,7 +188,7 @@ public class BuildMenuManager : MonoBehaviour
                 container.name = string.Format("{0}_container", category.ToString());
 
                 container.GetComponentInChildren<Text>().text = building.Name;
-                container.GetComponentInChildren<Image>().sprite = SpriteManager.Instance.Get(building.Sprite, SpriteManager.SpriteType.Building);
+                container.GetComponentInChildren<Image>().sprite = SpriteManager.Instance.Get(building.Sprite.Name, building.Sprite.Type);
 
                 Button.ButtonClickedEvent click = new Button.ButtonClickedEvent();
                 click.AddListener(new UnityAction(delegate () { Select_Building(building); }));

@@ -6,6 +6,7 @@ public class Building {
     private static long current_id = 0;
 
     public static readonly float UPDATE_INTERVAL = 1.0f;
+    public static readonly float ALERT_CHANGE_INTERVAL = 2.0f;
     public static readonly string TOWN_HALL_INTERNAL_NAME = "town_hall";
     public static int INPUT_OUTPUT_STORAGE_LIMIT = 100;
     public static float DECONSTRUCTION_SPEED = 10.0f;
@@ -19,7 +20,7 @@ public class Building {
     public string Name { get; private set; }
     public string Internal_Name { get; private set; }
     public UI_Category Category { get; private set; }
-    public string Sprite { get; private set; }
+    public SpriteData Sprite { get; private set; }
     public bool Is_Prototype { get { return Id < 0; } }
     public bool Is_Town_Hall { get { return Internal_Name == TOWN_HALL_INTERNAL_NAME; } }
     public BuildingSize Size { get; private set; }
@@ -40,7 +41,7 @@ public class Building {
     public float Construction_Progress { get; private set; }
     public float Deconstruction_Progress { get; private set; }
     public bool Is_Built { get { return Is_Town_Hall || Construction_Progress == Construction_Time; } }
-    public bool Is_Operational { get { return Is_Built && !Is_Paused && !Is_Deconstructing; } }
+    public bool Is_Operational { get { return Is_Built && !Is_Paused && !Is_Deconstructing && (!Requires_Connection || Is_Connected); } }
     public float Construction_Speed { get; private set; }
     public float Construction_Range { get; private set; }
     public Dictionary<Resident, int> Max_Workers { get; private set; }
@@ -54,6 +55,9 @@ public class Building {
     public bool Is_Paused { get; set; }
     public bool Is_Deconstructing { get; private set; }
     public bool Is_Deleted { get; private set; }
+    public bool Is_Road { get; private set; }
+    public bool Is_Connected { get; set; }
+    public bool Requires_Connection { get { return requires_connection && Is_Built && !Is_Deconstructing; } set { requires_connection = value; } }
 
     public GameObject GameObject { get; private set; }
     public SpriteRenderer Renderer { get { return GameObject != null ? GameObject.GetComponent<SpriteRenderer>() : null; } }
@@ -62,6 +66,11 @@ public class Building {
     protected bool update_on_last_call;
     private bool can_be_paused;
     private int storage_limit;
+    private List<string> active_alerts;
+    private List<GameObject> alerts;
+    private GameObject active_alert;
+    private bool requires_connection;
+    private float alert_change_cooldown;
 
     public Building(Building prototype, Tile tile, List<Tile> tiles, bool is_preview)
     {
@@ -72,7 +81,7 @@ public class Building {
         Name = prototype.Name;
         Internal_Name = prototype.Internal_Name;
         Category = prototype.Category;
-        Sprite = prototype.Sprite;
+        Sprite = prototype.Sprite.Clone();
         Size = prototype.Size;
         HP = prototype.HP;
         Max_HP = prototype.Max_HP;
@@ -103,6 +112,22 @@ public class Building {
         Current_Workers = Make_Resident_Dictionary();
         Can_Be_Paused = prototype.can_be_paused;
         Is_Paused = false;
+        Is_Road = prototype.Is_Road;
+        Requires_Connection = prototype.requires_connection;
+
+        if (!Is_Preview) {
+            if (Is_Town_Hall) {
+                Is_Connected = true;
+            } else {
+                Is_Connected = false;
+                foreach (Tile t in Map.Instance.Get_Tiles_Around(this)) {
+                    if (t.Building != null && ((t.Building.Is_Road && t.Building.Is_Connected) || (Is_Road && t.Building.Is_Town_Hall))) {
+                        Is_Connected = true;
+                        break;
+                    }
+                }
+            }
+        }
 
         update_cooldown = RNG.Instance.Next_F() * UPDATE_INTERVAL;
 
@@ -117,18 +142,21 @@ public class Building {
             Map.Instance.Building_Container.transform
         );
         GameObject.name = !is_preview ? string.Format("{0}_#{1}", Internal_Name, Id) : string.Format("{0}_preview", Internal_Name);
+        alerts = new List<GameObject>();
+        active_alerts = new List<string>();
+        alert_change_cooldown = ALERT_CHANGE_INTERVAL;
 
         Update_Sprite();
     }
 
     public Building(string name, string internal_name, UI_Category category, string sprite, BuildingSize size, int hp, Dictionary<Resource, int> cost, int cash_cost, List<Resource> allowed_resources, int storage_limit, int construction_time,
-        Dictionary<Resource, float> upkeep, float cash_upkeep, float construction_speed, float construction_range, Dictionary<Resident, int> workers, int max_workers, bool can_be_paused)
+        Dictionary<Resource, float> upkeep, float cash_upkeep, float construction_speed, float construction_range, Dictionary<Resident, int> workers, int max_workers, bool can_be_paused, bool is_road, bool p_requires_connection)
     {
         Id = -1;
         Name = name;
         Internal_Name = internal_name;
         Category = category;
-        Sprite = sprite;
+        Sprite = new SpriteData(sprite);
         Size = size;
         Max_HP = hp;
         HP = Max_HP;
@@ -152,6 +180,8 @@ public class Building {
         Current_Workers = new Dictionary<Resident, int>();
         Can_Be_Paused = can_be_paused;
         Is_Paused = false;
+        Is_Road = is_road;
+        Requires_Connection = p_requires_connection;
     }
 
     public void Move(Tile tile)
@@ -165,6 +195,7 @@ public class Building {
             tile.GameObject.transform.position.y,
             tile.GameObject.transform.position.z
         );
+        Update_Sprite();
     }
 
     public float Current_Storage_Amount
@@ -246,6 +277,7 @@ public class Building {
             update_on_last_call = false;
             return;
         }
+        float realtime_delta_time = update_cooldown;
         delta_time = update_cooldown * TimeManager.Instance.Multiplier;
         update_on_last_call = true;
 
@@ -263,8 +295,12 @@ public class Building {
             }
             return;
         }
+        
+        if(Requires_Connection && !Is_Connected) {
+            Show_Alert("alert_road");
+        }
 
-        if(Construction_Speed > 0.0f && Construction_Range > 0.0f) {
+        if(Is_Operational && Construction_Speed > 0.0f && Construction_Range > 0.0f) {
             float construction_progress = Efficency * Construction_Speed * delta_time;
             foreach(Building building in City.Instance.Buildings) {
                 if (building.Is_Built) {
@@ -278,8 +314,10 @@ public class Building {
                 building.Update_Sprite();
             }
         }
-
+        
         //TODO if non-cash upkeep is not provided, deteriorate HP (can't be destroyed this way)
+
+        Refresh_Alerts(realtime_delta_time);
     }
 
     public float Efficency
@@ -377,11 +415,85 @@ public class Building {
 
     private GameObject Get_Prefab()
     {
-        if(Size == BuildingSize.s2x2) {
+        if(Is_Road && !Sprite.Simple) {
+            return PrefabManager.Instance.Road;
+        }
+        return PrefabManager.Instance.Building_Generic;
+        /*if(Size == BuildingSize.s1x1) {
+            return PrefabManager.Instance.Building_1x1;
+        }
+        if (Size == BuildingSize.s2x2) {
             return PrefabManager.Instance.Building_2x2;
         }
+        if (Size == BuildingSize.s3x3) {
+            return PrefabManager.Instance.Building_3x3;
+        }
         CustomLogger.Instance.Error(string.Format("{0}x{1} prefab does not exist", Width, Height));
-        return null;
+        return null;*/
+    }
+
+    private void Show_Alert(string sprite)
+    {
+        if (!active_alerts.Contains(sprite)) {
+            active_alerts.Add(sprite);
+        }
+    }
+
+    private void Refresh_Alerts(float delta_time)
+    {
+        List<GameObject> destroyed_alerts = new List<GameObject>();
+        foreach(GameObject gameobject in alerts) {
+            if (!active_alerts.Contains(gameobject.name)) {
+                GameObject.Destroy(gameobject);
+                destroyed_alerts.Add(gameobject);
+            }
+        }
+        foreach(string icon in active_alerts) {
+            if(!alerts.Exists(x => x.name == icon)) {
+                GameObject new_alert = GameObject.Instantiate(
+                    PrefabManager.Instance.Alert,
+                    new Vector3(
+                        GameObject.transform.position.x,
+                        GameObject.transform.position.y,
+                        GameObject.transform.position.z
+                    ),
+                    Quaternion.identity,
+                    GameObject.transform
+                );
+                new_alert.name = icon;
+                new_alert.SetActive(false);
+                new_alert.GetComponentInChildren<SpriteRenderer>().sprite = SpriteManager.Instance.Get(icon, SpriteManager.SpriteType.UI);
+                alerts.Add(new_alert);
+            }
+        }
+
+        if(alerts.Count == 1) {
+            active_alert = alerts[0];
+            if (!active_alert.activeSelf) {
+                active_alert.SetActive(true);
+            }
+        } else if(alerts.Count > 1) {
+            if (active_alert == null) {
+                active_alert = alerts[0];
+                active_alert.SetActive(true);
+            } else {
+                alert_change_cooldown -= delta_time;
+                if (alert_change_cooldown <= 0.0f) {
+                    alert_change_cooldown += ALERT_CHANGE_INTERVAL;
+                    active_alert.SetActive(false);
+                    if(alerts.IndexOf(active_alert) == alerts.Count - 1) {
+                        active_alert = alerts[0];
+                    } else {
+                        active_alert = alerts[alerts.IndexOf(active_alert) + 1];
+                    }
+                    active_alert.SetActive(true);
+                }
+            }
+        } else {
+            active_alert = null;
+        }
+
+        active_alerts.Clear();
     }
 
     private Dictionary<Resident, int> Make_Resident_Dictionary(Dictionary<Resident, int> param = null)
@@ -397,10 +509,21 @@ public class Building {
         return dictionary;
     }
 
-    private void Update_Sprite()
+    private void Update_Sprite(bool ignore_adjacent = false)
     {
+        if (!ignore_adjacent) {
+            foreach (Tile tile in Map.Instance.Get_Tiles_Around(this)) {
+                if (tile.Building != null && !tile.Building.Sprite.Simple) {
+                    tile.Building.Update_Sprite(true);
+                }
+            }
+        }
         if ((Is_Built || Is_Town_Hall || Is_Preview) && !Is_Deconstructing) {
-            Renderer.sprite = SpriteManager.Instance.Get(Sprite, SpriteManager.SpriteType.Building, Is_Preview);
+            if (Sprite.Simple) {
+                Renderer.sprite = SpriteManager.Instance.Get(Sprite.Name, Sprite.Type, Is_Preview);
+            } else {
+                Renderer.sprite = SpriteManager.Instance.Get(Sprite.Logic(this), Sprite.Type, false);
+            }
             return;
         }
         if((Is_Deconstructing && Deconstruction_Progress >= Construction_Time * 0.66f) || Construction_Progress <= Construction_Time * 0.33f) {

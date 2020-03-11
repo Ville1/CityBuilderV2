@@ -151,4 +151,11 @@ public class Coordinates
         }
         return coordinates;
     }
+
+    public static List<Direction> Directly_Adjacent_Directions
+    {
+        get {
+            return new List<Direction>() { Direction.North, Direction.East, Direction.South, Direction.West };
+        }
+    }
 }

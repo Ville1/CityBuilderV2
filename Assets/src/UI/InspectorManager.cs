@@ -148,7 +148,7 @@ public class InspectorManager : MonoBehaviour {
         Prototype_Container.SetActive(building.Is_Prototype);
         Instance_Container.SetActive(!building.Is_Prototype);
         Name_Text.text = building.Name;
-        Image.sprite = SpriteManager.Instance.Get(building.Sprite, SpriteManager.SpriteType.Building);
+        Image.sprite = SpriteManager.Instance.Get(building.Sprite.Name, building.Sprite.Type);
         if (building.Is_Prototype) {
             foreach(GameObject row in cost_rows) {
                 GameObject.Destroy(row);
@@ -271,6 +271,8 @@ public class InspectorManager : MonoBehaviour {
                 Status_Text.text = string.Format("Deconstruction: {0}%", Helper.Float_To_String(100.0f * (building.Deconstruction_Progress / building.Construction_Time), 0));
             } else if (building.Is_Paused) {
                 Status_Text.text = "Paused";
+            } else if (building.Requires_Connection && !building.Is_Connected) {
+                Status_Text.text = "Disconnected";
             } else if (building.Is_Operational) {
                 Status_Text.text = "Operational";
             } else {

@@ -214,6 +214,58 @@ public class Map : MonoBehaviour
         }
         return tiles;
     }
+
+    /// <summary>
+    /// No diagonals
+    /// </summary>
+    /// <param name="building"></param>
+    /// <returns></returns>
+    public List<Tile> Get_Tiles_Around(Building building)
+    {
+        List<Tile> tiles = new List<Tile>();
+        Tile tile = building.Tile;
+        if(tile == null) {
+            //Preview
+            tile = Get_Tile_At(new Coordinates((int)building.GameObject.transform.position.x, (int)building.GameObject.transform.position.y));
+            if(tile == null) {
+                return new List<Tile>();
+            }
+        }
+        if(building.Size == Building.BuildingSize.s1x1) {
+            foreach(Coordinates.Direction direction in Coordinates.Directly_Adjacent_Directions) {
+                Tile t = Get_Tile_At(tile.Coordinates, direction);
+                if(t != null) {
+                    tiles.Add(t);
+                }
+            }
+        } else {
+            int x_start = tile.Coordinates.X - 1;
+            int x_end = tile.Coordinates.X + 1 + building.Width;
+            int y_start = tile.Coordinates.Y - 1;
+            int y_end = tile.Coordinates.Y + 1 + building.Height;
+            for(int x = x_start; x <= x_end; x++) {
+                Tile north = Get_Tile_At(x, y_end);
+                if(north != null) {
+                    tiles.Add(north);
+                }
+                Tile south = Get_Tile_At(x, y_start);
+                if(south != null) {
+                    tiles.Add(south);
+                }
+            }
+            for(int y = y_start + 1; y <= y_end - 1; y++) {
+                Tile west = Get_Tile_At(x_start, y);
+                if(west != null) {
+                    tiles.Add(west);
+                }
+                Tile east = Get_Tile_At(x_end, y);
+                if(east != null) {
+                    tiles.Add(east);
+                }
+            }
+        }
+        return tiles;
+    }
     
     public Dictionary<Coordinates.Direction, Tile> Get_Adjanced_Tiles(Tile tile, bool diagonal = false)
     {

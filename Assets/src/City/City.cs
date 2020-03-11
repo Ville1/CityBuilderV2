@@ -6,6 +6,7 @@ public enum Resource { Wood, Stone, Lumber, Tools }
 
 public class City {
     public static readonly float GRACE_TIME = 600;
+    public static readonly bool PAUSED_BUILDINGS_KEEP_WORKERS = false;
 
     private static City instance;
 
