@@ -61,6 +61,7 @@ public class Map : MonoBehaviour
     public void Start_Generation(int width, int height)
     {
         Delete();
+        City.Instance.Delete();
         TopGUIManager.Instance.Active = false;
         TimeManager.Instance.Paused = true;
         TimeManager.Instance.Reset_Time();
@@ -265,6 +266,17 @@ public class Map : MonoBehaviour
             }
         }
         return tiles;
+    }
+
+    public List<Building> Get_Buildings_Around(Building building)
+    {
+        List<Building> buildings = new List<Building>();
+        foreach(Tile tile in Get_Tiles_Around(building)) {
+            if(tile != null && tile.Building != null && !buildings.Contains(tile.Building)) {
+                buildings.Add(tile.Building);
+            }
+        }
+        return buildings;
     }
     
     public Dictionary<Coordinates.Direction, Tile> Get_Adjanced_Tiles(Tile tile, bool diagonal = false)

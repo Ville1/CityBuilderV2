@@ -356,7 +356,7 @@ public class InspectorManager : MonoBehaviour {
         }
     }
 
-    private void Pause()
+    public void Pause()
     {
         if(building == null || !building.Can_Be_Paused) {
             return;
@@ -365,7 +365,7 @@ public class InspectorManager : MonoBehaviour {
         Update_GUI();
     }
 
-    private void Delete()
+    public void Delete()
     {
         if(building == null || !building.Can_Be_Deleted) {
             return;

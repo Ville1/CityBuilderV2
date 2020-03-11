@@ -114,20 +114,7 @@ public class Building {
         Is_Paused = false;
         Is_Road = prototype.Is_Road;
         Requires_Connection = prototype.requires_connection;
-
-        if (!Is_Preview) {
-            if (Is_Town_Hall) {
-                Is_Connected = true;
-            } else {
-                Is_Connected = false;
-                foreach (Tile t in Map.Instance.Get_Tiles_Around(this)) {
-                    if (t.Building != null && ((t.Building.Is_Road && t.Building.Is_Connected) || (Is_Road && t.Building.Is_Town_Hall))) {
-                        Is_Connected = true;
-                        break;
-                    }
-                }
-            }
-        }
+        Is_Connected = !Is_Preview && Is_Town_Hall;
 
         update_cooldown = RNG.Instance.Next_F() * UPDATE_INTERVAL;
 
@@ -292,6 +279,9 @@ public class Building {
             if(Deconstruction_Progress >= Construction_Time) {
                 Delete();
                 City.Instance.Remove_Building(this);
+                foreach (Building building in Map.Instance.Get_Buildings_Around(this)) {
+                    building.Update_Sprite();
+                }
             }
             return;
         }
@@ -312,6 +302,16 @@ public class Building {
                 }
                 building.Construction_Progress = Mathf.Clamp(building.Construction_Progress + (range_multiplier * construction_progress), 0.0f, building.Construction_Time);
                 building.Update_Sprite();
+                if (building.Is_Built) {
+                    building.Update_Connectivity();
+                    if (building.Is_Road) {
+                        foreach (Building b in Map.Instance.Get_Buildings_Around(building)) {
+                            if (b.Is_Connected && b.Is_Built && !b.Is_Deconstructing) {
+                                b.Update_Connectivity();
+                            }
+                        }
+                    }
+                }
             }
         }
         
@@ -392,6 +392,12 @@ public class Building {
         foreach (KeyValuePair<Resource, float> resource in Output_Storage) {
             Store_Resources(resource.Key, resource.Value);
         }
+        foreach (Building b in Map.Instance.Get_Buildings_Around(this)) {
+            if (Is_Road && b.Is_Connected && b.Is_Built && !b.Is_Deconstructing) {
+                b.Update_Connectivity();
+            }
+            b.Update_Sprite();
+        }
     }
 
     public void Delete()
@@ -419,17 +425,6 @@ public class Building {
             return PrefabManager.Instance.Road;
         }
         return PrefabManager.Instance.Building_Generic;
-        /*if(Size == BuildingSize.s1x1) {
-            return PrefabManager.Instance.Building_1x1;
-        }
-        if (Size == BuildingSize.s2x2) {
-            return PrefabManager.Instance.Building_2x2;
-        }
-        if (Size == BuildingSize.s3x3) {
-            return PrefabManager.Instance.Building_3x3;
-        }
-        CustomLogger.Instance.Error(string.Format("{0}x{1} prefab does not exist", Width, Height));
-        return null;*/
     }
 
     private void Show_Alert(string sprite)
@@ -447,6 +442,9 @@ public class Building {
                 GameObject.Destroy(gameobject);
                 destroyed_alerts.Add(gameobject);
             }
+        }
+        foreach(GameObject alert in destroyed_alerts) {
+            alerts.Remove(alert);
         }
         foreach(string icon in active_alerts) {
             if(!alerts.Exists(x => x.name == icon)) {
@@ -496,6 +494,44 @@ public class Building {
         active_alerts.Clear();
     }
 
+    private void Update_Connectivity()
+    {
+        List<Building> connected_buildings = Get_Connected_Buildings();
+        bool connected = connected_buildings.Exists(x => x.Is_Town_Hall);
+        if (Is_Road && Is_Built && !Is_Deconstructing) {
+            foreach (Building b in connected_buildings) {
+                b.Is_Connected = connected;
+            }
+        }
+        Is_Connected = connected;
+    }
+
+    public List<Building> Get_Connected_Buildings(int range = -1)
+    {
+        List<Building> connected = new List<Building>();
+        foreach(Building b in Map.Instance.Get_Buildings_Around(this)) {
+            Get_Connected_Buildings_Recursive(b, this, ref connected, range, true);
+        }
+        return connected;
+    }
+
+    private void Get_Connected_Buildings_Recursive(Building building, Building previous, ref List<Building> connected, int range, bool first)
+    {
+        if (connected.Contains(building) || (!building.Is_Road && !previous.Is_Road)) {
+            return;
+        }
+        if(range == 0) {
+            return;
+        }
+        connected.Add(building);
+        if(!(building.Is_Road && building.Is_Built && !building.Is_Deconstructing)) {
+            return;
+        }
+        foreach(Building b in Map.Instance.Get_Buildings_Around(building)) {
+            Get_Connected_Buildings_Recursive(b, building, ref connected, range != -1 ? range - 1 : -1, false);
+        }
+    }
+
     private Dictionary<Resident, int> Make_Resident_Dictionary(Dictionary<Resident, int> param = null)
     {
         Dictionary<Resident, int> dictionary = new Dictionary<Resident, int>();
@@ -512,9 +548,9 @@ public class Building {
     private void Update_Sprite(bool ignore_adjacent = false)
     {
         if (!ignore_adjacent) {
-            foreach (Tile tile in Map.Instance.Get_Tiles_Around(this)) {
-                if (tile.Building != null && !tile.Building.Sprite.Simple) {
-                    tile.Building.Update_Sprite(true);
+            foreach (Building building in Map.Instance.Get_Buildings_Around(this)) {
+                if (!building.Sprite.Simple) {
+                    building.Update_Sprite(true);
                 }
             }
         }

@@ -71,6 +71,9 @@ public class KeyboardManager : MonoBehaviour
             if (Input.GetButtonDown("Pause")) {
                 TimeManager.Instance.Toggle_Pause();
             }
+            if(Input.GetButtonDown("Deconstruct")) {
+                InspectorManager.Instance.Delete();
+            }
         } else {
             MasterUIManager.Instance.Read_Keyboard_Input();
         }

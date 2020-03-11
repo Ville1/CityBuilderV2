@@ -210,6 +210,15 @@ public class City {
         }
     }
 
+    public void Delete()
+    {
+        if (Buildings != null) {
+            foreach (Building building in Buildings) {
+                GameObject.Destroy(building.GameObject);
+            }
+        }
+    }
+
     private bool Take_From_Storage(Resource resouce, float amount)
     {
         float amount_taken = 0.0f;
