@@ -57,7 +57,9 @@ public class Building {
     public bool Is_Deleted { get; private set; }
     public bool Is_Road { get; private set; }
     public bool Is_Connected { get; set; }
+    public bool Is_Complete { get { return Is_Built && !Is_Deconstructing; } }
     public bool Requires_Connection { get { return requires_connection && Is_Built && !Is_Deconstructing; } set { requires_connection = value; } }
+    public bool Requires_Workers { get { return Max_Workers_Total != 0; } }
 
     public GameObject GameObject { get; private set; }
     public SpriteRenderer Renderer { get { return GameObject != null ? GameObject.GetComponent<SpriteRenderer>() : null; } }
@@ -393,7 +395,7 @@ public class Building {
             Store_Resources(resource.Key, resource.Value);
         }
         foreach (Building b in Map.Instance.Get_Buildings_Around(this)) {
-            if (Is_Road && b.Is_Connected && b.Is_Built && !b.Is_Deconstructing) {
+            if (Is_Road && b.Is_Connected && b.Is_Complete) {
                 b.Update_Connectivity();
             }
             b.Update_Sprite();
@@ -498,7 +500,7 @@ public class Building {
     {
         List<Building> connected_buildings = Get_Connected_Buildings();
         bool connected = connected_buildings.Exists(x => x.Is_Town_Hall);
-        if (Is_Road && Is_Built && !Is_Deconstructing) {
+        if (Is_Road && Is_Complete) {
             foreach (Building b in connected_buildings) {
                 b.Is_Connected = connected;
             }
@@ -524,7 +526,7 @@ public class Building {
             return;
         }
         connected.Add(building);
-        if(!(building.Is_Road && building.Is_Built && !building.Is_Deconstructing)) {
+        if(!(building.Is_Road && building.Is_Complete)) {
             return;
         }
         foreach(Building b in Map.Instance.Get_Buildings_Around(building)) {

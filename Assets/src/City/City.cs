@@ -16,6 +16,8 @@ public class City {
     public float Cash { get; private set; }
     public Dictionary<Resource, float> Resource_Totals { get; private set; }
     public bool Grace_Time { get { return grace_time_remaining > 0.0f; } }
+    public Dictionary<Building.Resident, float> Unemployment { get; private set; }
+    public Dictionary<Building.Resident, float> Happiness { get; private set; }
 
     private float grace_time_remaining;
     private List<Building> removed_buildings;
@@ -26,6 +28,12 @@ public class City {
         foreach (Resource resource in Enum.GetValues(typeof(Resource))) {
             Resource_Totals.Add(resource, 0.0f);
         }
+        Unemployment = new Dictionary<Building.Resident, float>();
+        Happiness = new Dictionary<Building.Resident, float>();
+        foreach(Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
+            Unemployment.Add(resident, 0.0f);
+            Happiness.Add(resident, 0.0f);
+        }
     }
 
     public void Start_New()
@@ -35,6 +43,10 @@ public class City {
         Name = "PLACEHOLDER";
         grace_time_remaining = GRACE_TIME;
         removed_buildings = new List<Building>();
+        foreach (Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
+            Unemployment[resident] = 0.0f;
+            Happiness[resident] = 0.0f;
+        }
     }
     
     public static City Instance
@@ -65,47 +77,118 @@ public class City {
         }
         removed_buildings.Clear();
         
+        //Update statistics
         foreach(Resource resource in Enum.GetValues(typeof(Resource))) {
             Resource_Totals[resource] = 0.0f;
         }
         Dictionary<Building.Resident, int> current_population = new Dictionary<Building.Resident, int>();
         Dictionary<Building.Resident, int> max_population = new Dictionary<Building.Resident, int>();
         Dictionary<Building.Resident, float> happiness = new Dictionary<Building.Resident, float>();
+        Dictionary<Building.Resident, int> workers_required = new Dictionary<Building.Resident, int>();
         foreach (Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
             current_population.Add(resident, 0);
             max_population.Add(resident, 0);
             happiness.Add(resident, 0.0f);
+            workers_required.Add(resident, 0);
         }
         foreach (Building building in Buildings) {
             foreach(KeyValuePair<Resource, float> pair in building.Storage) {
                 Resource_Totals[pair.Key] = Resource_Totals[pair.Key] + pair.Value;
             }
-            if (building is Residence && building.Is_Built) {
-                Residence residence = building as Residence;
-                foreach (Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
-                    current_population[resident] += residence.Current_Residents[resident];
-                    max_population[resident] += residence.Resident_Space[resident];
-                    happiness[resident] += residence.Happiness[resident] * residence.Current_Residents[resident];
+            if (building.Is_Complete) {
+                if (building is Residence && building.Is_Operational) {
+                    Residence residence = building as Residence;
+                    foreach (Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
+                        current_population[resident] += residence.Current_Residents[resident];
+                        max_population[resident] += residence.Resident_Space[resident];
+                        happiness[resident] += residence.Happiness[resident] * residence.Current_Residents[resident];
+                    }
+                }
+                if (building.Is_Complete && (building.Is_Connected || !building.Requires_Connection) && (!building.Is_Paused || PAUSED_BUILDINGS_KEEP_WORKERS)) {
+                    foreach (Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
+                        workers_required[resident] += building.Worker_Settings[resident];
+                    }
                 }
             }
         }
+
+        //Allocate workers
+        Dictionary<Building.Resident, float> worker_ratios = new Dictionary<Building.Resident, float>();
+        Dictionary<Building.Resident, int> available_workers = new Dictionary<Building.Resident, int>();
+        Dictionary<Building.Resident, int> workers_allocated = new Dictionary<Building.Resident, int>();
+        foreach (Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
+            worker_ratios.Add(resident, workers_required[resident] == 0 ? 0.0f : current_population[resident] / (float)workers_required[resident]);
+            available_workers.Add(resident, current_population[resident]);
+            workers_allocated.Add(resident, 0);
+        }
+        foreach (Building building in Buildings) {
+            if (!building.Requires_Workers) {
+                continue;
+            }
+            foreach (Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
+                building.Current_Workers[resident] = 0;
+            }
+            if (building.Is_Complete && (building.Is_Connected || !building.Requires_Connection) && (!building.Is_Paused || PAUSED_BUILDINGS_KEEP_WORKERS)) {
+                foreach (Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
+                    building.Current_Workers[resident] = Mathf.RoundToInt(building.Worker_Settings[resident] * Mathf.Clamp(worker_ratios[resident], 0.0f, 1.0f));
+                    available_workers[resident] -= building.Current_Workers[resident];
+                    workers_allocated[resident] += building.Current_Workers[resident];
+                    if (available_workers[resident] < 0) {
+                        CustomLogger.Instance.Error("More workers allocated, than there is available workers");
+                    }
+                }
+            }
+        }
+
+        foreach (Building building in Buildings) {
+            if (!building.Requires_Workers) {
+                continue;
+            }
+            foreach (Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
+                if (available_workers[resident] > 0 && worker_ratios[resident] < 1.0f && building.Current_Workers[resident] < building.Worker_Settings[resident]) {
+                    building.Current_Workers[resident]++;
+                    available_workers[resident]--;
+                    workers_allocated[resident]++;
+                }
+            }
+        }
+
+        foreach (Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
+            if(available_workers[resident] > 0 && workers_allocated[resident] < workers_required[resident]) {
+                CustomLogger.Instance.Error("Worker allocation mismatch, not enough allocated");
+            }
+            if(workers_allocated[resident] > workers_required[resident]) {
+                CustomLogger.Instance.Error("Worker allocation mismatch, too many allocated");
+            }
+            if (workers_allocated[resident] > current_population[resident]) {
+                CustomLogger.Instance.Error("Worker allocation mismatch, allocated > population");
+            }
+        }
+
+        //GUI
         int peasant_current = current_population[Building.Resident.Peasant];
         int peasant_max = max_population[Building.Resident.Peasant];
         float peasant_happiness = peasant_current > 0 ? happiness[Building.Resident.Peasant] / peasant_current : 0.0f;
-        float peasant_employment_relative = 0.0f;
-        int peasant_employment = 0;
+        Happiness[Building.Resident.Peasant] = peasant_happiness;
+        int peasant_employment = workers_allocated[Building.Resident.Peasant] - workers_required[Building.Resident.Peasant] + available_workers[Building.Resident.Peasant];
+        float peasant_employment_relative = peasant_current == 0 ? 0.0f : peasant_employment / (float)peasant_current;
+        Unemployment[Building.Resident.Peasant] = peasant_employment_relative > 0.0f ? peasant_employment_relative : 0.0f;
 
         int citizen_current = current_population[Building.Resident.Citizen];
         int citizen_max = max_population[Building.Resident.Citizen];
         float citizen_happiness = citizen_current > 0 ? happiness[Building.Resident.Citizen] / citizen_current : 0.0f;
-        float citizen_employment_relative = 0.0f;
-        int citizen_employment = 0;
+        Happiness[Building.Resident.Citizen] = peasant_happiness;
+        int citizen_employment = workers_allocated[Building.Resident.Citizen] - workers_required[Building.Resident.Citizen] + available_workers[Building.Resident.Citizen];
+        float citizen_employment_relative = citizen_current == 0 ? 0.0f : citizen_employment / (float)citizen_current;
+        Unemployment[Building.Resident.Citizen] = citizen_employment_relative > 0.0f ? citizen_employment_relative : 0.0f;
 
         int noble_current = current_population[Building.Resident.Noble];
         int noble_max = max_population[Building.Resident.Noble];
         float noble_happiness = noble_current > 0 ? happiness[Building.Resident.Noble] / noble_current : 0.0f;
-        float noble_employment_relative = 0.0f;
-        int noble_employment = 0;
+        Happiness[Building.Resident.Noble] = peasant_happiness;
+        int noble_employment = workers_allocated[Building.Resident.Noble] - workers_required[Building.Resident.Noble] + available_workers[Building.Resident.Noble];
+        float noble_employment_relative = noble_current == 0 ? 0.0f : noble_employment / (float)noble_current;
+        Unemployment[Building.Resident.Citizen] = noble_employment_relative > 0.0f ? noble_employment_relative : 0.0f;
         TopGUIManager.Instance.Update_City_Info(Name, Cash, 0.0f, Mathf.RoundToInt(Resource_Totals[Resource.Wood]), Mathf.RoundToInt(Resource_Totals[Resource.Lumber]), Mathf.RoundToInt(Resource_Totals[Resource.Stone]),
             Mathf.RoundToInt(Resource_Totals[Resource.Tools]), peasant_current, peasant_max, peasant_happiness, peasant_employment_relative, peasant_employment, citizen_current, citizen_max, citizen_happiness,
             citizen_employment_relative, citizen_employment, noble_current, noble_max, noble_happiness, noble_employment_relative, noble_employment);
