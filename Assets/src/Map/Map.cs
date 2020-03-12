@@ -26,6 +26,7 @@ public class Map : MonoBehaviour
     private int generation_index_x;
     private int generation_index_y;
     private int loop_progress;
+    private List<Tile> fine_tuned_tiles;
 
     /// <summary>
     /// Initializiation
@@ -82,6 +83,7 @@ public class Map : MonoBehaviour
         generation_index_x = 0;
         generation_index_y = 0;
         loop_progress = 0;
+        fine_tuned_tiles = new List<Tile>();
 
         tiles = new List<List<Tile>>();
         for(int x = 0; x < width; x++) {
@@ -97,7 +99,7 @@ public class Map : MonoBehaviour
 
     private void Generation_Loop_1()
     {
-        Tile tile = new Tile(generation_index_x, generation_index_y, TilePrototypes.Instance.Get(RNG.Instance.Next(0, 100) < (100 - (5 * forest_count_setting)) ? "grass" : "forest"));
+        Tile tile = new Tile(generation_index_x, generation_index_y, TilePrototypes.Instance.Get(RNG.Instance.Next(0, 100) < (100 - Mathf.RoundToInt(3.0f * forest_count_setting)) ? "grass" : "forest"));
         tiles[generation_index_x][generation_index_y] = tile;
 
         loop_progress++;
@@ -118,22 +120,18 @@ public class Map : MonoBehaviour
     private void Generation_Loop_2()
     {
         Tile tile = tiles[generation_index_x][generation_index_y];
-        int spread_range = 1 + Mathf.RoundToInt(forest_size_setting * 2.0f);
-        int spread_chance_base = 10 + Mathf.RoundToInt(forest_density_setting * 35.0f);
-        int dense_chance_base = 50 + Mathf.RoundToInt(forest_density_setting * 35.0f);
+        int spread_range = 2 + Mathf.RoundToInt(forest_size_setting * 2.0f);
+        int spread_chance_base = 50 + Mathf.RoundToInt(forest_density_setting * 35.0f);
         if(tile.Internal_Name == "forest") {
             foreach (Tile t in Get_Tiles(tile.Coordinates.Shift(new Coordinates(-spread_range, -spread_range)), spread_range * 2 + 1, spread_range * 2 + 1)) {
                 if(t.Internal_Name != "grass") {
                     continue;
                 }
                 float distance = tile.Coordinates.Distance(t.Coordinates);
-                int chance = Mathf.RoundToInt(spread_chance_base / distance);
+                float distance_multiplier = Mathf.Pow(0.40f, distance) + ((0.60f * forest_size_setting) / distance + 0.1f);
+                int chance = Mathf.RoundToInt(spread_chance_base * distance_multiplier);
                 if(RNG.Instance.Next(0, 100) <= chance) {
-                    if (RNG.Instance.Next(0, 100) <= Mathf.RoundToInt(dense_chance_base / distance)) {
-                        t.Change_To(TilePrototypes.Instance.Get("forest"));
-                    } else {
-                        t.Change_To(TilePrototypes.Instance.Get("sparse_forest"));
-                    }
+                    t.Change_To(TilePrototypes.Instance.Get("sparse_forest"));
                 }
             }
         } else if(tile.Internal_Name == "sparse_forest") {
@@ -142,13 +140,10 @@ public class Map : MonoBehaviour
                     continue;
                 }
                 float distance = tile.Coordinates.Distance(t.Coordinates);
-                int chance = Mathf.RoundToInt((spread_chance_base / distance) / 3.0f);
+                float distance_multiplier = Mathf.Pow(0.40f, distance) + ((0.60f * forest_size_setting) / distance + 0.1f);
+                int chance = Mathf.RoundToInt((spread_chance_base / 10.0f) * distance_multiplier);
                 if (RNG.Instance.Next(0, 100) <= chance) {
-                    if (RNG.Instance.Next(0, 100) <= Mathf.RoundToInt((dense_chance_base / distance) / 5.0f)) {
-                        t.Change_To(TilePrototypes.Instance.Get("forest"));
-                    } else {
-                        t.Change_To(TilePrototypes.Instance.Get("sparse_forest"));
-                    }
+                    t.Change_To(TilePrototypes.Instance.Get("sparse_forest"));
                 }
             }
         }
@@ -173,24 +168,45 @@ public class Map : MonoBehaviour
         Tile tile = tiles[generation_index_x][generation_index_y];
 
         List<Tile> tiles_around = new List<Tile>();
+        int fine_tuned = 0;
         foreach (Coordinates.Direction direction in Coordinates.Directly_Adjacent_Directions) {
             Tile t = Get_Tile_At(tile.Coordinates, direction);
             if (t != null) {
                 tiles_around.Add(t);
+                if (fine_tuned_tiles.Contains(t)) {
+                    fine_tuned++;
+                }
             }
         }
+        int forests = tiles_around.Where(x => x.Internal_Name == "forest" || x.Internal_Name == "sparse_forest").ToArray().Length;
+        int dense_forests = tiles_around.Where(x => x.Internal_Name == "forest").ToArray().Length;
 
-        if (tile.Internal_Name == "grass" && RNG.Instance.Next(0, 100) <= 5) {
-            tile.Change_To(TilePrototypes.Instance.Get("fertile_ground"));
-        } else if(tile.Internal_Name == "forest" && tiles_around.Select(x => x.Internal_Name == "forest" || x.Internal_Name == "sparse_forest").ToArray().Length <= 1) {
-            int degrade_chance = 60 + Mathf.RoundToInt(forest_density_setting * 30.0f);
-            if(RNG.Instance.Next(0, 100) <= degrade_chance) {
-                if(RNG.Instance.Next(0, 100) <= 50) {
-                    tile.Change_To(TilePrototypes.Instance.Get("grass"));
+        if (tile.Internal_Name == "sparse_forest" && forests >= 3) {
+            int dense_chance = 35 + Mathf.RoundToInt(35.0f * forest_density_setting) + dense_forests;
+            if (RNG.Instance.Next(0, 100) < dense_chance) {
+                tile.Change_To(TilePrototypes.Instance.Get("forest"));
+                fine_tuned_tiles.Add(tile);
+            }
+        } else if (tile.Internal_Name == "sparse_forest" && forests <= 2 && fine_tuned <= 1) {
+            int grass_chance = 55 - Mathf.RoundToInt(10.0f * forest_count_setting) - forests;
+            if (RNG.Instance.Next(0, 100) < grass_chance) {
+                tile.Change_To(TilePrototypes.Instance.Get("grass"));
+                fine_tuned_tiles.Add(tile);
+            }
+        } else if (tile.Internal_Name == "grass" && forests >= 3) {
+            int forest_chance = 50 + Mathf.RoundToInt(25.0f * forest_density_setting) + dense_forests;
+            int dense_chance = 35 + Mathf.RoundToInt(35.0f * forest_density_setting) + dense_forests;
+            if (RNG.Instance.Next(0, 100) < forest_chance) {
+                if(RNG.Instance.Next(0, 100) < dense_chance) {
+                    tile.Change_To(TilePrototypes.Instance.Get("forest"));
                 } else {
                     tile.Change_To(TilePrototypes.Instance.Get("sparse_forest"));
                 }
+                fine_tuned_tiles.Add(tile);
             }
+        } else if (tile.Internal_Name == "grass" && RNG.Instance.Next(0, 100) <= Mathf.RoundToInt(4.0f + ((forest_count_setting + forest_density_setting + forest_size_setting) / 1.5f))) {
+            tile.Change_To(TilePrototypes.Instance.Get("fertile_ground"));
+            fine_tuned_tiles.Add(tile);
         }
 
         loop_progress++;
@@ -208,6 +224,7 @@ public class Map : MonoBehaviour
 
     public void Finish_Generation()
     {
+        fine_tuned_tiles.Clear();
         State = MapState.Normal;
         ProgressBarManager.Instance.Active = false;
         City.Instance.Start_New();

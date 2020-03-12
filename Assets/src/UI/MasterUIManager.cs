@@ -37,6 +37,9 @@ public class MasterUIManager : MonoBehaviour {
         if (InspectorManager.Instance != null && typeof(InspectorManager).Name != type_name) {
             InspectorManager.Instance.Active = false;
         }
+        if (NewGameGUIManager.Instance != null && typeof(NewGameGUIManager).Name != type_name) {
+            NewGameGUIManager.Instance.Active = false;
+        }
     }
 
     public bool Intercept_Keyboard_Input

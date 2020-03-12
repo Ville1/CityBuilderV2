@@ -49,8 +49,7 @@ public class MainMenuManager : MonoBehaviour {
 
     public void New_Game_Button_On_Click()
     {
-        Map.Instance.Start_Generation(20, 20, 0.5f, 0.5f, 0.5f);
-        Active = false;
+        NewGameGUIManager.Instance.Active = true;
     }
 
     public void Exit_Button_On_Click()
