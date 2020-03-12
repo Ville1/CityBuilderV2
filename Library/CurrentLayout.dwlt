@@ -324,18 +324,18 @@ MonoBehaviour:
     m_ShowAllHits: 0
     m_SearchArea: 0
     m_Folders:
-    - Assets/Resources/images/buildings
+    - Assets/Resources/images/terrain
   m_ViewMode: 1
   m_StartGridSize: 43
   m_LastFolders:
-  - Assets/Resources/images/buildings
+  - Assets/Resources/images/terrain
   m_LastFoldersGridSize: 43
   m_LastProjectPath: C:\Users\Ville\Documents\UnityProjects\CityBuilderV2
   m_IsLocked: 0
   m_FolderTreeState:
     scrollPos: {x: 0, y: 0}
-    m_SelectedIDs: fc260000
-    m_LastClickedID: 9980
+    m_SelectedIDs: 4e250000
+    m_LastClickedID: 9550
     m_ExpandedIDs: 00000000fa2400003e250000ee250000fa260000ffffff7f
     m_RenameOverlay:
       m_UserAcceptedRename: 0
@@ -389,8 +389,8 @@ MonoBehaviour:
       m_Icon: {fileID: 0}
       m_ResourceFile: 
   m_ListAreaState:
-    m_SelectedInstanceIDs: de250000
-    m_LastClickedInstanceID: 9694
+    m_SelectedInstanceIDs: 86250000
+    m_LastClickedInstanceID: 9606
     m_HadKeyboardFocusLastEvent: 1
     m_ExpandedInstanceIDs: 4e24000000000000082600009c27feff
     m_RenameOverlay:
@@ -416,7 +416,7 @@ MonoBehaviour:
       m_Icon: {fileID: 0}
       m_ResourceFile: 
     m_NewAssetIndexInList: -1
-    m_ScrollPosition: {x: 0, y: 60}
+    m_ScrollPosition: {x: 0, y: 0}
     m_GridSize: 43
   m_DirectoriesAreaWidth: 147
 --- !u!114 &14
@@ -480,23 +480,23 @@ MonoBehaviour:
     height: 648
   m_TreeViewState:
     scrollPos: {x: 0, y: 0}
-    m_SelectedIDs: de250000
+    m_SelectedIDs: 86250000
     m_LastClickedID: 0
-    m_ExpandedIDs: 48afeeff02f1eeff9442efffd244ffffe2fbffff00000000962700001228000018280000c628000000290000522a00008a2b0000
+    m_ExpandedIDs: e2fbffff00000000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
-      m_Name: Tile_(X:0,Y:0)_#0
-      m_OriginalName: Tile_(X:0,Y:0)_#0
+      m_Name: 
+      m_OriginalName: 
       m_EditFieldRect:
         serializedVersion: 2
         x: 0
         y: 0
         width: 0
         height: 0
-      m_UserData: -37144
+      m_UserData: 0
       m_IsWaitingForDelay: 0
       m_IsRenaming: 0
-      m_OriginalEventType: 0
+      m_OriginalEventType: 11
       m_IsRenamingFilename: 0
       m_ClientGUIView: {fileID: 4}
     m_SearchString: 
@@ -564,7 +564,7 @@ MonoBehaviour:
   m_Rotation:
     m_Target: {x: 0.030597784, y: -0.0014987343, z: 0.00004592807, w: 0.9995444}
     speed: 2
-    m_Value: {x: 0.030597365, y: -0.0014987139, z: 0.00004592744, w: 0.9995307}
+    m_Value: {x: -0.030597784, y: 0.0014987343, z: -0.000045928067, w: -0.9995443}
   m_Size:
     m_Target: 2.8578837
     speed: 2

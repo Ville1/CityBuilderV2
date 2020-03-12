@@ -20,6 +20,9 @@ public class Tile
     public bool Buildable { get; private set; }
     public bool Is_Prototype { get { return Id < 0; } }
     public Building Building { get; set; }
+    public float Base_Appeal { get; private set; }
+    public float Base_Appeal_Range { get; private set; }
+    public float Appeal { get { return Base_Appeal; } }
 
     protected Color highlight_color;
     protected bool show_coordinates;
@@ -53,13 +56,15 @@ public class Tile
         Change_To(prototype);
     }
     
-    public Tile(string internal_name, string terrain, string sprite, bool buildable)
+    public Tile(string internal_name, string terrain, string sprite, bool buildable, float appeal, float appeal_range)
     {
         Id = -1;
         Internal_Name = internal_name;
         Terrain = terrain;
         Sprite = sprite;
         Buildable = buildable;
+        Base_Appeal = appeal;
+        Base_Appeal_Range = appeal_range;
     }
     
     public void Change_To(Tile prototype)
@@ -68,6 +73,8 @@ public class Tile
         Terrain = prototype.Terrain;
         Sprite = prototype.Sprite;
         Buildable = prototype.Buildable;
+        Base_Appeal = prototype.Base_Appeal;
+        Base_Appeal_Range = prototype.Base_Appeal_Range;
         SpriteRenderer.sprite = SpriteManager.Instance.Get(Sprite, SpriteManager.SpriteType.Terrain);
     }
 

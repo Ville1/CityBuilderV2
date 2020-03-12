@@ -49,7 +49,7 @@ public class MainMenuManager : MonoBehaviour {
 
     public void New_Game_Button_On_Click()
     {
-        Map.Instance.Start_Generation(20, 20);
+        Map.Instance.Start_Generation(20, 20, 0.5f, 0.5f, 0.5f);
         Active = false;
     }
 

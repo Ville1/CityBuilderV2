@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class Map : MonoBehaviour
@@ -15,6 +16,10 @@ public class Map : MonoBehaviour
     public int Width { get; private set; }
     public int Height { get; private set; }
     public MapState State { get; private set; }
+
+    private float forest_count_setting;
+    private float forest_size_setting;
+    private float forest_density_setting;
 
     private List<List<Tile>> tiles;
     private int generation_loop;
@@ -58,7 +63,7 @@ public class Map : MonoBehaviour
         }
     }
     
-    public void Start_Generation(int width, int height)
+    public void Start_Generation(int width, int height, float forest_count, float forest_size, float forest_density)
     {
         Delete();
         City.Instance.Delete();
@@ -69,6 +74,9 @@ public class Map : MonoBehaviour
         State = MapState.Generating;
         Width = width;
         Height = height;
+        forest_count_setting = Mathf.Clamp01(forest_count);
+        forest_size_setting = Mathf.Clamp01(forest_size);
+        forest_density_setting = Mathf.Clamp01(forest_density);
 
         generation_loop = 1;
         generation_index_x = 0;
@@ -89,7 +97,7 @@ public class Map : MonoBehaviour
 
     private void Generation_Loop_1()
     {
-        Tile tile = new Tile(generation_index_x, generation_index_y, TilePrototypes.Instance.Get(RNG.Instance.Next(0, 100) < 95 ? "grass" : "sparse_forest"));
+        Tile tile = new Tile(generation_index_x, generation_index_y, TilePrototypes.Instance.Get(RNG.Instance.Next(0, 100) < (100 - (5 * forest_count_setting)) ? "grass" : "forest"));
         tiles[generation_index_x][generation_index_y] = tile;
 
         loop_progress++;
@@ -99,8 +107,6 @@ public class Map : MonoBehaviour
             generation_index_y++;
         }
         if(generation_index_y == Height) {
-            Finish_Generation();
-            return;
             generation_index_x = 0;
             generation_index_y = 0;
             loop_progress = 0;
@@ -111,6 +117,42 @@ public class Map : MonoBehaviour
 
     private void Generation_Loop_2()
     {
+        Tile tile = tiles[generation_index_x][generation_index_y];
+        int spread_range = 1 + Mathf.RoundToInt(forest_size_setting * 2.0f);
+        int spread_chance_base = 10 + Mathf.RoundToInt(forest_density_setting * 35.0f);
+        int dense_chance_base = 50 + Mathf.RoundToInt(forest_density_setting * 35.0f);
+        if(tile.Internal_Name == "forest") {
+            foreach (Tile t in Get_Tiles(tile.Coordinates.Shift(new Coordinates(-spread_range, -spread_range)), spread_range * 2 + 1, spread_range * 2 + 1)) {
+                if(t.Internal_Name != "grass") {
+                    continue;
+                }
+                float distance = tile.Coordinates.Distance(t.Coordinates);
+                int chance = Mathf.RoundToInt(spread_chance_base / distance);
+                if(RNG.Instance.Next(0, 100) <= chance) {
+                    if (RNG.Instance.Next(0, 100) <= Mathf.RoundToInt(dense_chance_base / distance)) {
+                        t.Change_To(TilePrototypes.Instance.Get("forest"));
+                    } else {
+                        t.Change_To(TilePrototypes.Instance.Get("sparse_forest"));
+                    }
+                }
+            }
+        } else if(tile.Internal_Name == "sparse_forest") {
+            foreach (Tile t in Get_Tiles(tile.Coordinates.Shift(new Coordinates(-spread_range, -spread_range)), spread_range * 2 + 1, spread_range * 2 + 1)) {
+                if (t.Internal_Name != "grass") {
+                    continue;
+                }
+                float distance = tile.Coordinates.Distance(t.Coordinates);
+                int chance = Mathf.RoundToInt((spread_chance_base / distance) / 3.0f);
+                if (RNG.Instance.Next(0, 100) <= chance) {
+                    if (RNG.Instance.Next(0, 100) <= Mathf.RoundToInt((dense_chance_base / distance) / 5.0f)) {
+                        t.Change_To(TilePrototypes.Instance.Get("forest"));
+                    } else {
+                        t.Change_To(TilePrototypes.Instance.Get("sparse_forest"));
+                    }
+                }
+            }
+        }
+
         loop_progress++;
         generation_index_x++;
         if (generation_index_x == Width) {
@@ -128,6 +170,29 @@ public class Map : MonoBehaviour
 
     private void Generation_Loop_3()
     {
+        Tile tile = tiles[generation_index_x][generation_index_y];
+
+        List<Tile> tiles_around = new List<Tile>();
+        foreach (Coordinates.Direction direction in Coordinates.Directly_Adjacent_Directions) {
+            Tile t = Get_Tile_At(tile.Coordinates, direction);
+            if (t != null) {
+                tiles_around.Add(t);
+            }
+        }
+
+        if (tile.Internal_Name == "grass" && RNG.Instance.Next(0, 100) <= 5) {
+            tile.Change_To(TilePrototypes.Instance.Get("fertile_ground"));
+        } else if(tile.Internal_Name == "forest" && tiles_around.Select(x => x.Internal_Name == "forest" || x.Internal_Name == "sparse_forest").ToArray().Length <= 1) {
+            int degrade_chance = 60 + Mathf.RoundToInt(forest_density_setting * 30.0f);
+            if(RNG.Instance.Next(0, 100) <= degrade_chance) {
+                if(RNG.Instance.Next(0, 100) <= 50) {
+                    tile.Change_To(TilePrototypes.Instance.Get("grass"));
+                } else {
+                    tile.Change_To(TilePrototypes.Instance.Get("sparse_forest"));
+                }
+            }
+        }
+
         loop_progress++;
         generation_index_x++;
         if (generation_index_x == Width) {
@@ -207,10 +272,9 @@ public class Map : MonoBehaviour
         for (int x_i = x; x_i < width + x; x_i++) {
             for (int y_i = y; y_i < height + y; y_i++) {
                 Tile tile = Get_Tile_At(x_i, y_i);
-                if (tile == null) {
-                    return null;
+                if (tile != null) {
+                    tiles.Add(tile);
                 }
-                tiles.Add(tile);
             }
         }
         return tiles;
