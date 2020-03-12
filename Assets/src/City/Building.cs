@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class Building {
@@ -60,6 +61,9 @@ public class Building {
     public bool Is_Complete { get { return Is_Built && !Is_Deconstructing; } }
     public bool Requires_Connection { get { return requires_connection && Is_Built && !Is_Deconstructing; } set { requires_connection = value; } }
     public bool Requires_Workers { get { return Max_Workers_Total != 0; } }
+    public float Range { get; private set; }
+    public int Road_Range { get; private set; }
+    public Dictionary<string, object> Data { get; private set; }
 
     public GameObject GameObject { get; private set; }
     public SpriteRenderer Renderer { get { return GameObject != null ? GameObject.GetComponent<SpriteRenderer>() : null; } }
@@ -117,6 +121,9 @@ public class Building {
         Is_Road = prototype.Is_Road;
         Requires_Connection = prototype.requires_connection;
         Is_Connected = !Is_Preview && Is_Town_Hall;
+        Range = prototype.Range;
+        Road_Range = prototype.Road_Range;
+        Data = new Dictionary<string, object>();
 
         update_cooldown = RNG.Instance.Next_F() * UPDATE_INTERVAL;
 
@@ -131,6 +138,7 @@ public class Building {
             Map.Instance.Building_Container.transform
         );
         GameObject.name = !is_preview ? string.Format("{0}_#{1}", Internal_Name, Id) : string.Format("{0}_preview", Internal_Name);
+        GameObject.GetComponentInChildren<TextMesh>().gameObject.SetActive(false);
         alerts = new List<GameObject>();
         active_alerts = new List<string>();
         alert_change_cooldown = ALERT_CHANGE_INTERVAL;
@@ -139,7 +147,8 @@ public class Building {
     }
 
     public Building(string name, string internal_name, UI_Category category, string sprite, BuildingSize size, int hp, Dictionary<Resource, int> cost, int cash_cost, List<Resource> allowed_resources, int storage_limit, int construction_time,
-        Dictionary<Resource, float> upkeep, float cash_upkeep, float construction_speed, float construction_range, Dictionary<Resident, int> workers, int max_workers, bool can_be_paused, bool is_road, bool p_requires_connection)
+        Dictionary<Resource, float> upkeep, float cash_upkeep, float construction_speed, float construction_range, Dictionary<Resident, int> workers, int max_workers, bool can_be_paused, bool is_road, bool p_requires_connection, float range,
+        int road_range)
     {
         Id = -1;
         Name = name;
@@ -171,6 +180,8 @@ public class Building {
         Is_Paused = false;
         Is_Road = is_road;
         Requires_Connection = p_requires_connection;
+        Range = range;
+        Road_Range = road_range;
     }
 
     public void Move(Tile tile)
@@ -402,6 +413,23 @@ public class Building {
         }
     }
 
+    public List<Tile> Get_Tiles_In_Circle(float range = -1.0f)
+    {
+        if(range == -1.0f) {
+            range = Range;
+        }
+        if(range <= 0.0f) {
+            return new List<Tile>();
+        }
+        Coordinates coordinates = Is_Preview ? new Coordinates((int)GameObject.transform.position.x, (int)GameObject.transform.position.y) : Tile.Coordinates;
+        return Map.Instance.Get_Tiles_In_Circle(
+            Size == BuildingSize.s3x3 ? coordinates.Shift(new Coordinates(1, 1)) : coordinates,
+            range,
+            Size == BuildingSize.s2x2,
+            Size == BuildingSize.s2x2
+        );
+    }
+
     public void Delete()
     {
         GameObject.Destroy(GameObject);
@@ -498,39 +526,43 @@ public class Building {
 
     private void Update_Connectivity()
     {
-        List<Building> connected_buildings = Get_Connected_Buildings();
-        bool connected = connected_buildings.Exists(x => x.Is_Town_Hall);
+        Dictionary<Building, int> connected_buildings = Get_Connected_Buildings();
+        bool connected = connected_buildings.Select(x => x.Key).ToList().Exists(x => x.Is_Town_Hall);
         if (Is_Road && Is_Complete) {
-            foreach (Building b in connected_buildings) {
-                b.Is_Connected = connected;
+            foreach (KeyValuePair<Building, int> pair in connected_buildings) {
+                pair.Key.Is_Connected = connected;
             }
         }
         Is_Connected = connected;
     }
 
-    public List<Building> Get_Connected_Buildings(int range = -1)
+    public Dictionary<Building, int> Get_Connected_Buildings(int range = -1)
     {
-        List<Building> connected = new List<Building>();
+        Dictionary<Building, int> connected = new Dictionary<Building, int>();
         foreach(Building b in Map.Instance.Get_Buildings_Around(this)) {
-            Get_Connected_Buildings_Recursive(b, this, ref connected, range, true);
+            Get_Connected_Buildings_Recursive(b, this, ref connected, range, 0, true);
         }
         return connected;
     }
 
-    private void Get_Connected_Buildings_Recursive(Building building, Building previous, ref List<Building> connected, int range, bool first)
+    private void Get_Connected_Buildings_Recursive(Building building, Building previous, ref Dictionary<Building, int> connected, int range, int distance, bool first)
     {
-        if (connected.Contains(building) || (!building.Is_Road && !previous.Is_Road)) {
+        if ((connected.ContainsKey(building) && connected[building] <= distance) || (!building.Is_Road && !previous.Is_Road)) {
             return;
         }
-        if(range == 0) {
+        if(range > 0 && distance > range) {
             return;
         }
-        connected.Add(building);
+        if (!connected.ContainsKey(building)) {
+            connected.Add(building, distance);
+        } else {
+            connected[building] = distance;
+        }
         if(!(building.Is_Road && building.Is_Complete)) {
             return;
         }
         foreach(Building b in Map.Instance.Get_Buildings_Around(building)) {
-            Get_Connected_Buildings_Recursive(b, building, ref connected, range != -1 ? range - 1 : -1, false);
+            Get_Connected_Buildings_Recursive(b, building, ref connected, range, distance + 1, false);
         }
     }
 

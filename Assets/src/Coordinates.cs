@@ -78,10 +78,11 @@ public class Coordinates
         }
     }
 
-    public void Shift(Coordinates coordinates)
+    public Coordinates Shift(Coordinates coordinates)
     {
         X += coordinates.X;
         Y += coordinates.Y;
+        return this;
     }
 
     public static Coordinates Shift_Delta(Direction direction)

@@ -56,6 +56,7 @@ public class InspectorManager : MonoBehaviour {
     private List<GameObject> cost_rows;
     private List<GameObject> upkeep_rows;
     private List<GameObject> storage_rows;
+    private List<Tile> highlighted_tiles;
 
     /// <summary>
     /// Initializiation
@@ -74,6 +75,7 @@ public class InspectorManager : MonoBehaviour {
         cost_rows = new List<GameObject>();
         upkeep_rows = new List<GameObject>();
         storage_rows = new List<GameObject>();
+        highlighted_tiles = new List<Tile>();
 
         Button.ButtonClickedEvent click = new Button.ButtonClickedEvent();
         click.AddListener(new UnityAction(Pause));
@@ -113,6 +115,13 @@ public class InspectorManager : MonoBehaviour {
     /// </summary>
     private void Update()
     {
+        if (highlighted_tiles.Count != 0) {
+            foreach (Tile t in highlighted_tiles) {
+                t.Clear_Highlight();
+                t.Hide_Text();
+            }
+            highlighted_tiles.Clear();
+        }
         if (Active) {
             Update_GUI();
         }
@@ -353,6 +362,30 @@ public class InspectorManager : MonoBehaviour {
             Pause_Button.interactable = building.Can_Be_Paused;
             Pause_Button.GetComponentInChildren<Text>().text = building.Is_Paused ? "Unpause" : "Pause";
             Delete_Button.interactable = building.Can_Be_Deleted;
+
+            //Highlights
+            if(building.Range > 0 || building.Construction_Range > 0) {
+                float range = Math.Max(building.Range, building.Construction_Range);
+                List<Tile> tiles_in_range = building.Get_Tiles_In_Circle(range);
+                foreach (Tile t in tiles_in_range) {
+                    if (t.Building != building) {
+                        t.Highlight = new Color(0.35f, 0.35f, 1.0f, 1.0f);
+                        highlighted_tiles.Add(t);
+                    }
+                }
+            }
+            if (building.Road_Range > 0) {
+                Dictionary<Building, int> connected_buildings = building.Get_Connected_Buildings(building.Road_Range);
+                foreach (KeyValuePair<Building, int> pair in connected_buildings) {
+                    if (pair.Key != building) {
+                        foreach (Tile t in pair.Key.Tiles) {
+                            t.Highlight = new Color(0.35f, 0.35f, 0.35f, 1.0f);
+                            t.Show_Text(pair.Value.ToString());
+                            highlighted_tiles.Add(t);
+                        }
+                    }
+                }
+            }
         }
     }
 

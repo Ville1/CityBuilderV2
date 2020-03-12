@@ -48,6 +48,7 @@ public class Tile
         show_coordinates = false;
         text_game_object = GameObject.GetComponentInChildren<TextMesh>().gameObject;
         text_game_object.SetActive(false);
+        text_game_object.GetComponentInChildren<MeshRenderer>().sortingLayerName = "Text";
 
         Change_To(prototype);
     }
@@ -94,6 +95,12 @@ public class Tile
         }
     }
 
+    public void Clear_Highlight()
+    {
+        highlight_color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
+        GameObject.GetComponent<SpriteRenderer>().color = highlight_color;
+    }
+
     /// <summary>
     /// Color used to highlight this tile
     /// </summary>
@@ -129,6 +136,17 @@ public class Tile
             text_game_object.SetActive(true);
             TextMesh.text = Coordinates.Parse_Text(true, true);
         }
+    }
+
+    public void Show_Text(string text)
+    {
+        text_game_object.SetActive(true);
+        TextMesh.text = text;
+    }
+
+    public void Hide_Text()
+    {
+        text_game_object.SetActive(false);
     }
 
     public override string ToString()

@@ -241,9 +241,9 @@ public class Map : MonoBehaviour
             }
         } else {
             int x_start = tile.Coordinates.X - 1;
-            int x_end = tile.Coordinates.X + 1 + building.Width;
+            int x_end = tile.Coordinates.X + building.Width;
             int y_start = tile.Coordinates.Y - 1;
-            int y_end = tile.Coordinates.Y + 1 + building.Height;
+            int y_end = tile.Coordinates.Y + building.Height;
             for(int x = x_start; x <= x_end; x++) {
                 Tile north = Get_Tile_At(x, y_end);
                 if(north != null) {

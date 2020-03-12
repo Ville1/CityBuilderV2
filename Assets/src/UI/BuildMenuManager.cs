@@ -23,6 +23,8 @@ public class BuildMenuManager : MonoBehaviour
 
     private Building preview_building;
 
+    private List<Tile> highlighted_tiles;
+
     /// <summary>
     /// Initializiation
     /// </summary>
@@ -42,6 +44,7 @@ public class BuildMenuManager : MonoBehaviour
         tabs = new Dictionary<Building.UI_Category, GameObject>();
         Initialize();
         Interactable = false;
+        highlighted_tiles = new List<Tile>();
     }
 
     /// <summary>
@@ -55,6 +58,44 @@ public class BuildMenuManager : MonoBehaviour
                 preview_building = new Building(preview_building, tile, null, true);
             } else {
                 preview_building.Move(tile);
+                foreach(Tile t in highlighted_tiles) {
+                    t.Clear_Highlight();
+                    t.Hide_Text();
+                }
+                highlighted_tiles.Clear();
+                List<Tile> tiles_under = Map.Instance.Get_Tiles(tile.Coordinates, preview_building.Width, preview_building.Height);
+                foreach(Tile t in tiles_under) {
+                    t.Highlight = t.Buildable && t.Building == null ? new Color(0.0f, 0.5f, 0.0f, 1.0f) : new Color(0.5f, 0.0f, 0.0f, 1.0f);
+                    highlighted_tiles.Add(t);
+                }
+                if(preview_building.Range > 0.0f || preview_building.Construction_Range > 0.0f) {
+                    float range = Math.Max(preview_building.Range, preview_building.Construction_Range);
+                    List<Tile> tiles_in_range = preview_building.Get_Tiles_In_Circle(range);
+                    foreach (Tile t in tiles_in_range) {
+                        if (!tiles_under.Contains(t)) {
+                            t.Highlight = new Color(0.35f, 0.35f, 1.0f, 1.0f);
+                            highlighted_tiles.Add(t);
+                        }
+                    }
+                }
+                if(preview_building.Road_Range != 0) {
+                    Dictionary<Building, int> connected_buildings = preview_building.Get_Connected_Buildings(preview_building.Road_Range);
+                    foreach(KeyValuePair<Building, int> pair in connected_buildings) {
+                        foreach(Tile t in pair.Key.Tiles) {
+                            t.Highlight = new Color(0.35f, 0.35f, 0.35f, 1.0f);
+                            t.Show_Text(pair.Value.ToString());
+                            highlighted_tiles.Add(t);
+                        }
+                    }
+                }
+            }
+        } else {
+            if(highlighted_tiles.Count != 0) {
+                foreach (Tile t in highlighted_tiles) {
+                    t.Clear_Highlight();
+                    t.Hide_Text();
+                }
+                highlighted_tiles.Clear();
             }
         }
     }
