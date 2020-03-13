@@ -231,12 +231,12 @@ public class City {
         if(!Can_Build(prototype, out message)) {
             return false;
         }
-        if (!tile.Buildable) {
+        if ((prototype.Permitted_Terrain.Count == 0 && !tile.Buildable) || (prototype.Permitted_Terrain.Count > 0 && !prototype.Permitted_Terrain.Contains(tile.Internal_Name))) {
             message = "Invalid terrain";
             return false;
         }
         foreach(Tile t in Map.Instance.Get_Tiles(tile.Coordinates, prototype.Width, prototype.Height)) {
-            if (!t.Buildable) {
+            if ((prototype.Permitted_Terrain.Count == 0 && !t.Buildable) || (prototype.Permitted_Terrain.Count > 0 && !prototype.Permitted_Terrain.Contains(t.Internal_Name))) {
                 message = "Invalid terrain";
                 return false;
             }
@@ -317,6 +317,18 @@ public class City {
                 GameObject.Destroy(building.GameObject);
             }
         }
+    }
+
+    public float Add_To_Storage(Resource resouce, float amount)
+    {
+        float amount_added = 0.0f;
+        foreach (Building building in Buildings) {
+            if (!building.Is_Storehouse) {
+                continue;
+            }
+            amount_added += building.Store_Resources(resouce, amount - amount_added);
+        }
+        return amount_added;
     }
 
     private bool Take_From_Storage(Resource resouce, float amount)

@@ -6,6 +6,10 @@ using UnityEngine;
 public class Building {
     protected static long current_id = 0;
 
+    public delegate void OnUpdateDelegate(Building building, float delta_time);
+    public delegate void OnBuiltDelegate(Building building);
+    public delegate void OnDeconstructDelegate(Building building);
+
     public static readonly float UPDATE_INTERVAL = 1.0f;
     public static readonly float ALERT_CHANGE_INTERVAL = 2.0f;
     public static readonly string TOWN_HALL_INTERNAL_NAME = "town_hall";
@@ -31,6 +35,7 @@ public class Building {
     public Dictionary<Resource, int> Cost { get; private set; }
     public int Cash_Cost { get; private set; }
     public Dictionary<Resource, float> Storage { get; private set; }
+    public Dictionary<Resource, float> Storage_Settings { get; private set; }
     public Dictionary<Resource, float> Input_Storage { get; private set; }
     public Dictionary<Resource, float> Output_Storage { get; private set; }
     public int Storage_Limit { get { return Is_Deconstructing ? int.MaxValue : storage_limit; } set { storage_limit = value; } }
@@ -64,6 +69,10 @@ public class Building {
     public float Range { get; private set; }
     public int Road_Range { get; private set; }
     public Dictionary<string, object> Data { get; private set; }
+    public OnBuiltDelegate On_Built { get; private set; }
+    public OnUpdateDelegate On_Update { get; private set; }
+    public OnDeconstructDelegate On_Deconstruct { get; private set; }
+    public List<string> Permitted_Terrain { get; private set; }
 
     public GameObject GameObject { get; private set; }
     public SpriteRenderer Renderer { get { return GameObject != null ? GameObject.GetComponent<SpriteRenderer>() : null; } }
@@ -77,6 +86,9 @@ public class Building {
     private GameObject active_alert;
     private bool requires_connection;
     private float alert_change_cooldown;
+    private int animation_index;
+    private float animation_cooldown;
+    private bool animation_initialized;
 
     public Building(Building prototype, Tile tile, List<Tile> tiles, bool is_preview)
     {
@@ -124,7 +136,14 @@ public class Building {
         Range = prototype.Range;
         Road_Range = prototype.Road_Range;
         Data = new Dictionary<string, object>();
+        On_Built = prototype.On_Built;
+        On_Update = prototype.On_Update;
+        On_Deconstruct = prototype.On_Deconstruct;
+        Permitted_Terrain = Helper.Clone_List(prototype.Permitted_Terrain);
 
+        animation_index = 0;
+        animation_cooldown = Sprite.Animation_Frame_Time;
+        animation_initialized = false;
         update_cooldown = RNG.Instance.Next_F() * UPDATE_INTERVAL;
 
         GameObject = GameObject.Instantiate(
@@ -148,7 +167,7 @@ public class Building {
 
     public Building(string name, string internal_name, UI_Category category, string sprite, BuildingSize size, int hp, Dictionary<Resource, int> cost, int cash_cost, List<Resource> allowed_resources, int storage_limit, int construction_time,
         Dictionary<Resource, float> upkeep, float cash_upkeep, float construction_speed, float construction_range, Dictionary<Resident, int> workers, int max_workers, bool can_be_paused, bool is_road, bool p_requires_connection, float range,
-        int road_range)
+        int road_range, OnBuiltDelegate on_built, OnUpdateDelegate on_update, OnDeconstructDelegate on_deconstruct)
     {
         Id = -1;
         Name = name;
@@ -182,6 +201,10 @@ public class Building {
         Requires_Connection = p_requires_connection;
         Range = range;
         Road_Range = road_range;
+        On_Built = on_built;
+        On_Update = on_update;
+        On_Deconstruct = on_deconstruct;
+        Permitted_Terrain = new List<string>();
     }
 
     public Building(BuildingSaveData data) : this(BuildingPrototypes.Instance.Get(data.Internal_Name), Map.Instance.Get_Tile_At(data.X, data.Y),
@@ -231,17 +254,18 @@ public class Building {
         }
     }
 
-    public bool Store_Resources(Resource resource, float amount)
+    public float Store_Resources(Resource resource, float amount)
     {
-        if(Current_Storage_Amount + amount > Storage_Limit) {
-            return false;
-        }
+        float max = Is_Deconstructing ? float.MaxValue : (Mathf.Min(Storage_Limit, Storage_Settings != null && Storage_Settings.ContainsKey(resource) ? Storage_Settings[resource] : float.MaxValue));
+        float current = Storage.ContainsKey(resource) ? Storage[resource] : 0.0f;
+        float space = max - current;
+        float stored = Mathf.Min(amount, space);
         if (Storage.ContainsKey(resource)) {
-            Storage[resource] = Storage[resource] + amount;
+            Storage[resource] += stored;
         } else {
-            Storage.Add(resource, amount);
+            Storage.Add(resource, stored);
         }
-        return true;
+        return stored;
     }
 
     public float Take_Resources(Resource resource, float amount)
@@ -303,12 +327,32 @@ public class Building {
         delta_time = update_cooldown * TimeManager.Instance.Multiplier;
         update_on_last_call = true;
 
+        if(Sprite.Animation_Sprites.Count != 0) {
+            animation_cooldown -= realtime_delta_time;
+            Update_Sprite(true);
+        }
+
         if(!Can_Be_Paused && Is_Paused) {
             CustomLogger.Instance.Warning(string.Format("{0} can't be paused", Internal_Name));
             Is_Paused = false;
         }
 
         if (Is_Deconstructing) {
+            //Move resources
+            if (Current_Storage_Amount > 0.0f) {
+                Dictionary<Resource, float> added = new Dictionary<Resource, float>();
+                foreach (KeyValuePair<Resource, float> pair in Storage) {
+                    added.Add(pair.Key, City.Instance.Add_To_Storage(pair.Key, pair.Value));
+                }
+                foreach (KeyValuePair<Resource, float> pair in added) {
+                    Storage[pair.Key] -= pair.Value;
+                    if (Storage[pair.Key] < 0.0f) {
+                        CustomLogger.Instance.Error("Negative resource: " + pair.Key.ToString());
+                        Storage[pair.Key] = 0.0f;
+                    }
+                }
+            }
+            //Update progress
             Deconstruction_Progress += delta_time * DECONSTRUCTION_SPEED;
             Update_Sprite();
             if(Deconstruction_Progress >= Construction_Time) {
@@ -339,6 +383,9 @@ public class Building {
                 building.Update_Sprite();
                 if (building.Is_Built) {
                     building.Update_Connectivity();
+                    if(building.On_Built != null) {
+                        building.On_Built(building);
+                    }
                     if (building.Is_Road) {
                         foreach (Building b in Map.Instance.Get_Buildings_Around(building)) {
                             if (b.Is_Connected && b.Is_Built && !b.Is_Deconstructing) {
@@ -348,6 +395,10 @@ public class Building {
                     }
                 }
             }
+        }
+
+        if(On_Update != null) {
+            On_Update(this, delta_time);
         }
         
         //TODO if non-cash upkeep is not provided, deteriorate HP (can't be destroyed this way)
@@ -409,9 +460,9 @@ public class Building {
         }
     }
 
-    public void Deconstruct()
+    public void Deconstruct(bool instant = false)
     {
-        Deconstruction_Progress = 0.0f;
+        Deconstruction_Progress = instant ? float.MaxValue : 0.0f;
         Is_Deconstructing = true;
         City.Instance.Add_Cash(Cash_Cost * REFOUND);
         foreach(KeyValuePair<Resource, int> resource in Cost) {
@@ -432,6 +483,20 @@ public class Building {
                 b.Update_Connectivity();
             }
             b.Update_Sprite();
+        }
+        if(On_Deconstruct != null) {
+            On_Deconstruct(this);
+        }
+        Dictionary<Resource, float> added = new Dictionary<Resource, float>();
+        foreach(KeyValuePair<Resource, float> pair in Storage) {
+            added.Add(pair.Key, City.Instance.Add_To_Storage(pair.Key, pair.Value));
+        }
+        foreach(KeyValuePair<Resource, float> pair in added) {
+            Storage[pair.Key] -= pair.Value;
+            if(Storage[pair.Key] < 0.0f) {
+                CustomLogger.Instance.Error("Negative resource: " + pair.Key.ToString());
+                Storage[pair.Key] = 0.0f;
+            }
         }
     }
 
@@ -643,10 +708,23 @@ public class Building {
             }
         }
         if ((Is_Built || Is_Town_Hall || Is_Preview) && !Is_Deconstructing) {
-            if (Sprite.Simple) {
+            if (Sprite.Simple || (Sprite.Animation_Sprites.Count != 0 && Is_Preview)) {
                 Renderer.sprite = SpriteManager.Instance.Get(Sprite.Name, Sprite.Type, Is_Preview);
-            } else {
+            } else if(Sprite.Logic != null) {
                 Renderer.sprite = SpriteManager.Instance.Get(Sprite.Logic(this), Sprite.Type, false);
+            } else {
+                if (!animation_initialized) {
+                    Renderer.sprite = SpriteManager.Instance.Get(Sprite.Animation_Sprites[animation_index], Sprite.Type, false);
+                    animation_initialized = true;
+                }
+                if(animation_cooldown <= 0.0f) {
+                    animation_cooldown += Sprite.Animation_Frame_Time;
+                    animation_index++;
+                    if(animation_index >= Sprite.Animation_Sprites.Count) {
+                        animation_index = 0;
+                    }
+                    Renderer.sprite = SpriteManager.Instance.Get(Sprite.Animation_Sprites[animation_index], Sprite.Type, false);
+                }
             }
             return;
         }

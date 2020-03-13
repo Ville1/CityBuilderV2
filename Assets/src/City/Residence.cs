@@ -24,8 +24,9 @@ public class Residence : Building {
     }
 
     public Residence(string name, string internal_name, UI_Category category, string sprite, BuildingSize size, int hp, Dictionary<Resource, int> cost, int cash_cost, List<Resource> allowed_resources, int storage_limit, int construction_time,
-        Dictionary<Resource, float> upkeep, float cash_upkeep, float construction_speed, float construction_range, Dictionary<Resident, int> resident_space) : base(name, internal_name, category, sprite, size, hp, cost, cash_cost,
-            allowed_resources, storage_limit, construction_time, upkeep, cash_upkeep, construction_speed, construction_range, new Dictionary<Resident, int>(), 0, false, false, true, 0.0f, 0)
+        Dictionary<Resource, float> upkeep, float cash_upkeep, float construction_speed, float construction_range, Dictionary<Resident, int> resident_space, OnBuiltDelegate on_built, OnUpdateDelegate on_update, OnDeconstructDelegate on_deconstruct) :
+        base(name, internal_name, category, sprite, size, hp, cost, cash_cost, allowed_resources, storage_limit, construction_time, upkeep, cash_upkeep, construction_speed, construction_range, new Dictionary<Resident, int>(), 0, false, false,
+            true, 0.0f, 0, on_built, on_update, on_deconstruct)
     {
         Resident_Space = Helper.Clone_Dictionary(resident_space);
         foreach (Resident resident in Enum.GetValues(typeof(Resident))) {

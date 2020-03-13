@@ -419,7 +419,7 @@ public class Map : MonoBehaviour
         Active = true;
         CameraManager.Instance.Set_Camera_Location(Get_Tile_At(Width / 2, Height / 2).Coordinates.Vector);
         BuildMenuManager.Instance.Interactable = true;
-        TopGUIManager.Instance.Active = true;
+        TopGUIManager.Instance.Active = City.Instance.Has_Town_Hall;
     }
 
     public Tile Get_Tile_At(int x, int y, Coordinates.Direction? offset = null)

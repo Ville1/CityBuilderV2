@@ -54,7 +54,7 @@ public class MasterUIManager : MonoBehaviour {
     public bool Intercept_Keyboard_Input
     {
         get {
-            return ConsoleManager.Instance.Is_Open();
+            return ConsoleManager.Instance.Is_Open() || SaveGUIManager.Instance.Active || LoadGUIManager.Instance.Active;
         }
     }
 

@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class SaveManager
 {
-    public static readonly string DEFAULT_SAVE_LOCATION = "C:\\Users\\Ville\\Documents\\temp\\";
+    public static readonly string DEFAULT_SAVE_LOCATION = "C:\\Users\\Ville\\Documents\\cbsaves\\";
 
     private static SaveManager instance;
 
