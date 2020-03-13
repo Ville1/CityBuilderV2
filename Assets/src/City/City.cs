@@ -112,7 +112,7 @@ public class City {
                         happiness[resident] += residence.Happiness[resident] * residence.Current_Residents[resident];
                     }
                 }
-                if (building.Is_Complete && (building.Is_Connected || !building.Requires_Connection) && (!building.Is_Paused || PAUSED_BUILDINGS_KEEP_WORKERS)) {
+                if (building.Requires_Workers && building.Is_Complete && (building.Is_Connected || !building.Requires_Connection) && (!building.Is_Paused || PAUSED_BUILDINGS_KEEP_WORKERS)) {
                     foreach (Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
                         workers_required[resident] += building.Worker_Settings[resident];
                     }
@@ -130,7 +130,7 @@ public class City {
             workers_allocated.Add(resident, 0);
         }
         foreach (Building building in Buildings) {
-            if (!building.Requires_Workers) {
+            if (!building.Requires_Workers || !(building.Is_Complete && (building.Is_Connected || !building.Requires_Connection) && (!building.Is_Paused || PAUSED_BUILDINGS_KEEP_WORKERS))) {
                 continue;
             }
             foreach (Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
@@ -149,7 +149,7 @@ public class City {
         }
 
         foreach (Building building in Buildings) {
-            if (!building.Requires_Workers) {
+            if (!building.Requires_Workers || !(building.Is_Complete && (building.Is_Connected || !building.Requires_Connection) && (!building.Is_Paused || PAUSED_BUILDINGS_KEEP_WORKERS))) {
                 continue;
             }
             foreach (Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
@@ -283,7 +283,7 @@ public class City {
         }
         Cash -= prototype.Cash_Cost;
         foreach(KeyValuePair<Resource, int> pair in prototype.Cost) {
-            if(!Take_From_Storage(pair.Key, pair.Value)) {
+            if(Take_From_Storage(pair.Key, pair.Value) != pair.Value) {
                 CustomLogger.Instance.Error(string.Format("Failed to take {0} {1}", pair.Value, pair.Key));
             }
         }
@@ -331,7 +331,7 @@ public class City {
         return amount_added;
     }
 
-    private bool Take_From_Storage(Resource resouce, float amount)
+    public float Take_From_Storage(Resource resouce, float amount)
     {
         float amount_taken = 0.0f;
         foreach(Building building in Buildings) {
@@ -341,6 +341,6 @@ public class City {
                 break;
             }
         }
-        return amount_taken == amount;
+        return amount_taken;
     }
 }

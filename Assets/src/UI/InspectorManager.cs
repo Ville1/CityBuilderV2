@@ -18,6 +18,8 @@ public class InspectorManager : MonoBehaviour {
     public Text Status_Text;
     public Text Efficency_Text;
     public Text Storage_Text;
+    public GameObject Delta_Content;
+    public GameObject Delta_Row_Prototype;
     public GameObject Storage_Content;
     public GameObject Storage_Row_Prototype;
     public Button Pause_Button;
@@ -55,6 +57,7 @@ public class InspectorManager : MonoBehaviour {
     private Building building;
     private List<GameObject> cost_rows;
     private List<GameObject> upkeep_rows;
+    private List<GameObject> delta_rows;
     private List<GameObject> storage_rows;
     private List<Tile> highlighted_tiles;
 
@@ -71,9 +74,11 @@ public class InspectorManager : MonoBehaviour {
         Active = false;
         Cost_Row_Prototype.SetActive(false);
         Upkeep_Row_Prototype.SetActive(false);
+        Delta_Row_Prototype.SetActive(false);
         Storage_Row_Prototype.SetActive(false);
         cost_rows = new List<GameObject>();
         upkeep_rows = new List<GameObject>();
+        delta_rows = new List<GameObject>();
         storage_rows = new List<GameObject>();
         highlighted_tiles = new List<Tile>();
 
@@ -235,7 +240,7 @@ public class InspectorManager : MonoBehaviour {
                 );
                 cash_upkeep_row.name = "cash_upkeep_row";
                 cash_upkeep_row.SetActive(true);
-                cash_upkeep_row.GetComponentInChildren<Text>().text = string.Format("{0} cash", Helper.Float_To_String(building.Cash_Upkeep, 1));
+                cash_upkeep_row.GetComponentInChildren<Text>().text = string.Format("{0} cash", Helper.Float_To_String(building.Cash_Upkeep, 2));
                 upkeep_rows.Add(cash_upkeep_row);
             }
             foreach (KeyValuePair<Resource, float> upkeep in building.Upkeep) {
@@ -251,7 +256,7 @@ public class InspectorManager : MonoBehaviour {
                 );
                 upkeep_row.name = string.Format("{0}_upkeep_row", upkeep.Key.ToString().ToLower());
                 upkeep_row.SetActive(true);
-                upkeep_row.GetComponentInChildren<Text>().text = string.Format("{0} {1}", Helper.Float_To_String(upkeep.Value, 1), upkeep.Key.ToString().ToLower());
+                upkeep_row.GetComponentInChildren<Text>().text = string.Format("{0} {1}", Helper.Float_To_String(upkeep.Value, 2), upkeep.Key.ToString().ToLower());
                 upkeep_rows.Add(upkeep_row);
             }
             if (upkeep_rows.Count == 0) {
@@ -331,6 +336,47 @@ public class InspectorManager : MonoBehaviour {
             } else {
                 Workers_Container.SetActive(false);
             }
+
+            //Delta
+            foreach (GameObject row in delta_rows) {
+                GameObject.Destroy(row);
+            }
+            delta_rows.Clear();
+
+            if(building.Cash_Upkeep != 0.0f) {
+                GameObject delta_row = GameObject.Instantiate(
+                    Delta_Row_Prototype,
+                    new Vector3(
+                        Delta_Row_Prototype.transform.position.x,
+                        Delta_Row_Prototype.transform.position.y - (15.0f * delta_rows.Count),
+                        Delta_Row_Prototype.transform.position.z
+                    ),
+                    Quaternion.identity,
+                    Delta_Content.transform
+                );
+                delta_row.name = "cash_delta_row";
+                delta_row.SetActive(true);
+                delta_row.GetComponentInChildren<Text>().text = string.Format("{0} cash", Helper.Float_To_String(building.Cash_Upkeep, 2, true));
+                delta_rows.Add(delta_row);
+            }
+
+            foreach (KeyValuePair<Resource, float> resource in building.Per_Day_Resource_Delta) {
+                GameObject delta_row = GameObject.Instantiate(
+                    Delta_Row_Prototype,
+                    new Vector3(
+                        Delta_Row_Prototype.transform.position.x,
+                        Delta_Row_Prototype.transform.position.y - (15.0f * delta_rows.Count),
+                        Delta_Row_Prototype.transform.position.z
+                    ),
+                    Quaternion.identity,
+                    Delta_Content.transform
+                );
+                delta_row.name = string.Format("{0}_delta_row", resource.Key.ToString().ToLower());
+                delta_row.SetActive(true);
+                delta_row.GetComponentInChildren<Text>().text = string.Format("{0} {1}", Helper.Float_To_String(resource.Value, 2, true), resource.Key.ToString().ToLower());
+                delta_rows.Add(delta_row);
+            }
+            Delta_Content.GetComponentInChildren<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 15.0f * delta_rows.Count);
 
             //Storage
             foreach (GameObject row in storage_rows) {

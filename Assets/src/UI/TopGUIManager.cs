@@ -94,9 +94,10 @@ public class TopGUIManager : MonoBehaviour {
         }
     }
 
-    public void Update_Time(int day, int month, int year)
+    public void Update_Time(int day, int month, int year, float total_days)
     {
         Time_Text.text = string.Format("D:{0} M:{1} Y:{2}", day < 10 ? "0" + day : day.ToString(), month < 10 ? "0" + month : month.ToString(), year);
+        TooltipManager.Instance.Register_Tooltip(Time_Text.gameObject, string.Format("Total days: {0}", Helper.Float_To_String(total_days, 1)), gameObject);
     }
 
     public void Update_Time(string time)

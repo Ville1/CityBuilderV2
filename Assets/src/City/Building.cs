@@ -17,6 +17,7 @@ public class Building {
     public static float DECONSTRUCTION_SPEED = 10.0f;
     public static float REFOUND = 0.50f;
     public static float TOOL_REFOUND = 0.10f;
+    public static float DISREPAIR_SPEED = 1.0f;//HP / day
     public enum UI_Category { Admin, Infrastructure, Housing, Services, Forestry, Agriculture, Industry }
     public enum Resident { Peasant, Citizen, Noble }
     public enum BuildingSize { s1x1, s2x2, s3x3 }
@@ -75,6 +76,7 @@ public class Building {
     public OnDeconstructDelegate On_Deconstruct { get; private set; }
     public List<string> Permitted_Terrain { get; private set; }
     public List<Tag> Tags { get; private set; }
+    public Dictionary<Resource, float> Per_Day_Resource_Delta { get; private set; }
 
     public GameObject GameObject { get; private set; }
     public SpriteRenderer Renderer { get { return GameObject != null ? GameObject.GetComponent<SpriteRenderer>() : null; } }
@@ -143,6 +145,7 @@ public class Building {
         On_Deconstruct = prototype.On_Deconstruct;
         Permitted_Terrain = Helper.Clone_List(prototype.Permitted_Terrain);
         Tags = Helper.Clone_List(prototype.Tags);
+        Per_Day_Resource_Delta = new Dictionary<Resource, float>();
 
         animation_index = 0;
         animation_cooldown = Sprite.Animation_Frame_Time;
@@ -247,6 +250,27 @@ public class Building {
         Update_Sprite();
     }
 
+    public void Instant_Build()
+    {
+        if (Is_Built) {
+            return;
+        }
+        Construction_Progress = Construction_Time;
+        //TODO: Duplicate code
+        Update_Connectivity();
+        if (On_Built != null) {
+            On_Built(this);
+        }
+        if (Is_Road) {
+            foreach (Building b in Map.Instance.Get_Buildings_Around(this)) {
+                if (b.Is_Connected && b.Is_Built && !b.Is_Deconstructing) {
+                    b.Update_Connectivity();
+                }
+            }
+        }
+        Update_Sprite();
+    }
+
     public float Current_Storage_Amount
     {
         get {
@@ -330,6 +354,7 @@ public class Building {
         float realtime_delta_time = update_cooldown;
         delta_time = update_cooldown * TimeManager.Instance.Multiplier;
         update_on_last_call = true;
+        float delta_days = TimeManager.Instance.Seconds_To_Days(delta_time, 1.0f);
 
         if(Sprite.Animation_Sprites.Count != 0) {
             animation_cooldown -= realtime_delta_time;
@@ -340,6 +365,8 @@ public class Building {
             CustomLogger.Instance.Warning(string.Format("{0} can't be paused", Internal_Name));
             Is_Paused = false;
         }
+
+        Per_Day_Resource_Delta.Clear();
 
         if (Is_Deconstructing) {
             //Move resources
@@ -373,6 +400,21 @@ public class Building {
             Show_Alert("alert_road");
         }
 
+        //TODO: Have buildings (storehouses?) transfer upkeep to buildings?
+        foreach(KeyValuePair<Resource, float> pair in Upkeep) {
+            float actual_amount = Calculate_Actual_Amount(pair.Value, delta_time);
+            float amount_taken = City.Instance.Take_From_Storage(pair.Key, actual_amount);
+            Update_Delta(pair.Key, -pair.Value);
+            if(amount_taken < actual_amount) {
+                //TODO: New icon?
+                Show_Alert("alert_no_resources");
+                HP -= DISREPAIR_SPEED * delta_days;
+                if(HP < 1.0f) {
+                    HP = 1.0f;
+                }
+            }
+        }
+
         if(Is_Operational && Construction_Speed > 0.0f && Construction_Range > 0.0f) {
             float construction_progress = Efficency * Construction_Speed * delta_time;
             foreach(Building building in City.Instance.Buildings) {
@@ -403,6 +445,13 @@ public class Building {
 
         if(On_Update != null) {
             On_Update(this, delta_time);
+        }
+        
+        foreach(KeyValuePair<Resource, float> pair in Output_Storage) {
+            if(pair.Value >= INPUT_OUTPUT_STORAGE_LIMIT) {
+                Show_Alert("alert_no_room");
+                break;
+            }
         }
         
         //TODO if non-cash upkeep is not provided, deteriorate HP (can't be destroyed this way)
@@ -551,6 +600,39 @@ public class Building {
             }
         }
         return data;
+    }
+
+    /// <summary>
+    /// TODO: High game speeds create small error in amount of prodeucted resources
+    /// </summary>
+    /// <param name="resource"></param>
+    /// <param name="amount_per_day"></param>
+    /// <param name="delta_time"></param>
+    public void Produce(Resource resource, float amount_per_day, float delta_time)
+    {
+        float actual_amount = Calculate_Actual_Amount(amount_per_day, delta_time);
+        float space = Mathf.Max(0.0f, Output_Storage.ContainsKey(resource) ? INPUT_OUTPUT_STORAGE_LIMIT - Output_Storage[resource] : INPUT_OUTPUT_STORAGE_LIMIT);
+        float stored = Mathf.Min(space, actual_amount);
+        if (Output_Storage.ContainsKey(resource)) {
+            Output_Storage[resource] += stored;
+        } else {
+            Output_Storage.Add(resource, stored);
+        }
+        Update_Delta(resource, amount_per_day);
+    }
+
+    private float Calculate_Actual_Amount(float amount_per_day, float delta_time)
+    {
+        return (amount_per_day / TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f)) * delta_time;
+    }
+
+    private void Update_Delta(Resource resource, float amount_per_day)
+    {
+        if (Per_Day_Resource_Delta.ContainsKey(resource)) {
+            Per_Day_Resource_Delta[resource] += amount_per_day;
+        } else {
+            Per_Day_Resource_Delta.Add(resource, amount_per_day);
+        }
     }
 
     public void Delete()

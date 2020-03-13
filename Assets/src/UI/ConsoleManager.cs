@@ -147,6 +147,20 @@ public class ConsoleManager : MonoBehaviour
             return "";
         });
 
+        commands.Add("instant_build", (string[] arguments) => {
+            if (arguments.Length != 1) {
+                return "Invalid number of arguments";
+            }
+            int count = 0;
+            foreach(Building building in City.Instance.Buildings) {
+                if(!building.Is_Built && !building.Is_Deconstructing) {
+                    building.Instant_Build();
+                    count++;
+                }
+            }
+            return string.Format("{0} building{1} built", count, Helper.Plural(count));
+        });
+        
         Update_Output();
         Panel.SetActive(false);
     }

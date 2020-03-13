@@ -4,7 +4,7 @@ using UnityEngine;
 public class TimeManager : MonoBehaviour
 {
     public enum Speed { Paused, Normal, Fast, Very_Fast }
-    public static readonly float REALTIME_SECONDS_PER_DAY = 30.0f;
+    public static readonly float REALTIME_SECONDS_PER_DAY = 5.0f;
     public static readonly int DAYS_IN_MONTH = 30;
     public static readonly int MONTHS_IN_YEAR = 12;
 
@@ -20,6 +20,7 @@ public class TimeManager : MonoBehaviour
     private int day;
     private int month;
     private int year;
+    private float total_days;
 
     private Speed saved_speed;
     private Speed speed;
@@ -44,7 +45,9 @@ public class TimeManager : MonoBehaviour
     private void Update()
     {
         if(!Paused && Map.Instance.State == Map.MapState.Normal) {
-            day_progress += Time.deltaTime * Multiplier * (1.0f / REALTIME_SECONDS_PER_DAY);
+            float delta = Seconds_To_Days(Time.deltaTime);
+            total_days += delta;
+            day_progress += delta;
             int days_passed = (int)day_progress;
             if(days_passed > 0) {
                 day_progress -= days_passed;
@@ -62,8 +65,18 @@ public class TimeManager : MonoBehaviour
 
         if(TopGUIManager.Instance != null && TopGUIManager.Instance.Active) {
             TopGUIManager.Instance.Update_Speed(speed);
-            TopGUIManager.Instance.Update_Time(day, month, year);
+            TopGUIManager.Instance.Update_Time(day, month, year, total_days);
         }
+    }
+
+    public float Seconds_To_Days(float seconds, float? multiplier = null)
+    {
+        return seconds * (multiplier.HasValue ? multiplier.Value : Multiplier) * (1.0f / REALTIME_SECONDS_PER_DAY);
+    }
+
+    public float Days_To_Seconds(float days, float? multiplier = null)
+    {
+        return days / (multiplier.HasValue ? multiplier.Value : Multiplier) * REALTIME_SECONDS_PER_DAY;
     }
 
     public bool Paused
@@ -128,6 +141,7 @@ public class TimeManager : MonoBehaviour
     public void Reset_Time()
     {
         day_progress = 0.0f;
+        total_days = 0.0f;
         day = 1;
         month = 1;
         year = 1;
