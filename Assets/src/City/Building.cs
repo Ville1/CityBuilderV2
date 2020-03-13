@@ -20,6 +20,7 @@ public class Building {
     public enum UI_Category { Admin, Infrastructure, Housing, Services, Forestry, Agriculture, Industry }
     public enum Resident { Peasant, Citizen, Noble }
     public enum BuildingSize { s1x1, s2x2, s3x3 }
+    public enum Tag { Undeletable }
 
     public long Id { get; protected set; }
     public string Name { get; private set; }
@@ -55,7 +56,7 @@ public class Building {
     public Dictionary<Resident, int> Worker_Settings { get; private set; }
     public Dictionary<Resident, int> Current_Workers { get; private set; }
     public bool Can_Be_Paused { get { return can_be_paused && !Is_Deconstructing && Is_Built; } set { can_be_paused = value; } }
-    public bool Can_Be_Deleted { get { return !Is_Town_Hall && !Is_Deconstructing && Is_Built; } }
+    public bool Can_Be_Deleted { get { return !Is_Town_Hall && !Is_Deconstructing && Is_Built && !Tags.Contains(Tag.Undeletable); } }
     public int Max_HP { get; private set; }
     public float HP { get; private set; }
     public bool Is_Paused { get; set; }
@@ -73,6 +74,7 @@ public class Building {
     public OnUpdateDelegate On_Update { get; private set; }
     public OnDeconstructDelegate On_Deconstruct { get; private set; }
     public List<string> Permitted_Terrain { get; private set; }
+    public List<Tag> Tags { get; private set; }
 
     public GameObject GameObject { get; private set; }
     public SpriteRenderer Renderer { get { return GameObject != null ? GameObject.GetComponent<SpriteRenderer>() : null; } }
@@ -140,6 +142,7 @@ public class Building {
         On_Update = prototype.On_Update;
         On_Deconstruct = prototype.On_Deconstruct;
         Permitted_Terrain = Helper.Clone_List(prototype.Permitted_Terrain);
+        Tags = Helper.Clone_List(prototype.Tags);
 
         animation_index = 0;
         animation_cooldown = Sprite.Animation_Frame_Time;
@@ -205,6 +208,7 @@ public class Building {
         On_Update = on_update;
         On_Deconstruct = on_deconstruct;
         Permitted_Terrain = new List<string>();
+        Tags = new List<Tag>();
     }
 
     public Building(BuildingSaveData data) : this(BuildingPrototypes.Instance.Get(data.Internal_Name), Map.Instance.Get_Tile_At(data.X, data.Y),

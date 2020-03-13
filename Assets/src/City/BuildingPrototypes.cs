@@ -82,6 +82,7 @@ public class BuildingPrototypes {
         prototypes.First(x => x.Internal_Name == "clear_trees").Sprite.Animation_Sprites = new List<string>() { "chop_trees_1", "chop_trees_2" };
         prototypes.First(x => x.Internal_Name == "clear_trees").Permitted_Terrain.Add("forest");
         prototypes.First(x => x.Internal_Name == "clear_trees").Permitted_Terrain.Add("sparse_forest");
+        prototypes.First(x => x.Internal_Name == "clear_trees").Tags.Add(Building.Tag.Undeletable);
     }
 
     public static BuildingPrototypes Instance
