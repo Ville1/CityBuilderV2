@@ -83,6 +83,7 @@
     <Compile Include="Assets\src\City\City.cs" />
     <Compile Include="Assets\src\City\Residence.cs" />
     <Compile Include="Assets\src\City\SpriteData.cs" />
+    <Compile Include="Assets\src\City\StorageSetting.cs" />
     <Compile Include="Assets\src\ConsoleScriptManager.cs" />
     <Compile Include="Assets\src\Coordinates.cs" />
     <Compile Include="Assets\src\CustomLogger.cs" />
@@ -121,6 +122,7 @@
     <Compile Include="Assets\src\UI\NewGameGUIManager.cs" />
     <Compile Include="Assets\src\UI\ProgressBarManager.cs" />
     <Compile Include="Assets\src\UI\SaveGUIManager.cs" />
+    <Compile Include="Assets\src\UI\StorageSettingsGUIManager.cs" />
     <Compile Include="Assets\src\UI\TooltipManager.cs" />
     <Compile Include="Assets\src\UI\TopGUIManager.cs" />
   </ItemGroup>

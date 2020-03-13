@@ -15,9 +15,11 @@ public class Building {
     public static readonly string TOWN_HALL_INTERNAL_NAME = "town_hall";
     public static int INPUT_OUTPUT_STORAGE_LIMIT = 100;
     public static float DECONSTRUCTION_SPEED = 10.0f;
-    public static float REFOUND = 0.50f;
-    public static float TOOL_REFOUND = 0.10f;
+    public static float REFUND = 0.50f;
+    public static float TOOL_REFUND = 0.10f;
     public static float DISREPAIR_SPEED = 1.0f;//HP / day
+    public static float PAUSE_UPKEEP_MULTIPLIER = 0.5f;
+
     public enum UI_Category { Admin, Infrastructure, Housing, Services, Forestry, Agriculture, Industry }
     public enum Resident { Peasant, Citizen, Noble }
     public enum BuildingSize { s1x1, s2x2, s3x3 }
@@ -37,12 +39,15 @@ public class Building {
     public Dictionary<Resource, int> Cost { get; private set; }
     public int Cash_Cost { get; private set; }
     public Dictionary<Resource, float> Storage { get; private set; }
-    public Dictionary<Resource, float> Storage_Settings { get; private set; }
+    public float Transfer_Speed { get; private set; }//Resources / day
+    public StorageSettings Storage_Settings { get; private set; }
     public Dictionary<Resource, float> Input_Storage { get; private set; }
+    public List<Resource> Consumes { get; private set; }
     public Dictionary<Resource, float> Output_Storage { get; private set; }
+    public List<Resource> Produces { get; private set; }
     public int Storage_Limit { get { return Is_Deconstructing ? int.MaxValue : storage_limit; } set { storage_limit = value; } }
     public List<Resource> Allowed_Resources { get; private set; }
-    public bool Is_Storehouse { get { return storage_limit > 0 && Allowed_Resources != null && Allowed_Resources.Count != 0; } }
+    public bool Is_Storehouse { get { return storage_limit > 0 && Allowed_Resources != null && Allowed_Resources.Count != 0 && Transfer_Speed > 0.0f; } }
     public int Construction_Time { get; private set; }
     public Dictionary<Resource, float> Upkeep { get; private set; }
     public float Cash_Upkeep { get; private set; }
@@ -77,6 +82,7 @@ public class Building {
     public List<string> Permitted_Terrain { get; private set; }
     public List<Tag> Tags { get; private set; }
     public Dictionary<Resource, float> Per_Day_Resource_Delta { get; private set; }
+    public float Per_Day_Cash_Delta { get; private set; }
 
     public GameObject GameObject { get; private set; }
     public SpriteRenderer Renderer { get { return GameObject != null ? GameObject.GetComponent<SpriteRenderer>() : null; } }
@@ -119,7 +125,11 @@ public class Building {
         Cash_Cost = prototype.Cash_Cost;
         Allowed_Resources = Helper.Clone_List(prototype.Allowed_Resources);
         Storage = new Dictionary<Resource, float>();
+        foreach(Resource resource in Allowed_Resources) {
+            Storage.Add(resource, 0.0f);
+        }
         Storage_Limit = prototype.Storage_Limit;
+        Transfer_Speed = prototype.Transfer_Speed;
         Input_Storage = new Dictionary<Resource, float>();
         Output_Storage = new Dictionary<Resource, float>();
         Construction_Time = prototype.Construction_Time;
@@ -146,6 +156,17 @@ public class Building {
         Permitted_Terrain = Helper.Clone_List(prototype.Permitted_Terrain);
         Tags = Helper.Clone_List(prototype.Tags);
         Per_Day_Resource_Delta = new Dictionary<Resource, float>();
+        if (Is_Storehouse) {
+            Storage_Settings = new StorageSettings(this);
+        }
+        Consumes = Helper.Clone_List(prototype.Consumes);
+        foreach(Resource resource in Consumes) {
+            Input_Storage.Add(resource, 0.0f);
+        }
+        Produces = Helper.Clone_List(prototype.Produces);
+        foreach (Resource resource in Produces) {
+            Output_Storage.Add(resource, 0.0f);
+        }
 
         animation_index = 0;
         animation_cooldown = Sprite.Animation_Frame_Time;
@@ -171,9 +192,9 @@ public class Building {
         Update_Sprite();
     }
 
-    public Building(string name, string internal_name, UI_Category category, string sprite, BuildingSize size, int hp, Dictionary<Resource, int> cost, int cash_cost, List<Resource> allowed_resources, int storage_limit, int construction_time,
-        Dictionary<Resource, float> upkeep, float cash_upkeep, float construction_speed, float construction_range, Dictionary<Resident, int> workers, int max_workers, bool can_be_paused, bool is_road, bool p_requires_connection, float range,
-        int road_range, OnBuiltDelegate on_built, OnUpdateDelegate on_update, OnDeconstructDelegate on_deconstruct)
+    public Building(string name, string internal_name, UI_Category category, string sprite, BuildingSize size, int hp, Dictionary<Resource, int> cost, int cash_cost, List<Resource> allowed_resources, int storage_limit, float transfer_speed,
+        int construction_time, Dictionary<Resource, float> upkeep, float cash_upkeep, float construction_speed, float construction_range, Dictionary<Resident, int> workers, int max_workers, bool can_be_paused, bool is_road,
+        bool p_requires_connection, float range, int road_range, OnBuiltDelegate on_built, OnUpdateDelegate on_update, OnDeconstructDelegate on_deconstruct, List<Resource> consumes, List<Resource> produces)
     {
         Id = -1;
         Name = name;
@@ -189,6 +210,7 @@ public class Building {
         Allowed_Resources = Helper.Clone_List(allowed_resources);
         Storage = new Dictionary<Resource, float>();
         Storage_Limit = storage_limit;
+        Transfer_Speed = transfer_speed;
         Input_Storage = new Dictionary<Resource, float>();
         Output_Storage = new Dictionary<Resource, float>();
         Construction_Time = construction_time;
@@ -210,6 +232,8 @@ public class Building {
         On_Built = on_built;
         On_Update = on_update;
         On_Deconstruct = on_deconstruct;
+        Consumes = Helper.Clone_List(consumes);
+        Produces = Helper.Clone_List(produces);
         Permitted_Terrain = new List<string>();
         Tags = new List<Tag>();
     }
@@ -284,7 +308,7 @@ public class Building {
 
     public float Store_Resources(Resource resource, float amount)
     {
-        float max = Is_Deconstructing ? float.MaxValue : (Mathf.Min(Storage_Limit, Storage_Settings != null && Storage_Settings.ContainsKey(resource) ? Storage_Settings[resource] : float.MaxValue));
+        float max = Is_Deconstructing ? float.MaxValue : (Mathf.Min(Storage_Limit, Storage_Settings != null && Storage_Settings.Has(resource) ? Storage_Settings.Get(resource).Limit : float.MaxValue));
         float current = Storage.ContainsKey(resource) ? Storage[resource] : 0.0f;
         float space = max - current;
         float stored = Mathf.Min(amount, space);
@@ -367,6 +391,7 @@ public class Building {
         }
 
         Per_Day_Resource_Delta.Clear();
+        Per_Day_Cash_Delta = 0.0f;
 
         if (Is_Deconstructing) {
             //Move resources
@@ -400,11 +425,18 @@ public class Building {
             Show_Alert("alert_road");
         }
 
+        if(Cash_Upkeep > 0.0f) {
+            float amount = Cash_Upkeep * (Is_Paused ? PAUSE_UPKEEP_MULTIPLIER : 1.0f);
+            Per_Day_Cash_Delta -= amount;
+            City.Instance.Take_Cash(Calculate_Actual_Amount(amount, delta_time));
+        }
+
         //TODO: Have buildings (storehouses?) transfer upkeep to buildings?
-        foreach(KeyValuePair<Resource, float> pair in Upkeep) {
-            float actual_amount = Calculate_Actual_Amount(pair.Value, delta_time);
+        foreach (KeyValuePair<Resource, float> pair in Upkeep) {
+            float amount = pair.Value * (Is_Paused ? PAUSE_UPKEEP_MULTIPLIER : 1.0f);
+            float actual_amount = Calculate_Actual_Amount(amount, delta_time);
             float amount_taken = City.Instance.Take_From_Storage(pair.Key, actual_amount);
-            Update_Delta(pair.Key, -pair.Value);
+            Update_Delta(pair.Key, -amount);
             if(amount_taken < actual_amount) {
                 //TODO: New icon?
                 Show_Alert("alert_no_resources");
@@ -441,6 +473,51 @@ public class Building {
                     }
                 }
             }
+        }
+
+        //Collecting resources
+        if(Is_Operational && (Is_Storehouse || (Transfer_Speed > 0.0f && Road_Range > 0 && Consumes.Count != 0))) {
+            List<Building> connected_buildings = Get_Connected_Buildings(Road_Range).Select(x => x.Key).ToList();
+            float resources_transfered = 0.0f;
+            float max_transfer = Transfer_Speed * delta_days * Efficency;
+            if (Is_Storehouse) {
+                foreach(Building building in connected_buildings) {
+                    foreach(Resource resource in Allowed_Resources) {
+                        float take = Math.Min(max_transfer - resources_transfered, Storage_Settings.Get(resource).Limit - Storage[resource]);
+                        if (building.Produces.Contains(resource)) {
+                            float resources_taken = Mathf.Min(building.Output_Storage[resource], take);
+                            building.Output_Storage[resource] -= resources_taken;
+                            resources_transfered += resources_taken;
+                            Storage[resource] += resources_taken;
+                        } else if(building.Is_Storehouse && building.Allowed_Resources.Contains(resource) && (int)Storage_Settings.Get(resource).Priority > (int)building.Storage_Settings.Get(resource).Priority) {
+                            float resources_taken = building.Take_Resources(resource, take);
+                            resources_transfered += resources_taken;
+                            Storage[resource] += resources_taken;
+                        }
+                    }
+                }
+            } else {
+                foreach(Building building in connected_buildings) {
+                    foreach (Resource resource in Consumes) {
+                        float take = Math.Min(max_transfer - resources_transfered, INPUT_OUTPUT_STORAGE_LIMIT - Input_Storage[resource]);
+                        if (building.Produces.Contains(resource)) {
+                            float resources_taken = Mathf.Min(building.Output_Storage[resource], take);
+                            building.Output_Storage[resource] -= resources_taken;
+                            resources_transfered += resources_taken;
+                            Input_Storage[resource] += resources_taken;
+                        } else {
+                            float resources_taken = building.Take_Resources(resource, take);
+                            resources_transfered += resources_taken;
+                            Input_Storage[resource] += resources_taken;
+                        }
+                    }
+                }
+            }
+        }
+
+        //Distributing resources
+        if (Is_Operational && Is_Storehouse) {
+            //TODO: this
         }
 
         if(On_Update != null) {
@@ -513,16 +590,18 @@ public class Building {
         }
     }
 
-    public void Deconstruct(bool instant = false)
+    public void Deconstruct(bool instant = false, bool refund = true)
     {
         Deconstruction_Progress = instant ? float.MaxValue : 0.0f;
         Is_Deconstructing = true;
-        City.Instance.Add_Cash(Cash_Cost * REFOUND);
-        foreach(KeyValuePair<Resource, int> resource in Cost) {
-            if(resource.Key == Resource.Tools) {
-                Store_Resources(Resource.Tools, resource.Value * TOOL_REFOUND);
-            } else {
-                Store_Resources(resource.Key, resource.Value * REFOUND);
+        City.Instance.Add_Cash(Cash_Cost * REFUND);
+        if (refund) {
+            foreach (KeyValuePair<Resource, int> resource in Cost) {
+                if (resource.Key == Resource.Tools) {
+                    Store_Resources(Resource.Tools, resource.Value * TOOL_REFUND);
+                } else {
+                    Store_Resources(resource.Key, resource.Value * REFUND);
+                }
             }
         }
         foreach(KeyValuePair<Resource, float> resource in Input_Storage) {

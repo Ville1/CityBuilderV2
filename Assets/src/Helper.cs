@@ -15,9 +15,6 @@ public class Helper {
         if (!show_zeros && rounded == 0.0d) {
             return string.Empty;
         }
-        if (f < 0.0f) {
-            return rounded.ToString();
-        }
         string rounded_s = rounded.ToString();
         if (show_zeros && digits > 0) {
             StringBuilder builder = new StringBuilder(rounded_s);
@@ -34,7 +31,7 @@ public class Helper {
             }
             rounded_s = builder.ToString();
         }
-        return string.Format("{0}{1}", (show_plus_sign ? "+" : string.Empty), rounded_s);
+        return string.Format("{0}{1}", (show_plus_sign && f >= 0.0f ? "+" : string.Empty), rounded_s);
     }
 
     public static string Plural(int i)

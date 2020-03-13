@@ -24,6 +24,7 @@ public class InspectorManager : MonoBehaviour {
     public GameObject Storage_Row_Prototype;
     public Button Pause_Button;
     public Button Delete_Button;
+    public Button Storage_Settings_Button;
 
     public Text Residents_Label_Text;
     public Text Residents_Text;
@@ -113,6 +114,10 @@ public class InspectorManager : MonoBehaviour {
         Button.ButtonClickedEvent click8 = new Button.ButtonClickedEvent();
         click8.AddListener(new UnityAction(Remove_Noble_Worker));
         Worker_Noble_Minus_Button.onClick = click8;
+
+        Button.ButtonClickedEvent click9 = new Button.ButtonClickedEvent();
+        click9.AddListener(new UnityAction(Show_Storage_Settings));
+        Storage_Settings_Button.onClick = click9;
     }
 
     /// <summary>
@@ -343,7 +348,7 @@ public class InspectorManager : MonoBehaviour {
             }
             delta_rows.Clear();
 
-            if(building.Cash_Upkeep != 0.0f) {
+            if(building.Per_Day_Cash_Delta != 0.0f) {
                 GameObject delta_row = GameObject.Instantiate(
                     Delta_Row_Prototype,
                     new Vector3(
@@ -356,7 +361,7 @@ public class InspectorManager : MonoBehaviour {
                 );
                 delta_row.name = "cash_delta_row";
                 delta_row.SetActive(true);
-                delta_row.GetComponentInChildren<Text>().text = string.Format("{0} cash", Helper.Float_To_String(building.Cash_Upkeep, 2, true));
+                delta_row.GetComponentInChildren<Text>().text = string.Format("{0} cash", Helper.Float_To_String(building.Per_Day_Cash_Delta, 2, true));
                 delta_rows.Add(delta_row);
             }
 
@@ -387,6 +392,9 @@ public class InspectorManager : MonoBehaviour {
             Storage_Text.text = building.Is_Storehouse ? string.Format("Storage ({0} / {1})", Helper.Float_To_String(building.Current_Storage_Amount, 0), building.Storage_Limit) : "Storage";
 
             foreach (KeyValuePair<Resource, float> resource in building.All_Resources) {
+                if(resource.Value == 0.0f) {
+                    continue;
+                }
                 GameObject resource_row = GameObject.Instantiate(
                     Storage_Row_Prototype,
                     new Vector3(
@@ -408,6 +416,7 @@ public class InspectorManager : MonoBehaviour {
             Pause_Button.interactable = building.Can_Be_Paused;
             Pause_Button.GetComponentInChildren<Text>().text = building.Is_Paused ? "Unpause" : "Pause";
             Delete_Button.interactable = building.Can_Be_Deleted;
+            Storage_Settings_Button.interactable = building.Is_Storehouse;
 
             //Highlights
             if(building.Range > 0 || building.Construction_Range > 0) {
@@ -492,6 +501,13 @@ public class InspectorManager : MonoBehaviour {
     {
         if (building != null && building.Worker_Settings[Building.Resident.Noble] > 0 && building.Workers_Allocated > 1) {
             building.Worker_Settings[Building.Resident.Noble]--;
+        }
+    }
+
+    private void Show_Storage_Settings()
+    {
+        if(building != null && building.Is_Storehouse) {
+            StorageSettingsGUIManager.Instance.Show(building);
         }
     }
 }

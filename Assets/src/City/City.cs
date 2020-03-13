@@ -211,6 +211,15 @@ public class City {
         Cash += amount;
     }
 
+    public void Take_Cash(float amount)
+    {
+        if (amount <= 0.0f) {
+            CustomLogger.Instance.Warning(string.Format("amount = {0}", amount));
+            return;
+        }
+        Cash -= amount;
+    }
+
     public bool Can_Build(Building prototype, out string message)
     {
         message = string.Empty;
