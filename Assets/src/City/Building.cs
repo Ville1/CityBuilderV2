@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEngine;
 
 public class Building {
-    private static long current_id = 0;
+    protected static long current_id = 0;
 
     public static readonly float UPDATE_INTERVAL = 1.0f;
     public static readonly float ALERT_CHANGE_INTERVAL = 2.0f;
@@ -17,7 +17,7 @@ public class Building {
     public enum Resident { Peasant, Citizen, Noble }
     public enum BuildingSize { s1x1, s2x2, s3x3 }
 
-    public long Id { get; private set; }
+    public long Id { get; protected set; }
     public string Name { get; private set; }
     public string Internal_Name { get; private set; }
     public UI_Category Category { get; private set; }
@@ -182,6 +182,28 @@ public class Building {
         Requires_Connection = p_requires_connection;
         Range = range;
         Road_Range = road_range;
+    }
+
+    public Building(BuildingSaveData data) : this(BuildingPrototypes.Instance.Get(data.Internal_Name), Map.Instance.Get_Tile_At(data.X, data.Y),
+        Map.Instance.Get_Tiles(data.X, data.Y, BuildingPrototypes.Instance.Get(data.Internal_Name).Width, BuildingPrototypes.Instance.Get(data.Internal_Name).Height), false)
+    {
+        Id = data.Id;
+        if(Id >= current_id) {
+            current_id = Id + 1;
+        }
+        foreach(ResourceSaveData resource_data in data.Storage) {
+            Storage.Add((Resource)resource_data.Resource, resource_data.Amount);
+        }
+        foreach (ResidentSaveData worker_data in data.Worker_Allocation) {
+            Worker_Settings[(Resident)worker_data.Resident] = worker_data.Count;
+        }
+        Is_Deconstructing = data.Is_Deconstructing;
+        Is_Connected = data.Is_Connected;
+        Is_Paused = data.Is_Paused;
+        Construction_Progress = data.Construction_Progress;
+        Deconstruction_Progress = data.Deconstruction_Progress;
+        HP = data.HP;
+        Update_Sprite();
     }
 
     public void Move(Tile tile)
@@ -430,6 +452,38 @@ public class Building {
         );
     }
 
+    public BuildingSaveData Save_Data()
+    {
+        BuildingSaveData data = new BuildingSaveData() {
+            Id = Id,
+            Internal_Name = Internal_Name,
+            X = Tile.Coordinates.X,
+            Y = Tile.Coordinates.Y,
+            Storage = new List<ResourceSaveData>(),
+            Residents = new List<ResidentSaveData>(),
+            Is_Residence = this is Residence,
+            Worker_Allocation = new List<ResidentSaveData>(),
+            Is_Deconstructing = Is_Deconstructing,
+            Is_Connected = Is_Connected,
+            Is_Paused = Is_Paused,
+            Construction_Progress = Construction_Progress,
+            Deconstruction_Progress = Deconstruction_Progress,
+            HP = HP
+        };
+        foreach(KeyValuePair<Resource, float> pair in Storage) {
+            data.Storage.Add(new ResourceSaveData() { Resource = (int)pair.Key, Amount = pair.Value });
+        }
+        foreach(KeyValuePair<Resident, int> pair in Worker_Settings) {
+            data.Worker_Allocation.Add(new ResidentSaveData() { Resident = (int)pair.Key, Count = pair.Value });
+        }
+        if(this is Residence) {
+            foreach (KeyValuePair<Resident, int> pair in (this as Residence).Current_Residents) {
+                data.Residents.Add(new ResidentSaveData() { Resident = (int)pair.Key, Count = pair.Value });
+            }
+        }
+        return data;
+    }
+
     public void Delete()
     {
         GameObject.Destroy(GameObject);
@@ -643,5 +697,10 @@ public class Building {
                     break;
             }
         }
+    }
+
+    public static void Reset_Current_Id()
+    {
+        current_id = 0;
     }
 }

@@ -96,13 +96,23 @@
     <Compile Include="Assets\src\Pathfinding\PathfindingNode.cs" />
     <Compile Include="Assets\src\PrefabManager.cs" />
     <Compile Include="Assets\src\RNG.cs" />
+    <Compile Include="Assets\src\Saving\BuildingSaveData.cs" />
+    <Compile Include="Assets\src\Saving\CitySaveData.cs" />
+    <Compile Include="Assets\src\Saving\MapSaveData.cs" />
+    <Compile Include="Assets\src\Saving\ResidentSaveData.cs" />
+    <Compile Include="Assets\src\Saving\ResourceSaveData.cs" />
+    <Compile Include="Assets\src\Saving\SaveData.cs" />
+    <Compile Include="Assets\src\Saving\SaveManager.cs" />
+    <Compile Include="Assets\src\Saving\TileSaveData.cs" />
     <Compile Include="Assets\src\SpriteManager.cs" />
     <Compile Include="Assets\src\TimeManager.cs" />
     <Compile Include="Assets\src\UI\BuildMenuManager.cs" />
     <Compile Include="Assets\src\UI\CameraManager.cs" />
+    <Compile Include="Assets\src\UI\ConfirmationDialogManager.cs" />
     <Compile Include="Assets\src\UI\ConsoleManager.cs" />
     <Compile Include="Assets\src\UI\InspectorManager.cs" />
     <Compile Include="Assets\src\UI\KeyboardManager.cs" />
+    <Compile Include="Assets\src\UI\LoadGUIManager.cs" />
     <Compile Include="Assets\src\UI\MainMenuManager.cs" />
     <Compile Include="Assets\src\UI\MasterUIManager.cs" />
     <Compile Include="Assets\src\UI\MenuManager.cs" />
@@ -110,6 +120,7 @@
     <Compile Include="Assets\src\UI\MouseManager.cs" />
     <Compile Include="Assets\src\UI\NewGameGUIManager.cs" />
     <Compile Include="Assets\src\UI\ProgressBarManager.cs" />
+    <Compile Include="Assets\src\UI\SaveGUIManager.cs" />
     <Compile Include="Assets\src\UI\TooltipManager.cs" />
     <Compile Include="Assets\src\UI\TopGUIManager.cs" />
   </ItemGroup>

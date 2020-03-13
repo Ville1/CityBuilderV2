@@ -52,6 +52,18 @@ public class MainMenuManager : MonoBehaviour {
         NewGameGUIManager.Instance.Active = true;
     }
 
+    public void Save_Button_On_Click()
+    {
+        if (Map.Instance.State == Map.MapState.Normal) {
+            SaveGUIManager.Instance.Active = true;
+        }
+    }
+
+    public void Load_Button_On_Click()
+    {
+        LoadGUIManager.Instance.Active = true;
+    }
+
     public void Exit_Button_On_Click()
     {
         Main.Quit();

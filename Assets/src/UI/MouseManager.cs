@@ -44,7 +44,7 @@ public class MouseManager : MonoBehaviour
                 } else if(tile != null) {
                     InspectorManager.Instance.Building = tile.Building;
                     MasterUIManager.Instance.Close_Others(typeof(InspectorManager).Name);
-                } else {
+                } else if(Map.Instance.State == Map.MapState.Normal) {
                     MasterUIManager.Instance.Close_Others(string.Empty);
                 }
             }

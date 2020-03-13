@@ -25,8 +25,12 @@ public class Map : MonoBehaviour
     private int generation_loop;
     private int generation_index_x;
     private int generation_index_y;
+    private int save_load_loop;
+    private int save_index_x;
+    private int save_index_y;
     private int loop_progress;
     private List<Tile> fine_tuned_tiles;
+    private bool city_loaded;
 
     /// <summary>
     /// Initializiation
@@ -46,7 +50,7 @@ public class Map : MonoBehaviour
     /// </summary>
     private void Update()
     {
-        if(State == MapState.Generating) {
+        if (State == MapState.Generating) {
             switch (generation_loop) {
                 case 1:
                     Generation_Loop_1();
@@ -59,7 +63,27 @@ public class Map : MonoBehaviour
                     break;
             }
             return;
-        } else if(State == MapState.Normal) {
+        } else if (State == MapState.Saving) {
+            switch (save_load_loop) {
+                case 1:
+                    Save_Loop_1();
+                    break;
+                case 2:
+                    Save_Loop_2();
+                    break;
+            }
+            return;
+        } else if (State == MapState.Loading) {
+            switch (save_load_loop) {
+                case 1:
+                    Load_Loop_1();
+                    break;
+                case 2:
+                    Load_Loop_2();
+                    break;
+            }
+            return;
+        } else if (State == MapState.Normal) {
             City.Instance.Update(Time.deltaTime);
         }
     }
@@ -227,7 +251,7 @@ public class Map : MonoBehaviour
         fine_tuned_tiles.Clear();
         State = MapState.Normal;
         ProgressBarManager.Instance.Active = false;
-        City.Instance.Start_New();
+        City.Instance.Start_New("PLACEHOLDER");
         Active = true;
         CameraManager.Instance.Set_Camera_Location(Get_Tile_At(Width / 2, Height / 2).Coordinates.Vector);
         BuildMenuManager.Instance.Interactable = true;
@@ -240,7 +264,162 @@ public class Map : MonoBehaviour
             float current = ((generation_loop - 1) * (Width * Height)) + loop_progress;
             float progress = current / max;
             ProgressBarManager.Instance.Show("Generating map...", progress);
+        } else if(State == MapState.Saving) {
+            float max = (Width * Height) + City.Instance.Buildings.Count;
+            float current = save_load_loop == 1 ? loop_progress : (Width * Height) + loop_progress;
+            float progress = current / max;
+            ProgressBarManager.Instance.Show("Saving...", progress);
+        } else if (State == MapState.Loading) {
+            float max = (Width * Height) + SaveManager.Instance.Data.City.Buildings.Count + 10.0f;
+            float current = save_load_loop == 1 ? loop_progress : (Width * Height) + loop_progress + (city_loaded ? 10.0f : 0.0f);
+            float progress = current / max;
+            ProgressBarManager.Instance.Show("Loading...", progress);
         }
+    }
+
+    public void Start_Saving(string path)
+    {
+        State = MapState.Saving;
+        SaveManager.Instance.Start_Saving(path);
+        save_index_x = 0;
+        save_index_y = 0;
+        loop_progress = 0;
+        save_load_loop = 1;
+        ProgressBarManager.Instance.Active = true;
+        Update_Progress();
+    }
+
+    private void Save_Loop_1()
+    {
+        Tile tile = tiles[save_index_x][save_index_y];
+        SaveManager.Instance.Add(tile.Save_Data());
+
+        loop_progress++;
+        save_index_x++;
+        if (save_index_x == Width) {
+            save_index_x = 0;
+            save_index_y++;
+        }
+        if (save_index_y == Height) {
+            save_index_x = 0;
+            save_index_y = 0;
+            loop_progress = 0;
+            save_load_loop++;
+        }
+        Update_Progress();
+    }
+
+    private void Save_Loop_2()
+    {
+        if(City.Instance.Buildings.Count == 0) {
+            Finish_Saving();
+            return;
+        }
+        Building building = City.Instance.Buildings[loop_progress];
+        SaveManager.Instance.Add(building.Save_Data());
+
+        loop_progress++;
+        if (loop_progress == City.Instance.Buildings.Count) {
+            Finish_Saving();
+        } else {
+            Update_Progress();
+        }
+    }
+
+    private void Finish_Saving()
+    {
+        SaveManager.Instance.Finish_Saving();
+        State = MapState.Normal;
+        ProgressBarManager.Instance.Active = false;
+    }
+
+    public void Start_Loading(string path)
+    {
+        Delete();
+        City.Instance.Delete();
+        TopGUIManager.Instance.Active = false;
+        TimeManager.Instance.Paused = true;
+        TimeManager.Instance.Reset_Time();
+        Active = false;
+        State = MapState.Loading;
+        SaveManager.Instance.Start_Loading(path);
+        save_load_loop = 1;
+        loop_progress = 0;
+        save_index_x = 0;
+        save_index_y = 0;
+        city_loaded = false;
+        Width = SaveManager.Instance.Data.Map.Width;
+        Height = SaveManager.Instance.Data.Map.Height;
+        Building.Reset_Current_Id();
+
+        tiles = new List<List<Tile>>();
+        for (int x = 0; x < Width; x++) {
+            tiles.Add(new List<Tile>());
+            for (int y = 0; y < Height; y++) {
+                tiles[x].Add(null);
+            }
+        }
+
+        ProgressBarManager.Instance.Active = true;
+        Update_Progress();
+    }
+
+    private void Load_Loop_1()
+    {
+        tiles[save_index_x][save_index_y] = new Tile(save_index_x, save_index_y, TilePrototypes.Instance.Get(SaveManager.Instance.Get_Tile(save_index_x, save_index_y).Internal_Name));
+
+        loop_progress++;
+        save_index_x++;
+        if (save_index_x == Width) {
+            save_index_x = 0;
+            save_index_y++;
+        }
+        if (save_index_y == Height) {
+            save_index_x = 0;
+            save_index_y = 0;
+            loop_progress = 0;
+            save_load_loop++;
+        }
+        Update_Progress();
+    }
+
+    private void Load_Loop_2()
+    {
+        if (!city_loaded) {
+            City.Instance.Load(SaveManager.Instance.Data.City);
+            city_loaded = true;
+            return;
+        }
+        if (SaveManager.Instance.Data.City.Buildings.Count == 0) {
+            Finish_Loading();
+            return;
+        }
+        BuildingSaveData data = SaveManager.Instance.Data.City.Buildings[loop_progress];
+        if (!data.Is_Residence) {
+            Building building = new Building(data);
+            City.Instance.Buildings.Add(building);
+        } else {
+            Residence residence = new Residence(data);
+            City.Instance.Buildings.Add(residence);
+        }
+
+        loop_progress++;
+        if (loop_progress == SaveManager.Instance.Data.City.Buildings.Count) {
+            Finish_Loading();
+        } else {
+            Update_Progress();
+        }
+    }
+
+    private void Finish_Loading()
+    {
+        SaveManager.Instance.Finish_Loading();
+        State = MapState.Normal;
+        ProgressBarManager.Instance.Active = false;
+        Active = true;
+        CameraManager.Instance.Set_Camera_Location(Get_Tile_At(Width / 2, Height / 2).Coordinates.Vector);
+        BuildMenuManager.Instance.Interactable = true;
+        TopGUIManager.Instance.Active = true;
     }
 
     public Tile Get_Tile_At(int x, int y, Coordinates.Direction? offset = null)

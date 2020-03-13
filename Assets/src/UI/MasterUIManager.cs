@@ -40,6 +40,15 @@ public class MasterUIManager : MonoBehaviour {
         if (NewGameGUIManager.Instance != null && typeof(NewGameGUIManager).Name != type_name) {
             NewGameGUIManager.Instance.Active = false;
         }
+        if (ConfirmationDialogManager.Instance != null && typeof(ConfirmationDialogManager).Name != type_name) {
+            ConfirmationDialogManager.Instance.Active = false;
+        }
+        if (SaveGUIManager.Instance != null && typeof(SaveGUIManager).Name != type_name) {
+            SaveGUIManager.Instance.Active = false;
+        }
+        if (LoadGUIManager.Instance != null && typeof(LoadGUIManager).Name != type_name) {
+            LoadGUIManager.Instance.Active = false;
+        }
     }
 
     public bool Intercept_Keyboard_Input

@@ -156,6 +156,15 @@ public class Tile
         text_game_object.SetActive(false);
     }
 
+    public TileSaveData Save_Data()
+    {
+        return new TileSaveData() {
+            X = X,
+            Y = Y,
+            Internal_Name = Internal_Name
+        };
+    }
+
     public override string ToString()
     {
         return Is_Prototype ? string.Format("{0}-Prototype", Internal_Name) : string.Format("{0}_{1}_#{2}", Internal_Name, Coordinates.Parse_Text(true, false), Id);

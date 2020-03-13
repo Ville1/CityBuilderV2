@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public enum Resource { Wood, Stone, Lumber, Tools }
@@ -36,17 +37,24 @@ public class City {
         }
     }
 
-    public void Start_New()
+    public void Start_New(string name)
     {
         Has_Town_Hall = false;
         Buildings = new List<Building>();
-        Name = "PLACEHOLDER";
+        Name = name;
         grace_time_remaining = GRACE_TIME;
         removed_buildings = new List<Building>();
         foreach (Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
             Unemployment[resident] = 0.0f;
             Happiness[resident] = 0.0f;
         }
+    }
+
+    public void Load(CitySaveData data)
+    {
+        Start_New(data.Name);
+        Cash = data.Cash;
+        Has_Town_Hall = data.Buildings.FirstOrDefault(x => x.Internal_Name == Building.TOWN_HALL_INTERNAL_NAME) != null;
     }
     
     public static City Instance
@@ -291,6 +299,15 @@ public class City {
         if (!removed_buildings.Contains(building)) {
             removed_buildings.Add(building);
         }
+    }
+
+    public CitySaveData Save_Data()
+    {
+        return new CitySaveData() {
+            Name = Name,
+            Cash = Cash,
+            Buildings = new List<BuildingSaveData>()
+        };
     }
 
     public void Delete()

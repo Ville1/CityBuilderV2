@@ -38,6 +38,22 @@ public class Residence : Building {
         migration_progress = -1.0f;
     }
 
+    public Residence(BuildingSaveData data) : base(data)
+    {
+        Resident_Space = Helper.Clone_Dictionary(BuildingPrototypes.Instance.Get_Residence(data.Internal_Name).Resident_Space);
+        Current_Residents = new Dictionary<Resident, int>();
+        foreach (Resident resident in Enum.GetValues(typeof(Resident))) {
+            Current_Residents.Add(resident, 0);
+        }
+        foreach (ResidentSaveData resident_data in data.Residents) {
+            Current_Residents[(Resident)resident_data.Resident] = resident_data.Count;
+        }
+        Happiness = new Dictionary<Resident, float>();
+        foreach (Resident resident in Enum.GetValues(typeof(Resident))) {
+            Happiness.Add(resident, 0.0f);
+        }
+        migration_progress = 0.0f;
+    }
 
     public new void Update(float delta_time)
     {

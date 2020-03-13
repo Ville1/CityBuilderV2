@@ -11,6 +11,7 @@ public class NewGameGUIManager : MonoBehaviour
 
     public GameObject Panel;
 
+    public Toggle Lock_Square_Toggle;
     public Slider Width_Slider;
     public InputField Width_Input;
     public Slider Height_Slider;
@@ -154,5 +155,21 @@ public class NewGameGUIManager : MonoBehaviour
         }
         Map.Instance.Start_Generation(width, height, Forest_Count_Slider.value, Forest_Size_Slider.value, Forest_Density_Slider.value);
         Active = false;
+    }
+
+    public void Width_Changed()
+    {
+        if (Lock_Square_Toggle.isOn) {
+            Height_Slider.value = Width_Slider.value;
+            Height_Input.text = Width_Input.text;
+        }
+    }
+
+    public void Height_Changed()
+    {
+        if (Lock_Square_Toggle.isOn) {
+            Width_Slider.value = Height_Slider.value;
+            Width_Input.text = Height_Input.text;
+        }
     }
 }
