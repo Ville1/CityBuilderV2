@@ -517,7 +517,18 @@ public class Building {
 
         //Distributing resources
         if (Is_Operational && Is_Storehouse) {
-            //TODO: this
+            List<Building> connected_buildings = Get_Connected_Buildings(Road_Range).Select(x => x.Key).ToList();
+            float resources_transfered = 0.0f;
+            float max_transfer = Transfer_Speed * delta_days * Efficency;
+            foreach (Building building in connected_buildings) {
+                foreach(Resource resource in building.Consumes) {
+                    float give = Math.Min(max_transfer - resources_transfered, INPUT_OUTPUT_STORAGE_LIMIT - building.Input_Storage[resource]);
+                    float resources_given = Mathf.Min(Storage[resource], give);
+                    building.Input_Storage[resource] += resources_given;
+                    resources_transfered += resources_given;
+                    Storage[resource] -= resources_given;
+                }
+            }
         }
 
         if(On_Update != null) {
