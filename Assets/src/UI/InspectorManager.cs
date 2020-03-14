@@ -26,9 +26,6 @@ public class InspectorManager : MonoBehaviour {
     public Button Delete_Button;
     public Button Storage_Settings_Button;
 
-    public Text Residents_Label_Text;
-    public Text Residents_Text;
-
     public GameObject Workers_Container;
     public Text Worker_Peasant_Current;
     public Text Worker_Peasant_Max;
@@ -44,6 +41,17 @@ public class InspectorManager : MonoBehaviour {
     public Button Worker_Noble_Minus_Button;
     public Text Worker_Allocated_Current;
     public Text Worker_Allocated_Max;
+
+    public GameObject Residents_Container;
+    public Text Residents_Peasant_Current;
+    public Text Residents_Peasant_Max;
+    public Text Residents_Peasant_Happiness;
+    public Text Residents_Citizen_Current;
+    public Text Residents_Citizen_Max;
+    public Text Residents_Citizen_Happiness;
+    public Text Residents_Noble_Current;
+    public Text Residents_Noble_Max;
+    public Text Residents_Noble_Happiness;
 
     public GameObject Prototype_Container;
     public Text Size_Text;
@@ -298,31 +306,11 @@ public class InspectorManager : MonoBehaviour {
                 Status_Text.text = "ERROR";
             }
             Efficency_Text.text = string.Format("Efficency: {0}%", Helper.Float_To_String(100.0f * building.Efficency, 0));
-
-            //Residents
-            Residents_Label_Text.gameObject.SetActive(building is Residence);
-            Residents_Text.gameObject.SetActive(building is Residence);
-            if (building is Residence) {
-                Residence residence = building as Residence;
-                StringBuilder builder = new StringBuilder("                       ");
-                bool has_residents = false;
-                foreach(Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
-                    if(residence.Current_Residents[resident] != 0) {
-                        builder.Append(residence.Current_Residents[resident]).Append(" ").Append(resident.ToString().ToLower()).Append(Helper.Plural(residence.Current_Residents[resident])).Append(",");
-                        has_residents = true;
-                    }
-                }
-                if (has_residents) {
-                    builder.Remove(builder.Length - 1, 1);
-                } else {
-                    builder.Append("None");
-                }
-                Residents_Text.text = builder.ToString();
-            }
-
+            
             //Workers
             if (building.Is_Built && !building.Is_Deconstructing && building.Max_Workers_Total != 0) {
                 Workers_Container.SetActive(true);
+                Residents_Container.SetActive(false);
                 Worker_Peasant_Current.text = building.Current_Workers[Building.Resident.Peasant].ToString();
                 Worker_Peasant_Max.text = building.Worker_Settings[Building.Resident.Peasant].ToString();
                 Worker_Citizen_Current.text = building.Current_Workers[Building.Resident.Citizen].ToString();
@@ -338,8 +326,37 @@ public class InspectorManager : MonoBehaviour {
                 Worker_Peasant_Minus_Button.interactable = building.Workers_Allocated > 1 && building.Worker_Settings[Building.Resident.Peasant] > 0;
                 Worker_Citizen_Minus_Button.interactable = building.Workers_Allocated > 1 && building.Worker_Settings[Building.Resident.Citizen] > 0;
                 Worker_Noble_Minus_Button.interactable = building.Workers_Allocated > 1 && building.Worker_Settings[Building.Resident.Noble] > 0;
+            } else if(building is Residence) {
+                Workers_Container.SetActive(false);
+                Residents_Container.SetActive(true);
+                Residence residence = (Building as Residence);
+                Residents_Peasant_Current.text = residence.Current_Residents[Building.Resident.Peasant].ToString();
+                Residents_Peasant_Max.text = residence.Resident_Space[Building.Resident.Peasant].ToString();
+                Residents_Peasant_Happiness.text = Helper.Float_To_String(100.0f * residence.Happiness[Building.Resident.Peasant], 0);
+                if(residence.Happiness_Info[Building.Resident.Peasant].Count != 0) {
+                    TooltipManager.Instance.Register_Tooltip(Residents_Peasant_Happiness.gameObject, Parse_Happiness_Tooltip(residence.Happiness_Info[Building.Resident.Peasant]), gameObject);
+                } else {
+                    TooltipManager.Instance.Unregister_Tooltip(Residents_Peasant_Happiness.gameObject);
+                }
+                Residents_Citizen_Current.text = residence.Current_Residents[Building.Resident.Citizen].ToString();
+                Residents_Citizen_Max.text = residence.Resident_Space[Building.Resident.Citizen].ToString();
+                Residents_Citizen_Happiness.text = Helper.Float_To_String(100.0f * residence.Happiness[Building.Resident.Citizen], 0);
+                if (residence.Happiness_Info[Building.Resident.Citizen].Count != 0) {
+                    TooltipManager.Instance.Register_Tooltip(Residents_Citizen_Happiness.gameObject, Parse_Happiness_Tooltip(residence.Happiness_Info[Building.Resident.Citizen]), gameObject);
+                } else {
+                    TooltipManager.Instance.Unregister_Tooltip(Residents_Citizen_Happiness.gameObject);
+                }
+                Residents_Noble_Current.text = residence.Current_Residents[Building.Resident.Noble].ToString();
+                Residents_Noble_Max.text = residence.Resident_Space[Building.Resident.Noble].ToString();
+                Residents_Noble_Happiness.text = Helper.Float_To_String(100.0f * residence.Happiness[Building.Resident.Noble], 0);
+                if (residence.Happiness_Info[Building.Resident.Noble].Count != 0) {
+                    TooltipManager.Instance.Register_Tooltip(Residents_Noble_Happiness.gameObject, Parse_Happiness_Tooltip(residence.Happiness_Info[Building.Resident.Noble]), gameObject);
+                } else {
+                    TooltipManager.Instance.Unregister_Tooltip(Residents_Noble_Happiness.gameObject);
+                }
             } else {
                 Workers_Container.SetActive(false);
+                Residents_Container.SetActive(false);
             }
 
             //Delta
@@ -509,5 +526,17 @@ public class InspectorManager : MonoBehaviour {
         if(building != null && building.Is_Storehouse) {
             StorageSettingsGUIManager.Instance.Show(building);
         }
+    }
+
+    private string Parse_Happiness_Tooltip(List<string> rows)
+    {
+        StringBuilder builder = new StringBuilder();
+        for(int i = 0; i < rows.Count; i++) {
+            builder.Append(rows[i]);
+            if(i != rows.Count - 1) {
+                builder.Append(Environment.NewLine);
+            }
+        }
+        return builder.ToString();
     }
 }

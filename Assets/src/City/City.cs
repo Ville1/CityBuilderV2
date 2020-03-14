@@ -6,7 +6,7 @@ using UnityEngine;
 public enum Resource { Wood, Stone, Lumber, Tools }
 
 public class City {
-    public static readonly float GRACE_TIME = 600;
+    public static readonly float GRACE_TIME = 180;//180;
     public static readonly bool PAUSED_BUILDINGS_KEEP_WORKERS = false;
 
     private static City instance;
@@ -17,6 +17,7 @@ public class City {
     public float Cash { get; private set; }
     public Dictionary<Resource, float> Resource_Totals { get; private set; }
     public bool Grace_Time { get { return grace_time_remaining > 0.0f; } }
+    public float Grace_Time_Remaining { get { return grace_time_remaining; } }
     public Dictionary<Building.Resident, float> Unemployment { get; private set; }
     public Dictionary<Building.Resident, float> Happiness { get; private set; }
 
@@ -70,7 +71,7 @@ public class City {
     public void Update(float delta_time)
     {
         if(grace_time_remaining > 0.0f) {
-            grace_time_remaining = Mathf.Clamp(grace_time_remaining - (delta_time * TimeManager.Instance.Multiplier), 0.0f, GRACE_TIME);
+            grace_time_remaining = Math.Max(grace_time_remaining - TimeManager.Instance.Seconds_To_Days(delta_time), 0.0f);
         }
         //TODO: Add stopwatch?
         foreach(Building building in Buildings) {

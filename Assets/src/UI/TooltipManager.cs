@@ -20,6 +20,7 @@ public class TooltipManager : MonoBehaviour
     private float mouse_unmoved_time;
     private float line_height;
     private float font_widht;
+    private GameObject canvas;
 
     /// <summary>
     /// Initializiation
@@ -34,8 +35,8 @@ public class TooltipManager : MonoBehaviour
         Tooltip_Wait_Time = 1.0f;
         Tooltip_Sensitivity = 1.0f;
         mouse_unmoved_time = 0.0f;
-        line_height = 20.0f;
-        font_widht = 7.5f;
+        line_height = 17.5f;
+        font_widht = 7.75f;
         tooltips = new Dictionary<GameObject, Tooltip>();
         Tooltip_Panel.SetActive(false);
     }
@@ -76,10 +77,19 @@ public class TooltipManager : MonoBehaviour
                         }
                     }
                     Tooltip_Text.text = tooltip;
-                    Tooltip_Panel.GetComponent<RectTransform>().sizeDelta = new Vector2(5.0f + (max_line_lenght * font_widht), 7.5f + (lines * line_height));
-                    Tooltip_Text.GetComponent<RectTransform>().sizeDelta = new Vector2(max_line_lenght * font_widht, lines * line_height);
+                    Tooltip_Panel.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 7.5f + (max_line_lenght * font_widht));
+                    Tooltip_Panel.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 6.5f + (lines * line_height));
 
-                    Tooltip_Panel.transform.position = current_mouse_position;
+                    float screen_width = Canvas.GetComponentInChildren<RectTransform>().rect.width;
+                    if (current_mouse_position.x <= screen_width * 0.5f) {
+                        Tooltip_Panel.transform.position = current_mouse_position;
+                    } else {
+                        Tooltip_Panel.transform.position = new Vector3(
+                            current_mouse_position.x - Tooltip_Panel.GetComponent<RectTransform>().rect.width,
+                            current_mouse_position.y,
+                            current_mouse_position.z
+                        );
+                    }
                 }
             }
         } else {
@@ -119,6 +129,17 @@ public class TooltipManager : MonoBehaviour
         }
         foreach (GameObject tooltip_gameObject in owned_tooltips) {
             tooltips.Remove(tooltip_gameObject);
+        }
+    }
+
+    private GameObject Canvas
+    {
+        get {
+            if (canvas != null) {
+                return canvas;
+            }
+            canvas = GameObject.Find("Canvas");
+            return canvas;
         }
     }
 

@@ -140,7 +140,23 @@ public class Building {
         Construction_Range = prototype.Construction_Range;
         Max_Workers = Make_Resident_Dictionary(prototype.Max_Workers);
         Max_Workers_Total = prototype.Max_Workers_Total;
-        Worker_Settings = Make_Resident_Dictionary(prototype.Max_Workers);
+        Worker_Settings = new Dictionary<Resident, int>();
+        int settings_set = 0;
+        if (Max_Workers.Count != 0 && Max_Workers_Total != 0) {
+            foreach (KeyValuePair<Resident, int> pair in Max_Workers) {
+                Worker_Settings.Add(pair.Key, 0);
+                for (int i = 0; i < pair.Value; i++) {
+                    Worker_Settings[pair.Key]++;
+                    settings_set++;
+                    if(settings_set == Max_Workers_Total) {
+                        break;
+                    }
+                }
+                if(settings_set == Max_Workers_Total) {
+                    break;
+                }
+            }
+        }
         Current_Workers = Make_Resident_Dictionary();
         Can_Be_Paused = prototype.can_be_paused;
         Is_Paused = false;
@@ -550,11 +566,48 @@ public class Building {
     public float Efficency
     {
         get {
-            if (Is_Town_Hall) {
+            if (Is_Town_Hall || Max_Workers_Total == 0) {
                 return 1.0f;
             }
             //TODO: worker types, worker happiness, HP
-            return 1.0f;
+            float workers = 0.0f;
+            float workers_needed = Max_Workers_Total;
+            float worker_happiness_total = 0.0f;
+            foreach(KeyValuePair<Resident, int> pair in Current_Workers) {
+                workers += pair.Value;
+                worker_happiness_total += pair.Value * City.Instance.Happiness[pair.Key];
+            }
+            if(workers == 0.0f) {
+                return 0.0f;
+            }
+            float base_efficency = workers / workers_needed;
+            float multiplier = 1.0f;
+            float average_happiness = Mathf.Clamp01(worker_happiness_total / workers);
+
+            float happiness_penalty_threshold = 0.35f;
+            float happiness_penalty_max = 0.35f;
+            float happiness_bonus_threshold = 0.65f;
+            float happiness_bonus_max = 0.35f;
+            if (average_happiness < happiness_penalty_threshold) {
+                float penalty = happiness_penalty_max * ((happiness_penalty_threshold - average_happiness) / happiness_penalty_threshold);
+                multiplier -= penalty;
+            } else if(average_happiness > happiness_bonus_threshold) {
+                float bonus = happiness_bonus_max * ((average_happiness - happiness_bonus_threshold) / (1.0f - happiness_bonus_threshold));
+                multiplier += bonus;
+            }
+
+            float hp_penalty_threshold = 0.5f;
+            float hp_penalty_max = 0.5f;
+            float hp_relative = HP / Max_HP;
+            if (hp_relative < hp_penalty_threshold) {
+                float penalty = hp_penalty_max * ((hp_penalty_threshold - hp_relative) / hp_penalty_threshold);
+                multiplier -= penalty;
+            }
+
+            float min_multiplier = 0.05f;
+            multiplier = Math.Max(multiplier, min_multiplier);
+
+            return base_efficency * multiplier;
         }
     }
 

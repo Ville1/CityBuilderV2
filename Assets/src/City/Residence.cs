@@ -3,11 +3,18 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Residence : Building {
+    public static readonly Dictionary<Resident, float> BASE_HAPPINESS = new Dictionary<Resident, float>() {
+        { Resident.Peasant, 0.5f },
+        { Resident.Citizen, 0.4f },
+        { Resident.Noble, 0.25f }
+    };
+
     public Dictionary<Resident, int> Resident_Space { get; private set; }
     public Dictionary<Resident, int> Current_Residents { get; private set; }
     public Dictionary<Resident, float> Happiness { get; private set; }
+    public Dictionary<Resident, List<string>> Happiness_Info { get; private set; }
 
-    private float migration_progress;
+    private Dictionary<Resident, float> migration_progress;
 
     public Residence(Residence prototype, Tile tile, List<Tile> tiles, bool is_preview) : base(prototype, tile, tiles, is_preview)
     {
@@ -20,7 +27,12 @@ public class Residence : Building {
         foreach (Resident resident in Enum.GetValues(typeof(Resident))) {
             Happiness.Add(resident, 0.0f);
         }
-        migration_progress = 0.0f;
+        migration_progress = new Dictionary<Resident, float>();
+        Happiness_Info = new Dictionary<Resident, List<string>>();
+        foreach (Resident resident in Enum.GetValues(typeof(Resident))) {
+            Happiness_Info.Add(resident, new List<string>());
+            migration_progress.Add(resident, 0.0f);
+        }
     }
 
     public Residence(string name, string internal_name, UI_Category category, string sprite, BuildingSize size, int hp, Dictionary<Resource, int> cost, int cash_cost, List<Resource> allowed_resources, int storage_limit, int construction_time,
@@ -37,7 +49,7 @@ public class Residence : Building {
         }
         Current_Residents = new Dictionary<Resident, int>();
         Happiness = new Dictionary<Resident, float>();
-        migration_progress = -1.0f;
+        migration_progress = new Dictionary<Resident, float>();
     }
 
     public Residence(BuildingSaveData data) : base(data)
@@ -54,7 +66,7 @@ public class Residence : Building {
         foreach (Resident resident in Enum.GetValues(typeof(Resident))) {
             Happiness.Add(resident, 0.0f);
         }
-        migration_progress = 0.0f;
+        migration_progress = new Dictionary<Resident, float>();
     }
 
     public new void Update(float delta_time)
@@ -64,6 +76,9 @@ public class Residence : Building {
             return;
         }
         delta_time = update_cooldown * TimeManager.Instance.Multiplier;
+        foreach(KeyValuePair<Resident, List<string>> pair in Happiness_Info) {
+            pair.Value.Clear();
+        }
 
         if (!Is_Operational) {
             Current_Residents[Resident.Peasant] = 0;
@@ -72,36 +87,70 @@ public class Residence : Building {
             return;
         }
 
+        float max_unemployment_penalty = 0.5f;
+
         if(Resident_Space[Resident.Peasant] != 0) {
             if (City.Instance.Grace_Time) {
                 Happiness[Resident.Peasant] = 0.5f;
+                Happiness_Info[Resident.Peasant].Add(string.Format("Ignoring needs: {0} day{1}", Mathf.RoundToInt(City.Instance.Grace_Time_Remaining), Helper.Plural(Mathf.RoundToInt(City.Instance.Grace_Time_Remaining))));
             } else {
-                Happiness[Resident.Peasant] = 0.0f;
+                Happiness[Resident.Peasant] = BASE_HAPPINESS[Resident.Peasant];
+                Happiness_Info[Resident.Peasant].Add(string.Format("Base: {0}", UI_Happiness(BASE_HAPPINESS[Resident.Peasant])));
+
+                if(City.Instance.Unemployment[Resident.Peasant] > 0.0f) {
+                    Happiness[Resident.Peasant] -= max_unemployment_penalty * City.Instance.Unemployment[Resident.Peasant];
+                    Happiness_Info[Resident.Peasant].Add(string.Format("Unemployment: -{0}", UI_Happiness(max_unemployment_penalty * City.Instance.Unemployment[Resident.Peasant])));
+                }
+
+                Happiness[Resident.Peasant] = Math.Max(0.0f, Happiness[Resident.Peasant]);
             }
         }
 
         if (Resident_Space[Resident.Citizen] != 0) {
-            Happiness[Resident.Citizen] = 0.0f;
+            Happiness[Resident.Citizen] = BASE_HAPPINESS[Resident.Citizen];
+            Happiness_Info[Resident.Citizen].Add(string.Format("Base: {0}", UI_Happiness(BASE_HAPPINESS[Resident.Citizen])));
+
+            if (City.Instance.Unemployment[Resident.Citizen] > 0.0f) {
+                Happiness[Resident.Citizen] -= max_unemployment_penalty * City.Instance.Unemployment[Resident.Citizen];
+                Happiness_Info[Resident.Citizen].Add(string.Format("Unemployment: -{0}", UI_Happiness(max_unemployment_penalty * City.Instance.Unemployment[Resident.Citizen])));
+            }
+
+            Happiness[Resident.Citizen] = Math.Max(0.0f, Happiness[Resident.Citizen]);
         }
 
         if (Resident_Space[Resident.Noble] != 0) {
-            Happiness[Resident.Noble] = 0.0f;
+            Happiness[Resident.Noble] = BASE_HAPPINESS[Resident.Noble];
+            Happiness_Info[Resident.Noble].Add(string.Format("Base: {0}", UI_Happiness(BASE_HAPPINESS[Resident.Noble])));
+
+            if (City.Instance.Unemployment[Resident.Noble] > 0.0f) {
+                Happiness[Resident.Noble] -= max_unemployment_penalty * City.Instance.Unemployment[Resident.Noble];
+                Happiness_Info[Resident.Noble].Add(string.Format("Unemployment: -{0}", UI_Happiness(max_unemployment_penalty * City.Instance.Unemployment[Resident.Noble])));
+            }
+
+            Happiness[Resident.Noble] = Math.Max(0.0f, Happiness[Resident.Noble]);
         }
 
-        if (City.Instance.Grace_Time) {
-            migration_progress = delta_time * 0.25f;
-        } else {
-            migration_progress = delta_time * -0.25f;
-        }
-        int migration_delta = (int)migration_progress;
-        migration_progress -= migration_delta;
-        if(migration_delta != 0) {
-            foreach (Resident resident in Enum.GetValues(typeof(Resident))) {
-                if(City.Instance.Grace_Time && resident != Resident.Peasant) {
-                    continue;
+        float migration_threshold = 0.5f;
+        float emigration_threshold = 0.25f;
+        foreach (Resident resident in Enum.GetValues(typeof(Resident))) {
+            if(Happiness[resident] >= migration_threshold && Resident_Space[resident] - Current_Residents[resident] > 0) {
+                migration_progress[resident] += (delta_time / (float)((int)resident + 2));
+                if(migration_progress[resident] >= 1.0f) {
+                    migration_progress[resident] -= 1.0f;
+                    Current_Residents[resident]++;
                 }
-                Current_Residents[resident] = Mathf.Clamp(Current_Residents[resident] + migration_delta, 0, Resident_Space[resident]);
+            } else if(Happiness[resident] < emigration_threshold && Current_Residents[resident] > 0) {
+                migration_progress[resident] -= (delta_time * (1.0f + (((float)((int)resident + 1)) / 3.0f)));
+                if (migration_progress[resident] <= -1.0f) {
+                    migration_progress[resident] += 1.0f;
+                    Current_Residents[resident]--;
+                }
             }
         }
+    }
+
+    private string UI_Happiness(float happiness)
+    {
+        return Mathf.RoundToInt(100.0f * happiness).ToString();
     }
 }
