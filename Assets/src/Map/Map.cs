@@ -92,7 +92,6 @@ public class Map : MonoBehaviour
     {
         Delete();
         City.Instance.Delete();
-        TopGUIManager.Instance.Active = false;
         TimeManager.Instance.Paused = true;
         TimeManager.Instance.Reset_Time();
         Active = false;
@@ -255,6 +254,7 @@ public class Map : MonoBehaviour
         Active = true;
         CameraManager.Instance.Set_Camera_Location(Get_Tile_At(Width / 2, Height / 2).Coordinates.Vector);
         BuildMenuManager.Instance.Interactable = true;
+        TopGUIManager.Instance.Active = true;
     }
     
     private void Update_Progress()
@@ -337,7 +337,6 @@ public class Map : MonoBehaviour
     {
         Delete();
         City.Instance.Delete();
-        TopGUIManager.Instance.Active = false;
         TimeManager.Instance.Paused = true;
         TimeManager.Instance.Reset_Time();
         Active = false;
@@ -419,7 +418,7 @@ public class Map : MonoBehaviour
         Active = true;
         CameraManager.Instance.Set_Camera_Location(Get_Tile_At(Width / 2, Height / 2).Coordinates.Vector);
         BuildMenuManager.Instance.Interactable = true;
-        TopGUIManager.Instance.Active = City.Instance.Has_Town_Hall;
+        TopGUIManager.Instance.Active = true;
     }
 
     public Tile Get_Tile_At(int x, int y, Coordinates.Direction? offset = null)

@@ -52,6 +52,9 @@ public class MasterUIManager : MonoBehaviour {
         if(StorageSettingsGUIManager.Instance != null && typeof(StorageSettingsGUIManager).Name != type_name) {
             StorageSettingsGUIManager.Instance.Active = false;
         }
+        if (CityInfoGUIManager.Instance != null && typeof(CityInfoGUIManager).Name != type_name) {
+            CityInfoGUIManager.Instance.Active = false;
+        }
     }
 
     public bool Intercept_Keyboard_Input

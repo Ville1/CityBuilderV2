@@ -109,6 +109,7 @@
     <Compile Include="Assets\src\TimeManager.cs" />
     <Compile Include="Assets\src\UI\BuildMenuManager.cs" />
     <Compile Include="Assets\src\UI\CameraManager.cs" />
+    <Compile Include="Assets\src\UI\CityInfoGUIManager.cs" />
     <Compile Include="Assets\src\UI\ConfirmationDialogManager.cs" />
     <Compile Include="Assets\src\UI\ConsoleManager.cs" />
     <Compile Include="Assets\src\UI\InspectorManager.cs" />

@@ -140,11 +140,10 @@ public class Building {
         Construction_Range = prototype.Construction_Range;
         Max_Workers = Make_Resident_Dictionary(prototype.Max_Workers);
         Max_Workers_Total = prototype.Max_Workers_Total;
-        Worker_Settings = new Dictionary<Resident, int>();
+        Worker_Settings = Make_Resident_Dictionary();
         int settings_set = 0;
         if (Max_Workers.Count != 0 && Max_Workers_Total != 0) {
             foreach (KeyValuePair<Resident, int> pair in Max_Workers) {
-                Worker_Settings.Add(pair.Key, 0);
                 for (int i = 0; i < pair.Value; i++) {
                     Worker_Settings[pair.Key]++;
                     settings_set++;
@@ -348,6 +347,36 @@ public class Building {
         }
         Storage[resource] = Storage[resource] - amount;
         return amount;
+    }
+
+    public Dictionary<Resource, float> Total_Max_Storage
+    {
+        get {
+            Dictionary<Resource, float> max = new Dictionary<Resource, float>();
+            foreach(Resource resource in Allowed_Resources) {
+                float current = Storage.ContainsKey(resource) ? Storage[resource] : 0.0f;
+                float specific_limit = (Storage_Settings.Has(resource) ? Storage_Settings.Get(resource).Limit : Storage_Limit) - current;
+                float general_limit = Storage_Limit - Current_Storage_Amount;
+                max.Add(resource, Math.Min(specific_limit, general_limit) + current);
+            }
+            foreach(Resource resource in Consumes) {
+                float current = Input_Storage.ContainsKey(resource) ? Input_Storage[resource] : 0.0f;
+                if (max.ContainsKey(resource)) {
+                    max[resource] += (INPUT_OUTPUT_STORAGE_LIMIT - current);
+                } else {
+                    max.Add(resource, (INPUT_OUTPUT_STORAGE_LIMIT - current));
+                }
+            }
+            foreach (Resource resource in Produces) {
+                float current = Output_Storage.ContainsKey(resource) ? Output_Storage[resource] : 0.0f;
+                if (max.ContainsKey(resource)) {
+                    max[resource] += (INPUT_OUTPUT_STORAGE_LIMIT - current);
+                } else {
+                    max.Add(resource, (INPUT_OUTPUT_STORAGE_LIMIT - current));
+                }
+            }
+            return max;
+        }
     }
 
     public Dictionary<Resource, float> All_Resources

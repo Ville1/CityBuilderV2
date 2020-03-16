@@ -5,6 +5,7 @@ public class MenuManager : MonoBehaviour {
     public static MenuManager Instance { get; private set; }
 
     public Button Menu_Button;
+    public Button City_Button;
 
     /// <summary>
     /// Initializiation
@@ -23,12 +24,17 @@ public class MenuManager : MonoBehaviour {
     /// </summary>
     private void Update()
     {
-
+        City_Button.interactable = Map.Instance != null && Map.Instance.State == Map.MapState.Normal;
     }
 
     public void Menu_On_Click()
     {
         MainMenuManager.Instance.Toggle();
+    }
+
+    public void City_On_Click()
+    {
+        CityInfoGUIManager.Instance.Active = true;
     }
 
     public bool Interactable
@@ -38,6 +44,7 @@ public class MenuManager : MonoBehaviour {
         }
         set {
             Menu_Button.interactable = value;
+            City_Button.interactable = value;
         }
     }
 }

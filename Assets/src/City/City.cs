@@ -21,14 +21,23 @@ public class City {
     public Dictionary<Building.Resident, float> Unemployment { get; private set; }
     public Dictionary<Building.Resident, float> Happiness { get; private set; }
 
+    public float Cash_Delta { get; private set; }
+    public Dictionary<Resource, float> Resource_Max_Storage { get; private set; }
+    public Dictionary<Resource, float> Resource_Delta { get; private set; }
+
+    private static Dictionary<Resource, SpriteData> resource_icons;
     private float grace_time_remaining;
     private List<Building> removed_buildings;
 
     private City()
     {
         Resource_Totals = new Dictionary<Resource, float>();
+        Resource_Max_Storage = new Dictionary<Resource, float>();
+        Resource_Delta = new Dictionary<Resource, float>();
         foreach (Resource resource in Enum.GetValues(typeof(Resource))) {
             Resource_Totals.Add(resource, 0.0f);
+            Resource_Max_Storage.Add(resource, 0.0f);
+            Resource_Delta.Add(resource, 0.0f);
         }
         Unemployment = new Dictionary<Building.Resident, float>();
         Happiness = new Dictionary<Building.Resident, float>();
@@ -36,6 +45,7 @@ public class City {
             Unemployment.Add(resident, 0.0f);
             Happiness.Add(resident, 0.0f);
         }
+        Cash_Delta = 0.0f;
     }
 
     public void Start_New(string name)
@@ -89,7 +99,10 @@ public class City {
         //Update statistics
         foreach(Resource resource in Enum.GetValues(typeof(Resource))) {
             Resource_Totals[resource] = 0.0f;
+            Resource_Max_Storage[resource] = 0.0f;
+            Resource_Delta[resource] = 0.0f;
         }
+        Cash_Delta = 0.0f;
         Dictionary<Building.Resident, int> current_population = new Dictionary<Building.Resident, int>();
         Dictionary<Building.Resident, int> max_population = new Dictionary<Building.Resident, int>();
         Dictionary<Building.Resident, float> happiness = new Dictionary<Building.Resident, float>();
@@ -102,8 +115,15 @@ public class City {
         }
         foreach (Building building in Buildings) {
             foreach(KeyValuePair<Resource, float> pair in building.Storage) {
-                Resource_Totals[pair.Key] = Resource_Totals[pair.Key] + pair.Value;
+                Resource_Totals[pair.Key] += pair.Value;
             }
+            foreach (KeyValuePair<Resource, float> pair in building.Per_Day_Resource_Delta) {
+                Resource_Delta[pair.Key] += pair.Value;
+            }
+            foreach (KeyValuePair<Resource, float> pair in building.Total_Max_Storage) {
+                Resource_Max_Storage[pair.Key] += pair.Value;
+            }
+            Cash_Delta += building.Per_Day_Cash_Delta;
             if (building.Is_Complete) {
                 if (building is Residence && building.Is_Operational) {
                     Residence residence = building as Residence;
@@ -198,7 +218,7 @@ public class City {
         int noble_employment = workers_allocated[Building.Resident.Noble] - workers_required[Building.Resident.Noble] + available_workers[Building.Resident.Noble];
         float noble_employment_relative = noble_current == 0 ? 0.0f : noble_employment / (float)noble_current;
         Unemployment[Building.Resident.Citizen] = noble_employment_relative > 0.0f ? noble_employment_relative : 0.0f;
-        TopGUIManager.Instance.Update_City_Info(Name, Cash, 0.0f, Mathf.RoundToInt(Resource_Totals[Resource.Wood]), Mathf.RoundToInt(Resource_Totals[Resource.Lumber]), Mathf.RoundToInt(Resource_Totals[Resource.Stone]),
+        TopGUIManager.Instance.Update_City_Info(Name, Cash, Cash_Delta, Mathf.RoundToInt(Resource_Totals[Resource.Wood]), Mathf.RoundToInt(Resource_Totals[Resource.Lumber]), Mathf.RoundToInt(Resource_Totals[Resource.Stone]),
             Mathf.RoundToInt(Resource_Totals[Resource.Tools]), peasant_current, peasant_max, peasant_happiness, peasant_employment_relative, peasant_employment, citizen_current, citizen_max, citizen_happiness,
             citizen_employment_relative, citizen_employment, noble_current, noble_max, noble_happiness, noble_employment_relative, noble_employment);
     }
@@ -288,7 +308,6 @@ public class City {
             town_hall.Store_Resources(Resource.Tools, 500.0f);
 
             Buildings.Add(town_hall);
-            TopGUIManager.Instance.Active = true;
             return;
         }
         Cash -= prototype.Cash_Cost;
@@ -352,5 +371,20 @@ public class City {
             }
         }
         return amount_taken;
+    }
+
+    public static Dictionary<Resource, SpriteData> Resource_Icons
+    {
+        get {
+            if(resource_icons == null) {
+                resource_icons = new Dictionary<Resource, SpriteData>() {
+                    { Resource.Lumber, new SpriteData("lumber", SpriteManager.SpriteType.UI) },
+                    { Resource.Stone, new SpriteData("stone", SpriteManager.SpriteType.UI) },
+                    { Resource.Wood, new SpriteData("wood", SpriteManager.SpriteType.UI) },
+                    { Resource.Tools, new SpriteData("tools", SpriteManager.SpriteType.UI) }
+                };
+            }
+            return resource_icons;
+        }
     }
 }

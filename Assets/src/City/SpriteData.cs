@@ -18,6 +18,14 @@ public class SpriteData {
         Animation_Sprites = new List<string>();
     }
 
+    public SpriteData(string name, SpriteManager.SpriteType type)
+    {
+        Name = name;
+        Type = type;
+        Animation_Frame_Time = 0.0f;
+        Animation_Sprites = new List<string>();
+    }
+
     public SpriteData Clone()
     {
         SpriteData data = new SpriteData(Name);
