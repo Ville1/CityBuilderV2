@@ -11,6 +11,7 @@ public class InspectorManager : MonoBehaviour {
     public GameObject Panel;
 
     public Text Name_Text;
+    public Text Id_Text;
     public Image Image;
 
     public GameObject Instance_Container;
@@ -186,6 +187,7 @@ public class InspectorManager : MonoBehaviour {
             }
             upkeep_rows.Clear();
 
+            Id_Text.text = string.Empty;
             Size_Text.text = string.Format("Size: {0}x{1}", building.Width, building.Height);
             
             //Cost
@@ -291,6 +293,7 @@ public class InspectorManager : MonoBehaviour {
             Upkeep_Content.GetComponentInChildren<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 15.0f * upkeep_rows.Count);
 
         } else {
+            Id_Text.text = string.Format("#{0}", building.Id);
             HP_Text.text = string.Format("HP: {0} / {1}", Helper.Float_To_String(building.HP, 0), building.Max_HP);
             if (!building.Is_Built) {
                 Status_Text.text = string.Format("Construction: {0}%", Helper.Float_To_String(100.0f * (building.Construction_Progress / building.Construction_Time), 0));
@@ -439,9 +442,10 @@ public class InspectorManager : MonoBehaviour {
             if(building.Range > 0 || building.Construction_Range > 0) {
                 float range = Math.Max(building.Range, building.Construction_Range);
                 List<Tile> tiles_in_range = building.Get_Tiles_In_Circle(range);
+                List<Tile> special_highlight_tiles = building.On_Highlight != null ? building.On_Highlight(building) : new List<Tile>();
                 foreach (Tile t in tiles_in_range) {
                     if (t.Building != building) {
-                        t.Highlight = new Color(0.35f, 0.35f, 1.0f, 1.0f);
+                        t.Highlight = special_highlight_tiles.Contains(t) ? new Color(0.35f, 0.35f, 1.0f, 1.0f) : new Color(0.45f, 0.45f, 1.0f, 1.0f);
                         highlighted_tiles.Add(t);
                     }
                 }

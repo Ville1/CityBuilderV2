@@ -9,6 +9,7 @@ public class Building {
     public delegate void OnUpdateDelegate(Building building, float delta_time);
     public delegate void OnBuiltDelegate(Building building);
     public delegate void OnDeconstructDelegate(Building building);
+    public delegate List<Tile> OnHighlightDelegate(Building building);
 
     public static readonly float UPDATE_INTERVAL = 1.0f;
     public static readonly float ALERT_CHANGE_INTERVAL = 2.0f;
@@ -79,6 +80,7 @@ public class Building {
     public OnBuiltDelegate On_Built { get; private set; }
     public OnUpdateDelegate On_Update { get; private set; }
     public OnDeconstructDelegate On_Deconstruct { get; private set; }
+    public OnHighlightDelegate On_Highlight { get; private set; }
     public List<string> Permitted_Terrain { get; private set; }
     public List<Tag> Tags { get; private set; }
     public Dictionary<Resource, float> Per_Day_Resource_Delta { get; private set; }
@@ -168,6 +170,7 @@ public class Building {
         On_Built = prototype.On_Built;
         On_Update = prototype.On_Update;
         On_Deconstruct = prototype.On_Deconstruct;
+        On_Highlight = prototype.On_Highlight;
         Permitted_Terrain = Helper.Clone_List(prototype.Permitted_Terrain);
         Tags = Helper.Clone_List(prototype.Tags);
         Per_Day_Resource_Delta = new Dictionary<Resource, float>();
@@ -209,7 +212,7 @@ public class Building {
 
     public Building(string name, string internal_name, UI_Category category, string sprite, BuildingSize size, int hp, Dictionary<Resource, int> cost, int cash_cost, List<Resource> allowed_resources, int storage_limit, float transfer_speed,
         int construction_time, Dictionary<Resource, float> upkeep, float cash_upkeep, float construction_speed, float construction_range, Dictionary<Resident, int> workers, int max_workers, bool can_be_paused, bool is_road,
-        bool p_requires_connection, float range, int road_range, OnBuiltDelegate on_built, OnUpdateDelegate on_update, OnDeconstructDelegate on_deconstruct, List<Resource> consumes, List<Resource> produces)
+        bool p_requires_connection, float range, int road_range, OnBuiltDelegate on_built, OnUpdateDelegate on_update, OnDeconstructDelegate on_deconstruct, OnHighlightDelegate on_highlight, List<Resource> consumes, List<Resource> produces)
     {
         Id = -1;
         Name = name;
@@ -247,6 +250,7 @@ public class Building {
         On_Built = on_built;
         On_Update = on_update;
         On_Deconstruct = on_deconstruct;
+        On_Highlight = on_highlight;
         Consumes = Helper.Clone_List(consumes);
         Produces = Helper.Clone_List(produces);
         Permitted_Terrain = new List<string>();

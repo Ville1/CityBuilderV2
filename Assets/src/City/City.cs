@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-//public enum Resource { Wood, Stone, Lumber, Tools }
-
 public class City {
     public static readonly float GRACE_TIME = 180;//180;
     public static readonly bool PAUSED_BUILDINGS_KEEP_WORKERS = false;
@@ -24,8 +22,7 @@ public class City {
     public float Cash_Delta { get; private set; }
     public Dictionary<Resource, float> Resource_Max_Storage { get; private set; }
     public Dictionary<Resource, float> Resource_Delta { get; private set; }
-
-    private static Dictionary<Resource, SpriteData> resource_icons;
+    
     private float grace_time_remaining;
     private List<Building> removed_buildings;
 

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 public class Tile
 {
@@ -23,6 +24,7 @@ public class Tile
     public float Base_Appeal { get; private set; }
     public float Base_Appeal_Range { get; private set; }
     public float Appeal { get { return Base_Appeal; } }
+    public List<Building> Worked_By { get; private set; }
 
     protected Color highlight_color;
     protected bool show_coordinates;
@@ -37,7 +39,8 @@ public class Tile
         current_id++;
         X = x;
         Y = y;
-        
+        Worked_By = new List<Building>();
+
         GameObject = GameObject.Instantiate(
             PrefabManager.Instance.Tile,
             new Vector3(X, Y, Map.Z_LEVEL),
