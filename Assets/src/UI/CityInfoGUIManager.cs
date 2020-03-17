@@ -99,7 +99,7 @@ public class CityInfoGUIManager : MonoBehaviour {
     private void Update_Resources()
     {
         if(resource_rows.Count == 0) {
-            foreach(Resource resouce in Enum.GetValues(typeof(Resource))) {
+            foreach(Resource resouce in Resource.All) {
                 GameObject row = GameObject.Instantiate(
                     Resource_Row_Prototype,
                     new Vector3(
@@ -113,8 +113,8 @@ public class CityInfoGUIManager : MonoBehaviour {
                 row.SetActive(true);
                 row.name = string.Format("{0}_row", resouce.ToString().ToLower());
                 GameObject.Find(string.Format("{0}/NameText", row.name)).GetComponent<Text>().text = resouce.ToString();
-                if (City.Resource_Icons.ContainsKey(resouce)) {
-                    GameObject.Find(string.Format("{0}/IconImage", row.name)).GetComponent<Image>().sprite = SpriteManager.Instance.Get(City.Resource_Icons[resouce].Name, City.Resource_Icons[resouce].Type);
+                if (resouce.Has_Sprite) {
+                    GameObject.Find(string.Format("{0}/IconImage", row.name)).GetComponent<Image>().sprite = SpriteManager.Instance.Get(resouce.Sprite_Name, resouce.Sprite_Type);
                 } else {
                     GameObject.Find(string.Format("{0}/IconImage", row.name)).SetActive(false);
                 }
@@ -122,7 +122,7 @@ public class CityInfoGUIManager : MonoBehaviour {
             }
         }
 
-        foreach(Resource resource in Enum.GetValues(typeof(Resource))) {
+        foreach(Resource resource in Resource.All) {
             GameObject row = resource_rows[resource];
             GameObject.Find(string.Format("{0}/CurrentText", row.name)).GetComponent<Text>().text = Helper.Float_To_String(City.Instance.Resource_Totals[resource], 0);
             GameObject.Find(string.Format("{0}/MaxText", row.name)).GetComponent<Text>().text = Helper.Float_To_String(City.Instance.Resource_Max_Storage[resource], 0);

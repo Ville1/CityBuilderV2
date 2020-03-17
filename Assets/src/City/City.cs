@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public enum Resource { Wood, Stone, Lumber, Tools }
+//public enum Resource { Wood, Stone, Lumber, Tools }
 
 public class City {
     public static readonly float GRACE_TIME = 180;//180;
@@ -34,7 +34,7 @@ public class City {
         Resource_Totals = new Dictionary<Resource, float>();
         Resource_Max_Storage = new Dictionary<Resource, float>();
         Resource_Delta = new Dictionary<Resource, float>();
-        foreach (Resource resource in Enum.GetValues(typeof(Resource))) {
+        foreach (Resource resource in Resource.All) {
             Resource_Totals.Add(resource, 0.0f);
             Resource_Max_Storage.Add(resource, 0.0f);
             Resource_Delta.Add(resource, 0.0f);
@@ -97,7 +97,7 @@ public class City {
         removed_buildings.Clear();
         
         //Update statistics
-        foreach(Resource resource in Enum.GetValues(typeof(Resource))) {
+        foreach(Resource resource in Resource.All) {
             Resource_Totals[resource] = 0.0f;
             Resource_Max_Storage[resource] = 0.0f;
             Resource_Delta[resource] = 0.0f;
@@ -371,20 +371,5 @@ public class City {
             }
         }
         return amount_taken;
-    }
-
-    public static Dictionary<Resource, SpriteData> Resource_Icons
-    {
-        get {
-            if(resource_icons == null) {
-                resource_icons = new Dictionary<Resource, SpriteData>() {
-                    { Resource.Lumber, new SpriteData("lumber", SpriteManager.SpriteType.UI) },
-                    { Resource.Stone, new SpriteData("stone", SpriteManager.SpriteType.UI) },
-                    { Resource.Wood, new SpriteData("wood", SpriteManager.SpriteType.UI) },
-                    { Resource.Tools, new SpriteData("tools", SpriteManager.SpriteType.UI) }
-                };
-            }
-            return resource_icons;
-        }
     }
 }

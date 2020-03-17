@@ -261,7 +261,7 @@ public class Building {
             current_id = Id + 1;
         }
         foreach(ResourceSaveData resource_data in data.Storage) {
-            Storage.Add((Resource)resource_data.Resource, resource_data.Amount);
+            Storage.Add(Resource.Get((Resource.ResourceType)resource_data.Resource), resource_data.Amount);
         }
         foreach (ResidentSaveData worker_data in data.Worker_Allocation) {
             Worker_Settings[(Resident)worker_data.Resident] = worker_data.Count;
@@ -761,7 +761,7 @@ public class Building {
             HP = HP
         };
         foreach(KeyValuePair<Resource, float> pair in Storage) {
-            data.Storage.Add(new ResourceSaveData() { Resource = (int)pair.Key, Amount = pair.Value });
+            data.Storage.Add(new ResourceSaveData() { Resource = pair.Key.Id, Amount = pair.Value });
         }
         foreach(KeyValuePair<Resident, int> pair in Worker_Settings) {
             data.Worker_Allocation.Add(new ResidentSaveData() { Resident = (int)pair.Key, Count = pair.Value });
