@@ -85,6 +85,7 @@ public class Building {
     public List<Tag> Tags { get; private set; }
     public Dictionary<Resource, float> Per_Day_Resource_Delta { get; private set; }
     public float Per_Day_Cash_Delta { get; private set; }
+    public List<SpecialSetting> Special_Settings { get; private set; }
 
     public GameObject GameObject { get; private set; }
     public SpriteRenderer Renderer { get { return GameObject != null ? GameObject.GetComponent<SpriteRenderer>() : null; } }
@@ -185,6 +186,10 @@ public class Building {
         foreach (Resource resource in Produces) {
             Output_Storage.Add(resource, 0.0f);
         }
+        Special_Settings = new List<SpecialSetting>();
+        foreach(SpecialSetting setting in prototype.Special_Settings) {
+            Special_Settings.Add(new SpecialSetting(setting));
+        }
 
         animation_index = 0;
         animation_cooldown = Sprite.Animation_Frame_Time;
@@ -255,6 +260,7 @@ public class Building {
         Produces = Helper.Clone_List(produces);
         Permitted_Terrain = new List<string>();
         Tags = new List<Tag>();
+        Special_Settings = new List<SpecialSetting>();
     }
 
     public Building(BuildingSaveData data) : this(BuildingPrototypes.Instance.Get(data.Internal_Name), Map.Instance.Get_Tile_At(data.X, data.Y),

@@ -25,7 +25,7 @@ public class InspectorManager : MonoBehaviour {
     public GameObject Storage_Row_Prototype;
     public Button Pause_Button;
     public Button Delete_Button;
-    public Button Storage_Settings_Button;
+    public Button Settings_Button;
 
     public GameObject Workers_Container;
     public Text Worker_Peasant_Current;
@@ -125,8 +125,8 @@ public class InspectorManager : MonoBehaviour {
         Worker_Noble_Minus_Button.onClick = click8;
 
         Button.ButtonClickedEvent click9 = new Button.ButtonClickedEvent();
-        click9.AddListener(new UnityAction(Show_Storage_Settings));
-        Storage_Settings_Button.onClick = click9;
+        click9.AddListener(new UnityAction(Show_Settings));
+        Settings_Button.onClick = click9;
     }
 
     /// <summary>
@@ -436,7 +436,7 @@ public class InspectorManager : MonoBehaviour {
             Pause_Button.interactable = building.Can_Be_Paused;
             Pause_Button.GetComponentInChildren<Text>().text = building.Is_Paused ? "Unpause" : "Pause";
             Delete_Button.interactable = building.Can_Be_Deleted;
-            Storage_Settings_Button.interactable = building.Is_Storehouse;
+            Settings_Button.interactable = building.Is_Complete && (building.Is_Storehouse || building.Special_Settings.Count > 0);
 
             //Highlights
             if(building.Range > 0 || building.Construction_Range > 0) {
@@ -525,10 +525,15 @@ public class InspectorManager : MonoBehaviour {
         }
     }
 
-    private void Show_Storage_Settings()
+    private void Show_Settings()
     {
-        if(building != null && building.Is_Storehouse) {
+        if(building == null) {
+            return;
+        }
+        if(building.Is_Storehouse) {
             StorageSettingsGUIManager.Instance.Show(building);
+        } else if(building.Special_Settings.Count != 0) {
+            SpecialSettingsGUIManager.Instance.Show(building);
         }
     }
 

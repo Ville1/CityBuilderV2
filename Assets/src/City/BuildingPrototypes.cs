@@ -20,7 +20,7 @@ public class BuildingPrototypes {
 
         prototypes.Add(new Building("Wood Cutters Lodge", "wood_cutters_lodge", Building.UI_Category.Forestry, "wood_cutters_lodge", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
             { Resource.Wood, 75 }, { Resource.Stone, 5 }, { Resource.Tools, 15 }
-        }, 90, new List<Resource>(), 0, 0.0f, 85, new Dictionary<Resource, float>() { { Resource.Wood, 0.05f } }, 0.75f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 } }, 10, true, false, true, 5.0f, 0, delegate(Building building) {
+        }, 90, new List<Resource>(), 0, 0.0f, 85, new Dictionary<Resource, float>(), 0.75f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 } }, 10, true, false, true, 5.0f, 0, delegate(Building building) {
             foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
                 tile.Worked_By.Add(building);
             }
@@ -39,7 +39,10 @@ public class BuildingPrototypes {
                 }
             }
             wood /= 5.0f;
+            float firewood = wood * building.Special_Settings.First(x => x.Name == "firewood_ratio").Slider_Value;
+            wood -= firewood;
             building.Produce(Resource.Wood, wood, delta_time);
+            building.Produce(Resource.Firewood, firewood, delta_time);
         }, delegate(Building building) {
             foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
                 if (tile.Worked_By.Contains(building)) {
@@ -55,7 +58,8 @@ public class BuildingPrototypes {
                 }
             }
             return worked_tiles;
-        }, new List<Resource>(), new List<Resource>() { Resource.Wood }));
+        }, new List<Resource>(), new List<Resource>() { Resource.Wood, Resource.Firewood }));
+        prototypes.First(x => x.Internal_Name == "wood_cutters_lodge").Special_Settings.Add(new SpecialSetting("firewood_ratio", "Firewood production", SpecialSetting.SettingType.Slider, 0.0f));
 
         prototypes.Add(new Building("Cobblestone Road", "cobblestone_road", Building.UI_Category.Infrastructure, "road_nesw", Building.BuildingSize.s1x1, 10, new Dictionary<Resource, int>() { { Resource.Stone, 10 }, { Resource.Tools, 1 } }, 10,
             new List<Resource>(), 0, 0.0f, 10, new Dictionary<Resource, float>() { { Resource.Stone, 0.01f } }, 0.0f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, true, true, 0.0f, 0, null, null, null, null, new List<Resource>(), new List<Resource>()));
@@ -131,7 +135,78 @@ public class BuildingPrototypes {
         prototypes.Add(new Building("Storehouse", "storehouse", Building.UI_Category.Infrastructure, "storehouse", Building.BuildingSize.s2x2, 200, new Dictionary<Resource, int>() {
             { Resource.Stone, 30 }, { Resource.Tools, 25 }, { Resource.Lumber, 275 }
         }, 225, new List<Resource>() { Resource.Lumber, Resource.Stone, Resource.Tools, Resource.Wood },
-        2000, 25.0f, 250, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f } }, 1.0f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 } }, 10, true, false, true, 0.0f, 10, null, null, null, null, new List<Resource>(), new List<Resource>()));
+        2000, 25.0f, 250, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f } }, 1.0f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 } }, 10, false, false, true, 0.0f, 10, null, null, null, null, new List<Resource>(), new List<Resource>()));
+
+        prototypes.Add(new Building("Cellar", "cellar", Building.UI_Category.Infrastructure, "cellar", Building.BuildingSize.s1x1, 100, new Dictionary<Resource, int>() {
+            { Resource.Wood, 15 }, { Resource.Stone, 50 }, { Resource.Tools, 10 }, { Resource.Lumber, 50 }
+        }, 100, new List<Resource>() { Resource.Roots, Resource.Berries, Resource.Mushrooms, Resource.Herbs },
+        1000, 25.0f, 110, new Dictionary<Resource, float>() { { Resource.Wood, 0.05f } }, 0.5f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 5 } }, 5, false, false, true, 0.0f, 10, null, null, null, null, new List<Resource>(), new List<Resource>()));
+
+        prototypes.Add(new Building("Wood Stockpile", "wood_stockpile", Building.UI_Category.Infrastructure, "wood_stockpile", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
+            { Resource.Wood, 25 }, { Resource.Stone, 5 }, { Resource.Tools, 5 }
+        }, 100, new List<Resource>() { Resource.Wood, Resource.Lumber, Resource.Firewood },
+        1000, 25.0f, 50, new Dictionary<Resource, float>() { { Resource.Wood, 0.01f } }, 0.25f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 5 } }, 5, false, false, true, 0.0f, 10, null, null, null, null, new List<Resource>(), new List<Resource>()));
+
+        prototypes.Add(new Building("Gatherers Lodge", "gatherers_lodge", Building.UI_Category.Forestry, "gatherers_lodge", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
+            { Resource.Wood, 85 }, { Resource.Stone, 10 }, { Resource.Tools, 10 }
+        }, 100, new List<Resource>(), 0, 0.0f, 95, new Dictionary<Resource, float>() { { Resource.Wood, 0.05f } }, 0.75f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 5 } }, 5, true, false, true, 6.0f, 0, delegate (Building building) {
+            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
+                tile.Worked_By.Add(building);
+            }
+        }, delegate (Building building, float delta_time) {
+            if (!building.Is_Operational) {
+                return;
+            }
+            float roots = 0.0f;
+            float berries = 0.0f;
+            float mushrooms = 0.0f;
+            float herbs = 0.0f;
+            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
+                if (tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building && tile.Building == null) {
+                    if (tile.Internal_Name == "grass") {
+                        roots     += 0.010f;
+                        berries   += 0.025f;
+                        mushrooms += 0.005f;
+                        herbs     += 0.005f;
+                    } else if (tile.Internal_Name == "fertile_ground") {
+                        roots     += 0.015f;
+                        berries   += 0.045f;
+                        mushrooms += 0.010f;
+                        herbs     += 0.025f;
+                    } else if (tile.Internal_Name == "sparse_forest") {
+                        roots     += 0.045f;
+                        berries   += 0.025f;
+                        mushrooms += 0.045f;
+                        herbs     += 0.005f;
+                    } else if (tile.Internal_Name == "forest") {
+                        roots     += 0.045f;
+                        berries   += 0.020f;
+                        mushrooms += 0.050f;
+                        herbs     += 0.010f;
+                    }
+                }
+            }
+            float multiplier = 1.0f;
+            building.Produce(Resource.Roots, roots * multiplier, delta_time);
+            building.Produce(Resource.Berries, berries * multiplier, delta_time);
+            building.Produce(Resource.Mushrooms, mushrooms * multiplier, delta_time);
+            building.Produce(Resource.Herbs, herbs * multiplier, delta_time);
+        }, delegate (Building building) {
+            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
+                if (tile.Worked_By.Contains(building)) {
+                    tile.Worked_By.Remove(building);
+                }
+            }
+        }, delegate (Building building) {
+            List<Tile> worked_tiles = new List<Tile>();
+            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
+                Building b = tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name);
+                if (tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building) {
+                    worked_tiles.Add(tile);
+                }
+            }
+            return worked_tiles;
+        }, new List<Resource>(), new List<Resource>() { Resource.Wood }));
     }
 
     public static BuildingPrototypes Instance

@@ -29,7 +29,7 @@ public class StorageSettingsGUIManager : MonoBehaviour {
         Active = false;
         Row_Prototype.SetActive(false);
         rows = new Dictionary<Resource, GameObject>();
-        row_id++;
+        row_id = 0;
     }
 
     /// <summary>

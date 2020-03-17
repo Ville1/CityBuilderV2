@@ -55,6 +55,9 @@ public class MasterUIManager : MonoBehaviour {
         if (CityInfoGUIManager.Instance != null && typeof(CityInfoGUIManager).Name != type_name) {
             CityInfoGUIManager.Instance.Active = false;
         }
+        if (SpecialSettingsGUIManager.Instance != null && typeof(SpecialSettingsGUIManager).Name != type_name) {
+            SpecialSettingsGUIManager.Instance.Active = false;
+        }
     }
 
     public bool Intercept_Keyboard_Input
