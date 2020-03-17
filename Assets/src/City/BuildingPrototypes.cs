@@ -39,7 +39,7 @@ public class BuildingPrototypes {
                 }
             }
             wood /= 5.0f;
-            building.Produce(Resource.Wood, wood * building.Efficency, delta_time);
+            building.Produce(Resource.Wood, wood, delta_time);
         }, delegate(Building building) {
             foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
                 if (tile.Worked_By.Contains(building)) {
@@ -96,7 +96,12 @@ public class BuildingPrototypes {
         prototypes.Add(new Building("Lumber Mill", "lumber_mill", Building.UI_Category.Forestry, "lumber_mill", Building.BuildingSize.s3x3, 200, new Dictionary<Resource, int>() {
             { Resource.Wood, 225 }, { Resource.Stone, 20 }, { Resource.Tools, 40 }
         }, 200, new List<Resource>(), 0, 50.0f, 250, new Dictionary<Resource, float>() { { Resource.Wood, 0.10f } }, 2.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() {
-            { Building.Resident.Peasant, 20 }, { Building.Resident.Citizen, 10 } }, 20, true, false, true, 0.0f, 7, null, null, null, null, new List<Resource>() { Resource.Wood }, new List<Resource>() { Resource.Lumber }));
+            { Building.Resident.Peasant, 20 }, { Building.Resident.Citizen, 10 } }, 20, true, false, true, 0.0f, 7, null, delegate(Building building, float delta_time) {
+                if (!building.Is_Operational) {
+                    return;
+                }
+                building.Process(Resource.Wood, 20.0f, Resource.Lumber, 10.0f, delta_time);
+            }, null, null, new List<Resource>() { Resource.Wood }, new List<Resource>() { Resource.Lumber }));
 
         prototypes.Add(new Building("Clear Trees", "clear_trees", Building.UI_Category.Forestry, "axe", Building.BuildingSize.s1x1, 1, new Dictionary<Resource, int>() { { Resource.Tools, 1 } }, 5, new List<Resource>(),
             0, 0.0f, 0, new Dictionary<Resource, float>(), 0.0f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 0, null, delegate (Building building, float delta_time) {
@@ -124,7 +129,7 @@ public class BuildingPrototypes {
         prototypes.First(x => x.Internal_Name == "clear_trees").Tags.Add(Building.Tag.Undeletable);
 
         prototypes.Add(new Building("Storehouse", "storehouse", Building.UI_Category.Infrastructure, "storehouse", Building.BuildingSize.s2x2, 200, new Dictionary<Resource, int>() {
-            { Resource.Stone, 30 }, { Resource.Tools, 25 }//, { Resource.Lumber, 275 }
+            { Resource.Stone, 30 }, { Resource.Tools, 25 }, { Resource.Lumber, 275 }
         }, 225, new List<Resource>() { Resource.Lumber, Resource.Stone, Resource.Tools, Resource.Wood },
         2000, 25.0f, 250, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f } }, 1.0f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 } }, 10, true, false, true, 0.0f, 10, null, null, null, null, new List<Resource>(), new List<Resource>()));
     }

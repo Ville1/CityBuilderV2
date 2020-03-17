@@ -160,7 +160,33 @@ public class ConsoleManager : MonoBehaviour
             }
             return string.Format("{0} building{1} built", count, Helper.Plural(count));
         });
-        
+
+        commands.Add("give", (string[] arguments) => {
+            if (arguments.Length != 3) {
+                return "Invalid number of arguments";
+            }
+            int amount = 0;
+            if(!int.TryParse(arguments[1], out amount)) {
+                return "Invalid resource amount";
+            }
+            if(arguments[2].ToLower() == "cash") {
+                City.Instance.Add_Cash(amount);
+            } else {
+                Resource resource = null;
+                foreach(Resource r in Resource.All) {
+                    if(r.ToString().ToLower() == arguments[2].ToLower()) {
+                        resource = r;
+                        break;
+                    }
+                }
+                if(resource == null) {
+                    return "Invalid resource name";
+                }
+                City.Instance.Add_To_Storage(resource, amount);
+            }
+            return "There you go!";
+        });
+
         Update_Output();
         Panel.SetActive(false);
     }

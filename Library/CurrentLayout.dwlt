@@ -45,7 +45,7 @@ MonoBehaviour:
   m_MinSize: {x: 683, y: 342}
   m_MaxSize: {x: 12008, y: 8042}
   vertical: 0
-  controlID: 72
+  controlID: 9
 --- !u!114 &3
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -209,7 +209,7 @@ MonoBehaviour:
   m_MinSize: {x: 406, y: 342}
   m_MaxSize: {x: 8006, y: 8042}
   vertical: 1
-  controlID: 73
+  controlID: 10
 --- !u!114 &10
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -233,7 +233,7 @@ MonoBehaviour:
   m_MinSize: {x: 406, y: 221}
   m_MaxSize: {x: 8006, y: 4021}
   vertical: 0
-  controlID: 48
+  controlID: 11
 --- !u!114 &11
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -324,19 +324,19 @@ MonoBehaviour:
     m_ShowAllHits: 0
     m_SearchArea: 0
     m_Folders:
-    - Assets/src/City
+    - Assets/Resources/images/buildings
   m_ViewMode: 1
   m_StartGridSize: 43
   m_LastFolders:
-  - Assets/src/City
+  - Assets/Resources/images/buildings
   m_LastFoldersGridSize: 43
   m_LastProjectPath: C:\Users\Ville\Documents\UnityProjects\CityBuilderV2
   m_IsLocked: 0
   m_FolderTreeState:
     scrollPos: {x: 0, y: 36}
-    m_SelectedIDs: 12270000
-    m_LastClickedID: 10002
-    m_ExpandedIDs: 000000001e250000622500001626000028270000
+    m_SelectedIDs: 2a270000
+    m_LastClickedID: 10026
+    m_ExpandedIDs: 000000001e250000622500001626000028270000ffffff7f
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -389,8 +389,8 @@ MonoBehaviour:
       m_Icon: {fileID: 0}
       m_ResourceFile: 
   m_ListAreaState:
-    m_SelectedInstanceIDs: aa3f0000
-    m_LastClickedInstanceID: 16298
+    m_SelectedInstanceIDs: 02260000
+    m_LastClickedInstanceID: 9730
     m_HadKeyboardFocusLastEvent: 1
     m_ExpandedInstanceIDs: 4e24000000000000082600009c27feff
     m_RenameOverlay:
@@ -480,9 +480,9 @@ MonoBehaviour:
     height: 648
   m_TreeViewState:
     scrollPos: {x: 0, y: 0}
-    m_SelectedIDs: fc310000
-    m_LastClickedID: 12796
-    m_ExpandedIDs: e2fbffff000000003a2800009e300000fc310000
+    m_SelectedIDs: 3c280000
+    m_LastClickedID: 10300
+    m_ExpandedIDs: e4fbffff00000000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 

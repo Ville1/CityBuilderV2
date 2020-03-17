@@ -779,14 +779,14 @@ public class Building {
     }
 
     /// <summary>
-    /// TODO: High game speeds create small error in amount of prodeucted resources
+    /// TODO: High game speeds create small error in amount of produced resources
     /// </summary>
     /// <param name="resource"></param>
     /// <param name="amount_per_day"></param>
     /// <param name="delta_time"></param>
     public void Produce(Resource resource, float amount_per_day, float delta_time)
     {
-        float actual_amount = Calculate_Actual_Amount(amount_per_day, delta_time);
+        float actual_amount = Calculate_Actual_Amount(amount_per_day * Efficency, delta_time);
         float space = Mathf.Max(0.0f, Output_Storage.ContainsKey(resource) ? INPUT_OUTPUT_STORAGE_LIMIT - Output_Storage[resource] : INPUT_OUTPUT_STORAGE_LIMIT);
         float stored = Mathf.Min(space, actual_amount);
         if (Output_Storage.ContainsKey(resource)) {
@@ -795,6 +795,95 @@ public class Building {
             Output_Storage.Add(resource, stored);
         }
         Update_Delta(resource, amount_per_day);
+    }
+
+    public void Process(Resource input, float input_amount, Resource output, float output_amount, float delta_time)
+    {
+        Process(new Dictionary<Resource, float>() { { input, input_amount } }, new Dictionary<Resource, float>() { { output, output_amount } }, delta_time);
+    }
+
+    public void Process(Dictionary<Resource, float> inputs, Dictionary<Resource, float> outputs, float delta_time)
+    {
+        float min_input_relative = 1.0f;
+        float efficency = Efficency;
+        Dictionary<Resource, float> consumed_resouces = new Dictionary<Resource, float>();
+        foreach(KeyValuePair<Resource, float> pair in inputs) {
+            float amount = pair.Value * efficency;
+            float actual_amount = Calculate_Actual_Amount(amount, delta_time);
+            float actual_amount_desired = actual_amount;
+            Update_Delta(pair.Key, -amount);
+            if (!Input_Storage.ContainsKey(pair.Key)) {
+                actual_amount = 0.0f;
+            } else if(Input_Storage[pair.Key] < actual_amount) {
+                actual_amount = Input_Storage[pair.Key];
+            }
+            float relative = actual_amount / actual_amount_desired;
+            if(relative < min_input_relative) {
+                min_input_relative = relative;
+            }
+            consumed_resouces.Add(pair.Key, actual_amount);
+        }
+        if(min_input_relative == 0.0f) {
+            Show_Alert("alert_no_resources");
+            return;
+        }
+
+        float min_output_relative = 1.0f;
+        Dictionary<Resource, float> produced_resouces = new Dictionary<Resource, float>();
+        foreach (KeyValuePair<Resource, float> pair in outputs) {
+            float amount = pair.Value * efficency;
+            float actual_amount = Calculate_Actual_Amount(amount, delta_time);
+            float actual_amount_desired = actual_amount;
+
+            float cap = Output_Storage.ContainsKey(pair.Key) ? INPUT_OUTPUT_STORAGE_LIMIT - Output_Storage[pair.Key] : INPUT_OUTPUT_STORAGE_LIMIT;
+            if(cap < actual_amount) {
+                actual_amount = cap;
+            }
+
+            float relative = actual_amount / actual_amount_desired;
+            if (relative < min_output_relative) {
+                min_output_relative = relative;
+            }
+            produced_resouces.Add(pair.Key, actual_amount);
+        }
+        if(min_output_relative == 0.0f) {
+            Show_Alert("alert_no_room");
+            return;
+        }
+
+        foreach (KeyValuePair<Resource, float> pair in consumed_resouces) {
+            float consumed = pair.Value;
+            if (min_output_relative < min_input_relative) {
+                consumed = Calculate_Actual_Amount(inputs[pair.Key] * efficency, delta_time) * min_output_relative;
+            }
+            if (!Input_Storage.ContainsKey(pair.Key)) {
+                CustomLogger.Instance.Error(string.Format("Out of {0}", pair.Key));
+                return;
+            }
+            Input_Storage[pair.Key] -= consumed;
+            if (Input_Storage[pair.Key] < 0.0f) {
+                CustomLogger.Instance.Error(string.Format("Negative {0}", pair.Key));
+                Input_Storage[pair.Key] = 0.0f;
+            }
+        }
+
+        foreach(KeyValuePair<Resource, float> pair in produced_resouces) {
+            float produced = pair.Value;
+            float per_day = outputs[pair.Key] * efficency * min_output_relative;
+            if (min_input_relative < min_output_relative) {
+                produced = Calculate_Actual_Amount(outputs[pair.Key] * efficency, delta_time) * min_input_relative;
+                per_day = outputs[pair.Key] * efficency * min_input_relative;
+            }
+            if (!Output_Storage.ContainsKey(pair.Key)) {
+                Output_Storage.Add(pair.Key, 0.0f);
+            }
+            Output_Storage[pair.Key] += produced;
+            if(Output_Storage[pair.Key] > INPUT_OUTPUT_STORAGE_LIMIT) {
+                CustomLogger.Instance.Error(string.Format("Too much {0}", pair.Key));
+                Output_Storage[pair.Key] = INPUT_OUTPUT_STORAGE_LIMIT;
+            }
+            Update_Delta(pair.Key, per_day);
+        }
     }
 
     private float Calculate_Actual_Amount(float amount_per_day, float delta_time)
