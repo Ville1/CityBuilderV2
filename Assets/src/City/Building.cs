@@ -537,6 +537,9 @@ public class Building {
             float max_transfer = Transfer_Speed * delta_days * Efficency;
             if (Is_Storehouse) {
                 foreach(Building building in connected_buildings) {
+                    if(building.Id == Id) {
+                        continue;
+                    }
                     foreach(Resource resource in Allowed_Resources) {
                         float take = Math.Min(max_transfer - resources_transfered, Storage_Settings.Get(resource).Limit - Storage[resource]);
                         if (building.Produces.Contains(resource)) {
@@ -553,6 +556,9 @@ public class Building {
                 }
             } else {
                 foreach(Building building in connected_buildings) {
+                    if (building.Id == Id) {
+                        continue;
+                    }
                     foreach (Resource resource in Consumes) {
                         float take = Math.Min(max_transfer - resources_transfered, INPUT_OUTPUT_STORAGE_LIMIT - Input_Storage[resource]);
                         if (building.Produces.Contains(resource)) {
@@ -576,7 +582,13 @@ public class Building {
             float resources_transfered = 0.0f;
             float max_transfer = Transfer_Speed * delta_days * Efficency;
             foreach (Building building in connected_buildings) {
-                foreach(Resource resource in building.Consumes) {
+                if (building.Id == Id) {
+                    continue;
+                }
+                foreach (Resource resource in building.Consumes) {
+                    if (!Storage.ContainsKey(resource)) {
+                        continue;
+                    }
                     float give = Math.Min(max_transfer - resources_transfered, INPUT_OUTPUT_STORAGE_LIMIT - building.Input_Storage[resource]);
                     float resources_given = Mathf.Min(Storage[resource], give);
                     building.Input_Storage[resource] += resources_given;
@@ -799,6 +811,9 @@ public class Building {
             Output_Storage[resource] += stored;
         } else {
             Output_Storage.Add(resource, stored);
+        }
+        if(Output_Storage[resource] == INPUT_OUTPUT_STORAGE_LIMIT) {
+            Show_Alert("alert_no_room");
         }
         Update_Delta(resource, amount_per_day);
     }

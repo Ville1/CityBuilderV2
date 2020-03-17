@@ -3,11 +3,16 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Residence : Building {
+    private static readonly int AMOUNT = 0;
+    private static readonly int QUALITY = 1;
+
     public static readonly Dictionary<Resident, float> BASE_HAPPINESS = new Dictionary<Resident, float>() {
         { Resident.Peasant, 0.5f },
         { Resident.Citizen, 0.4f },
         { Resident.Noble, 0.25f }
     };
+
+    public enum ServiceType { Food }
 
     public Dictionary<Resident, int> Resident_Space { get; private set; }
     public Dictionary<Resident, int> Current_Residents { get; private set; }
@@ -15,12 +20,13 @@ public class Residence : Building {
     public Dictionary<Resident, List<string>> Happiness_Info { get; private set; }
 
     private Dictionary<Resident, float> migration_progress;
+    private Dictionary<ServiceType, float[]> services;
 
     public Residence(Residence prototype, Tile tile, List<Tile> tiles, bool is_preview) : base(prototype, tile, tiles, is_preview)
     {
         Resident_Space = Helper.Clone_Dictionary(prototype.Resident_Space);
         Current_Residents = new Dictionary<Resident, int>();
-        foreach(Resident resident in Enum.GetValues(typeof(Resident))) {
+        foreach (Resident resident in Enum.GetValues(typeof(Resident))) {
             Current_Residents.Add(resident, 0);
         }
         Happiness = new Dictionary<Resident, float>();
@@ -32,6 +38,10 @@ public class Residence : Building {
         foreach (Resident resident in Enum.GetValues(typeof(Resident))) {
             Happiness_Info.Add(resident, new List<string>());
             migration_progress.Add(resident, 0.0f);
+        }
+        services = new Dictionary<ServiceType, float[]>();
+        foreach (ServiceType service in Enum.GetValues(typeof(ServiceType))) {
+            services.Add(service, new float[2] { 0.0f, 0.0f });
         }
     }
 
@@ -147,6 +157,41 @@ public class Residence : Building {
                 }
             }
         }
+    }
+
+    public void Serve(ServiceType service, float amount, float quality)
+    {
+        float needed = 1.0f - services[service][AMOUNT];
+        if (needed == 0.0f) {
+            return;
+        }
+        float served = Math.Min(needed, amount);
+        float remaining_quality_total = services[service][QUALITY] * services[service][AMOUNT];
+        float new_quality_total = served * quality;
+        float total_quality = remaining_quality_total + new_quality_total;
+        services[service][AMOUNT] += served;
+        services[service][QUALITY] = quality;
+        if(services[service][AMOUNT] < 0.0f || services[service][AMOUNT] > 1.0f) {
+            CustomLogger.Instance.Error(string.Format("services[service][AMOUNT] = {0}", services[service][AMOUNT]));
+        }
+        if (services[service][QUALITY] < 0.0f || services[service][QUALITY] > 1.0f) {
+            CustomLogger.Instance.Error(string.Format("services[service][QUALITY] = {0}", services[service][QUALITY]));
+        }
+    }
+
+    public float Service_Needed(ServiceType service)
+    {
+        return 1.0f - services[service][AMOUNT];
+    }
+
+    public float Service_Level(ServiceType service)
+    {
+        return services[service][AMOUNT];
+    }
+
+    public float Service_Quality(ServiceType service)
+    {
+        return services[service][QUALITY];
     }
 
     private string UI_Happiness(float happiness)

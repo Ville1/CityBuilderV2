@@ -21,8 +21,12 @@ public class InspectorManager : MonoBehaviour {
     public Text Storage_Text;
     public GameObject Delta_Content;
     public GameObject Delta_Row_Prototype;
+    public GameObject Storage_Container;
     public GameObject Storage_Content;
     public GameObject Storage_Row_Prototype;
+    public GameObject Services_Container;
+    public GameObject Services_Content;
+    public GameObject Services_Row_Prototype;
     public Button Pause_Button;
     public Button Delete_Button;
     public Button Settings_Button;
@@ -69,6 +73,7 @@ public class InspectorManager : MonoBehaviour {
     private List<GameObject> upkeep_rows;
     private List<GameObject> delta_rows;
     private List<GameObject> storage_rows;
+    private List<GameObject> service_rows;
     private List<Tile> highlighted_tiles;
 
     /// <summary>
@@ -86,10 +91,12 @@ public class InspectorManager : MonoBehaviour {
         Upkeep_Row_Prototype.SetActive(false);
         Delta_Row_Prototype.SetActive(false);
         Storage_Row_Prototype.SetActive(false);
+        Services_Row_Prototype.SetActive(false);
         cost_rows = new List<GameObject>();
         upkeep_rows = new List<GameObject>();
         delta_rows = new List<GameObject>();
         storage_rows = new List<GameObject>();
+        service_rows = new List<GameObject>();
         highlighted_tiles = new List<Tile>();
 
         Button.ButtonClickedEvent click = new Button.ButtonClickedEvent();
@@ -403,35 +410,63 @@ public class InspectorManager : MonoBehaviour {
             }
             Delta_Content.GetComponentInChildren<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 15.0f * delta_rows.Count);
 
+            Storage_Container.SetActive(!(Building is Residence));
+            Services_Container.SetActive(Building is Residence);
             //Storage
-            foreach (GameObject row in storage_rows) {
-                GameObject.Destroy(row);
-            }
-            storage_rows.Clear();
-
-            Storage_Text.text = building.Is_Storehouse ? string.Format("Storage ({0} / {1})", Helper.Float_To_String(building.Current_Storage_Amount, 0), building.Storage_Limit) : "Storage";
-
-            foreach (KeyValuePair<Resource, float> resource in building.All_Resources) {
-                if(resource.Value == 0.0f) {
-                    continue;
+            if (!(Building is Residence)) {
+                foreach (GameObject row in storage_rows) {
+                    GameObject.Destroy(row);
                 }
-                GameObject resource_row = GameObject.Instantiate(
-                    Storage_Row_Prototype,
-                    new Vector3(
-                        Storage_Row_Prototype.transform.position.x,
-                        Storage_Row_Prototype.transform.position.y - (15.0f * storage_rows.Count),
-                        Storage_Row_Prototype.transform.position.z
-                    ),
-                    Quaternion.identity,
-                    Storage_Content.transform
-                );
-                resource_row.name = string.Format("{0}_resource_row", resource.Key.ToString().ToLower());
-                resource_row.SetActive(true);
-                resource_row.GetComponentInChildren<Text>().text = string.Format("{0} {1}", Helper.Float_To_String(resource.Value, 1), resource.Key.ToString().ToLower());
-                storage_rows.Add(resource_row);
-            }
-            Storage_Content.GetComponentInChildren<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 15.0f * storage_rows.Count);
+                storage_rows.Clear();
 
+                Storage_Text.text = building.Is_Storehouse ? string.Format("Storage ({0} / {1})", Helper.Float_To_String(building.Current_Storage_Amount, 0), building.Storage_Limit) : "Storage";
+
+                foreach (KeyValuePair<Resource, float> resource in building.All_Resources) {
+                    if (resource.Value == 0.0f) {
+                        continue;
+                    }
+                    GameObject resource_row = GameObject.Instantiate(
+                        Storage_Row_Prototype,
+                        new Vector3(
+                            Storage_Row_Prototype.transform.position.x,
+                            Storage_Row_Prototype.transform.position.y - (15.0f * storage_rows.Count),
+                            Storage_Row_Prototype.transform.position.z
+                        ),
+                        Quaternion.identity,
+                        Storage_Content.transform
+                    );
+                    resource_row.name = string.Format("{0}_resource_row", resource.Key.ToString().ToLower());
+                    resource_row.SetActive(true);
+                    resource_row.GetComponentInChildren<Text>().text = string.Format("{0} {1}", Helper.Float_To_String(resource.Value, 1), resource.Key.ToString().ToLower());
+                    storage_rows.Add(resource_row);
+                }
+                Storage_Content.GetComponentInChildren<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 15.0f * storage_rows.Count);
+            } else {
+                Residence residence = building as Residence;
+                //Services
+                foreach (GameObject row in service_rows) {
+                    GameObject.Destroy(row);
+                }
+                service_rows.Clear();
+
+                foreach(Residence.ServiceType service in Enum.GetValues(typeof(Residence.ServiceType))) {
+                    GameObject service_row = GameObject.Instantiate(
+                        Services_Row_Prototype,
+                        new Vector3(
+                            Services_Row_Prototype.transform.position.x,
+                            Services_Row_Prototype.transform.position.y - (15.0f * service_rows.Count),
+                            Services_Row_Prototype.transform.position.z
+                        ),
+                        Quaternion.identity,
+                        Services_Container.transform
+                    );
+                    service_row.name = string.Format("{0}_service_row", service.ToString().ToLower());
+                    service_row.SetActive(true);
+                    service_row.GetComponentInChildren<Text>().text = string.Format("{0} {1} / 100 {2}%", service.ToString(), Helper.Float_To_String(100.0f * residence.Service_Level(service), 0), Helper.Float_To_String(100.0f * residence.Service_Quality(service), 0));
+                    service_rows.Add(service_row);
+                }
+                Services_Container.GetComponentInChildren<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 15.0f * storage_rows.Count);
+            }
 
             Pause_Button.interactable = building.Can_Be_Paused;
             Pause_Button.GetComponentInChildren<Text>().text = building.Is_Paused ? "Unpause" : "Pause";

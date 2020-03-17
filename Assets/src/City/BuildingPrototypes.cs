@@ -206,7 +206,29 @@ public class BuildingPrototypes {
                 }
             }
             return worked_tiles;
-        }, new List<Resource>(), new List<Resource>() { Resource.Wood }));
+        }, new List<Resource>(), new List<Resource>() { Resource.Roots, Resource.Berries, Resource.Mushrooms, Resource.Herbs }));
+
+        prototypes.Add(new Building("Marketplace", "marketplace", Building.UI_Category.Services, "marketplace", Building.BuildingSize.s3x3, 150, new Dictionary<Resource, int>() {
+            { Resource.Lumber, 20 },
+            { Resource.Stone, 90 },
+            { Resource.Tools, 10 }
+        }, 110, new List<Resource>(), 0, 0.0f, 110, new Dictionary<Resource, float>() {
+            { Resource.Stone, 0.1f }
+        }, 1.0f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() {
+            { Building.Resident.Peasant, 10 },
+            { Building.Resident.Citizen, 10 }
+        }, 10, true, true, true, 0.0f, 10, null, delegate (Building market, float delta_time) {
+            if (!market.Is_Operational) {
+                return;
+            }
+            foreach(Building building in market.Get_Connected_Buildings(market.Road_Range).Select(x => x.Key).ToArray()) {
+                if(!(building is Residence)) {
+                    continue;
+                }
+                Residence residence = building as Residence;
+                residence.Serve(Residence.ServiceType.Food, 0.1f, 0.5f);
+            }
+        }, null, null, new List<Resource>() { Resource.Berries, Resource.Roots, Resource.Mushrooms, Resource.Herbs, Resource.Firewood }, new List<Resource>()));
     }
 
     public static BuildingPrototypes Instance

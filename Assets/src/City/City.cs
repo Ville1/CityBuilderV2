@@ -114,6 +114,12 @@ public class City {
             foreach(KeyValuePair<Resource, float> pair in building.Storage) {
                 Resource_Totals[pair.Key] += pair.Value;
             }
+            foreach (KeyValuePair<Resource, float> pair in building.Input_Storage) {
+                Resource_Totals[pair.Key] += pair.Value;
+            }
+            foreach (KeyValuePair<Resource, float> pair in building.Output_Storage) {
+                Resource_Totals[pair.Key] += pair.Value;
+            }
             foreach (KeyValuePair<Resource, float> pair in building.Per_Day_Resource_Delta) {
                 Resource_Delta[pair.Key] += pair.Value;
             }
@@ -156,9 +162,13 @@ public class City {
             }
             if (building.Is_Complete && (building.Is_Connected || !building.Requires_Connection) && (!building.Is_Paused || PAUSED_BUILDINGS_KEEP_WORKERS)) {
                 foreach (Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
-                    building.Current_Workers[resident] = Mathf.RoundToInt(building.Worker_Settings[resident] * Mathf.Clamp(worker_ratios[resident], 0.0f, 1.0f));
-                    available_workers[resident] -= building.Current_Workers[resident];
-                    workers_allocated[resident] += building.Current_Workers[resident];
+                    int workers = Mathf.RoundToInt(building.Worker_Settings[resident] * Mathf.Clamp(worker_ratios[resident], 0.0f, 1.0f));
+                    if(workers > available_workers[resident]) {
+                        workers = available_workers[resident];
+                    }
+                    building.Current_Workers[resident] = workers;
+                    available_workers[resident] -= workers;
+                    workers_allocated[resident] += workers;
                     if (available_workers[resident] < 0) {
                         CustomLogger.Instance.Error("More workers allocated, than there is available workers");
                     }
