@@ -12,7 +12,7 @@ public class Residence : Building {
         { Resident.Noble, 0.25f }
     };
 
-    public enum ServiceType { Food }
+    public enum ServiceType { Food, Fuel }
 
     public Dictionary<Resident, int> Resident_Space { get; private set; }
     public Dictionary<Resident, int> Current_Residents { get; private set; }
@@ -77,6 +77,15 @@ public class Residence : Building {
             Happiness.Add(resident, 0.0f);
         }
         migration_progress = new Dictionary<Resident, float>();
+        Happiness_Info = new Dictionary<Resident, List<string>>();
+        foreach (Resident resident in Enum.GetValues(typeof(Resident))) {
+            Happiness_Info.Add(resident, new List<string>());
+            migration_progress.Add(resident, 0.0f);
+        }
+        services = new Dictionary<ServiceType, float[]>();
+        foreach (ServiceType service in Enum.GetValues(typeof(ServiceType))) {
+            services.Add(service, new float[2] { 0.0f, 0.0f });
+        }
     }
 
     public new void Update(float delta_time)

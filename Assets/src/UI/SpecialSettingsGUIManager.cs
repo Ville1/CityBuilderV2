@@ -9,6 +9,7 @@ public class SpecialSettingsGUIManager : MonoBehaviour {
     public GameObject Content;
     public GameObject Slider_Row_Prototype;
     public GameObject Input_Field_Row_Prototype;
+    public GameObject Toggle_Row_Prototype;
 
     private Building building;
     private Dictionary<SpecialSetting, GameObject> rows;
@@ -27,6 +28,7 @@ public class SpecialSettingsGUIManager : MonoBehaviour {
         Active = false;
         Slider_Row_Prototype.SetActive(false);
         Input_Field_Row_Prototype.SetActive(false);
+        Toggle_Row_Prototype.SetActive(false);
         rows = new Dictionary<SpecialSetting, GameObject>();
         row_id = 0;
     }
@@ -72,7 +74,7 @@ public class SpecialSettingsGUIManager : MonoBehaviour {
 
         foreach(SpecialSetting setting in building.Special_Settings) {
             GameObject row = GameObject.Instantiate(
-                setting.Type == SpecialSetting.SettingType.Input ? Input_Field_Row_Prototype : Slider_Row_Prototype,
+                setting.Type == SpecialSetting.SettingType.Input ? Input_Field_Row_Prototype : (setting.Type == SpecialSetting.SettingType.Slider ? Slider_Row_Prototype : Toggle_Row_Prototype),
                 new Vector3(
                     Input_Field_Row_Prototype.transform.position.x,
                     Input_Field_Row_Prototype.transform.position.y - (20.0f * rows.Count),
@@ -94,9 +96,12 @@ public class SpecialSettingsGUIManager : MonoBehaviour {
                 GameObject.Find(string.Format("{0}/Slider", row.name)).GetComponent<Slider>().value = setting.Slider_Value;
             } else if(setting.Type == SpecialSetting.SettingType.Input) {
                 GameObject.Find(string.Format("{0}/LabelText", row.name)).GetComponent<Text>().text = setting.Label;
+            } else if (setting.Type == SpecialSetting.SettingType.Toggle) {
+                GameObject.Find(string.Format("{0}/Toggle", row.name)).GetComponentInChildren<Text>().text = setting.Label;
+                GameObject.Find(string.Format("{0}/Toggle", row.name)).GetComponentInChildren<Toggle>().isOn = setting.Toggle_Value;
             }
 
-            rows.Add(setting, row);
+                rows.Add(setting, row);
         }
         Content.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, rows.Count * 20.0f);
     }
@@ -113,6 +118,8 @@ public class SpecialSettingsGUIManager : MonoBehaviour {
                 pair.Key.Slider_Value = Mathf.RoundToInt(pair.Key.Slider_Value * 100.0f) / 100.0f;
             } else if(pair.Key.Type == SpecialSetting.SettingType.Input) {
 
+            } else if(pair.Key.Type == SpecialSetting.SettingType.Toggle) {
+                pair.Key.Toggle_Value = GameObject.Find(string.Format("{0}/Toggle", pair.Value.name)).GetComponentInChildren<Toggle>().isOn;
             }
         }
         Active = false;

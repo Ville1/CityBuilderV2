@@ -359,7 +359,7 @@ public class City {
     {
         float amount_added = 0.0f;
         foreach (Building building in Buildings) {
-            if (!building.Is_Storehouse) {
+            if (!building.Allowed_Resources.Contains(resouce)) {
                 continue;
             }
             amount_added += building.Store_Resources(resouce, amount - amount_added);

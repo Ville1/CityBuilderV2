@@ -412,6 +412,19 @@ public class Map : MonoBehaviour
 
     private void Finish_Loading()
     {
+        for (int x = 0; x < Width; x++) {
+            for (int y = 0; y < Height; y++) {
+                foreach (long id in SaveManager.Instance.Get_Tile(x, y).Worked_By) {
+                    Building building = City.Instance.Buildings.FirstOrDefault(b => b.Id == id);
+                    if (building == null) {
+                        CustomLogger.Instance.Error(string.Format("Building not found #{0}", id));
+                    } else {
+                        tiles[x][y].Worked_By.Add(building);
+                    }
+                }
+            }
+        }
+
         SaveManager.Instance.Finish_Loading();
         State = MapState.Normal;
         ProgressBarManager.Instance.Active = false;

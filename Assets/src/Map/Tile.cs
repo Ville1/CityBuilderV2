@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class Tile
@@ -164,7 +165,8 @@ public class Tile
         return new TileSaveData() {
             X = X,
             Y = Y,
-            Internal_Name = Internal_Name
+            Internal_Name = Internal_Name,
+            Worked_By = Worked_By.Select(x => x.Id).ToList()
         };
     }
 

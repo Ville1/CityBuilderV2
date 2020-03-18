@@ -84,7 +84,7 @@ public class Building {
     public List<string> Permitted_Terrain { get; private set; }
     public List<Tag> Tags { get; private set; }
     public Dictionary<Resource, float> Per_Day_Resource_Delta { get; private set; }
-    public float Per_Day_Cash_Delta { get; private set; }
+    public float Per_Day_Cash_Delta { get; set; }
     public List<SpecialSetting> Special_Settings { get; private set; }
 
     public GameObject GameObject { get; private set; }
@@ -271,7 +271,36 @@ public class Building {
             current_id = Id + 1;
         }
         foreach(ResourceSaveData resource_data in data.Storage) {
-            Storage.Add(Resource.Get((Resource.ResourceType)resource_data.Resource), resource_data.Amount);
+            Resource r = Resource.Get((Resource.ResourceType)resource_data.Resource);
+            if (!Storage.ContainsKey(r)) {
+                Storage.Add(r, resource_data.Amount);
+            } else {
+                Storage[r] = resource_data.Amount;
+            }
+        }
+        foreach (ResourceSaveData resource_data in data.Input_Storage) {
+            Resource r = Resource.Get((Resource.ResourceType)resource_data.Resource);
+            if (!Input_Storage.ContainsKey(r)) {
+                Input_Storage.Add(r, resource_data.Amount);
+            } else {
+                Input_Storage[r] = resource_data.Amount;
+            }
+        }
+        foreach (ResourceSaveData resource_data in data.Output_Storage) {
+            Resource r = Resource.Get((Resource.ResourceType)resource_data.Resource);
+            if (!Output_Storage.ContainsKey(r)) {
+                Output_Storage.Add(r, resource_data.Amount);
+            } else {
+                Output_Storage[r] = resource_data.Amount;
+            }
+        }
+        foreach (ResourceSaveData resource_data in data.Storage) {
+            Resource r = Resource.Get((Resource.ResourceType)resource_data.Resource);
+            if (!Storage.ContainsKey(r)) {
+                Storage.Add(r, resource_data.Amount);
+            } else {
+                Storage[r] = resource_data.Amount;
+            }
         }
         foreach (ResidentSaveData worker_data in data.Worker_Allocation) {
             Worker_Settings[(Resident)worker_data.Resident] = worker_data.Count;
@@ -282,6 +311,15 @@ public class Building {
         Construction_Progress = data.Construction_Progress;
         Deconstruction_Progress = data.Deconstruction_Progress;
         HP = data.HP;
+        foreach(SpecialSettingSaveData saved_setting in data.Settings) {
+            SpecialSetting setting = Special_Settings.FirstOrDefault(x => x.Name == saved_setting.Name);
+            if(setting == null) {
+                CustomLogger.Instance.Warning(string.Format("Save data contains setting {0} that building type does not have", saved_setting.Name));
+            } else {
+                setting.Slider_Value = saved_setting.Slider_Value;
+                setting.Toggle_Value = saved_setting.Toggle_Value;
+            }
+        }
         Update_Sprite();
     }
 
@@ -589,6 +627,9 @@ public class Building {
                     if (!Storage.ContainsKey(resource)) {
                         continue;
                     }
+                    if (!building.Input_Storage.ContainsKey(resource)) {
+                        building.Input_Storage.Add(resource, 0.0f);
+                    }
                     float give = Math.Min(max_transfer - resources_transfered, INPUT_OUTPUT_STORAGE_LIMIT - building.Input_Storage[resource]);
                     float resources_given = Mathf.Min(Storage[resource], give);
                     building.Input_Storage[resource] += resources_given;
@@ -772,6 +813,8 @@ public class Building {
             X = Tile.Coordinates.X,
             Y = Tile.Coordinates.Y,
             Storage = new List<ResourceSaveData>(),
+            Input_Storage = new List<ResourceSaveData>(),
+            Output_Storage = new List<ResourceSaveData>(),
             Residents = new List<ResidentSaveData>(),
             Is_Residence = this is Residence,
             Worker_Allocation = new List<ResidentSaveData>(),
@@ -780,18 +823,32 @@ public class Building {
             Is_Paused = Is_Paused,
             Construction_Progress = Construction_Progress,
             Deconstruction_Progress = Deconstruction_Progress,
-            HP = HP
+            HP = HP,
+            Settings = new List<SpecialSettingSaveData>()
         };
         foreach(KeyValuePair<Resource, float> pair in Storage) {
             data.Storage.Add(new ResourceSaveData() { Resource = pair.Key.Id, Amount = pair.Value });
         }
-        foreach(KeyValuePair<Resident, int> pair in Worker_Settings) {
+        foreach (KeyValuePair<Resource, float> pair in Input_Storage) {
+            data.Input_Storage.Add(new ResourceSaveData() { Resource = pair.Key.Id, Amount = pair.Value });
+        }
+        foreach (KeyValuePair<Resource, float> pair in Output_Storage) {
+            data.Output_Storage.Add(new ResourceSaveData() { Resource = pair.Key.Id, Amount = pair.Value });
+        }
+        foreach (KeyValuePair<Resident, int> pair in Worker_Settings) {
             data.Worker_Allocation.Add(new ResidentSaveData() { Resident = (int)pair.Key, Count = pair.Value });
         }
         if(this is Residence) {
             foreach (KeyValuePair<Resident, int> pair in (this as Residence).Current_Residents) {
                 data.Residents.Add(new ResidentSaveData() { Resident = (int)pair.Key, Count = pair.Value });
             }
+        }
+        foreach(SpecialSetting setting in Special_Settings) {
+            data.Settings.Add(new SpecialSettingSaveData() {
+                Name = setting.Name,
+                Slider_Value = setting.Slider_Value,
+                Toggle_Value = setting.Toggle_Value
+            });
         }
         return data;
     }

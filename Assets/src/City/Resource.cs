@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 
 public class Resource {
-    public enum ResourceType { Wood, Stone, Lumber, Tools, Roots, Berries, Mushrooms, Herbs, Firewood, Charcoal }
+    public enum ResourceType { Wood, Stone, Lumber, Tools, Roots, Berries, Mushrooms, Herbs, Firewood, Charcoal, Game }
     public enum FoodType { None, Meat, Vegetable }
 
     public static Resource Wood { get { return Get(ResourceType.Wood); } }
@@ -15,6 +15,7 @@ public class Resource {
     public static Resource Herbs { get { return Get(ResourceType.Herbs); } }
     public static Resource Firewood { get { return Get(ResourceType.Firewood); } }
     public static Resource Charcoal { get { return Get(ResourceType.Charcoal); } }
+    public static Resource Game { get { return Get(ResourceType.Game); } }
     private static Dictionary<ResourceType, Resource> resources;
 
     public int Id { get { return (int)Type; } }
@@ -54,6 +55,7 @@ public class Resource {
             resources.Add(ResourceType.Herbs, new Resource(ResourceType.Herbs, "Herbs", null, SpriteManager.SpriteType.UI, FoodType.Vegetable, 5.0f, 0.0f));
             resources.Add(ResourceType.Firewood, new Resource(ResourceType.Firewood, "Firewood", null, SpriteManager.SpriteType.UI, FoodType.None, 0.75f, 1.0f));
             resources.Add(ResourceType.Charcoal, new Resource(ResourceType.Charcoal, "Charcoal", null, SpriteManager.SpriteType.UI, FoodType.None, 1.0f, 10.0f));
+            resources.Add(ResourceType.Game, new Resource(ResourceType.Game, "Game", null, SpriteManager.SpriteType.UI, FoodType.Meat, 1.15f, 0.0f));
         }
         return resources[type];
     }
