@@ -424,7 +424,7 @@ public class Map : MonoBehaviour
                 }
             }
         }
-
+        TimeManager.Instance.Set_Time(SaveManager.Instance.Data.Days);
         SaveManager.Instance.Finish_Loading();
         State = MapState.Normal;
         ProgressBarManager.Instance.Active = false;

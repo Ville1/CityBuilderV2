@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEngine;
 
 public class City {
-    public static readonly float GRACE_TIME = 180;//180;
+    public static readonly float GRACE_TIME = 120;
     public static readonly bool PAUSED_BUILDINGS_KEEP_WORKERS = false;
 
     private static City instance;
@@ -15,7 +15,7 @@ public class City {
     public float Cash { get; private set; }
     public Dictionary<Resource, float> Resource_Totals { get; private set; }
     public bool Grace_Time { get { return grace_time_remaining > 0.0f; } }
-    public float Grace_Time_Remaining { get { return grace_time_remaining; } }
+    public float Grace_Time_Remaining { get { return grace_time_remaining; } set { grace_time_remaining = value; } }
     public Dictionary<Building.Resident, float> Unemployment { get; private set; }
     public Dictionary<Building.Resident, float> Happiness { get; private set; }
 
@@ -68,6 +68,15 @@ public class City {
         Start_New(data.Name);
         Cash = data.Cash;
         Has_Town_Hall = data.Buildings.FirstOrDefault(x => x.Internal_Name == Building.TOWN_HALL_INTERNAL_NAME) != null;
+    }
+
+    public void Update_Grace_Time(float total_days)
+    {
+        if(total_days >= GRACE_TIME) {
+            grace_time_remaining = 0.0f;
+        } else {
+            grace_time_remaining = GRACE_TIME - total_days;
+        }
     }
     
     public static City Instance

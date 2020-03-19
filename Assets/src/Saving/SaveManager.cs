@@ -31,6 +31,7 @@ public class SaveManager
         try {
             this.path = path;
             data = new SaveData();
+            data.Days = TimeManager.Instance.Total_Days;
             data.City = City.Instance.Save_Data();
             data.Map = new MapSaveData();
             data.Map.Tiles = new List<TileSaveData>();

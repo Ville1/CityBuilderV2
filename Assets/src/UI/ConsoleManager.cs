@@ -161,6 +161,18 @@ public class ConsoleManager : MonoBehaviour
             return string.Format("{0} building{1} built", count, Helper.Plural(count));
         });
 
+        commands.Add("set_grace_time", (string[] arguments) => {
+            if (arguments.Length != 2) {
+                return "Invalid number of arguments";
+            }
+            int time;
+            if(!int.TryParse(arguments[1], out time)) {
+                return "Invalid time";
+            }
+            City.Instance.Grace_Time_Remaining = time;
+            return "Time set";
+        });
+
         commands.Add("give", (string[] arguments) => {
             if (arguments.Length != 3) {
                 return "Invalid number of arguments";

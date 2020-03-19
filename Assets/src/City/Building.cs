@@ -87,6 +87,7 @@ public class Building {
     public float Per_Day_Cash_Delta { get; set; }
     public List<SpecialSetting> Special_Settings { get; private set; }
     public float Food_Production_Per_Day { get; private set; }
+    public bool Losing_HP_From_No_Upkeep { get; private set; }
 
     public GameObject GameObject { get; private set; }
     public SpriteRenderer Renderer { get { return GameObject != null ? GameObject.GetComponent<SpriteRenderer>() : null; } }
@@ -321,6 +322,13 @@ public class Building {
                 setting.Toggle_Value = saved_setting.Toggle_Value;
             }
         }
+        if(Is_Storehouse && data.Storage_Settings != null) {
+            Storage_Settings = new StorageSettings(this);
+            foreach (StorageSettingSaveData saved_setting in data.Storage_Settings) {
+                Storage_Settings.Get(Resource.Get((Resource.ResourceType)saved_setting.Resource)).Limit = saved_setting.Limit;
+                Storage_Settings.Get(Resource.Get((Resource.ResourceType)saved_setting.Resource)).Priority = (StorageSetting.StoragePriority)saved_setting.Priority;
+            }
+        }
         Update_Sprite();
     }
 
@@ -487,6 +495,7 @@ public class Building {
         Per_Day_Resource_Delta.Clear();
         Per_Day_Cash_Delta = 0.0f;
         Food_Production_Per_Day = 0.0f;
+        Losing_HP_From_No_Upkeep = false;
 
         if (Is_Deconstructing) {
             //Move resources
@@ -536,6 +545,7 @@ public class Building {
                 //TODO: New icon?
                 Show_Alert("alert_no_resources");
                 HP -= DISREPAIR_SPEED * delta_days;
+                Losing_HP_From_No_Upkeep = true;
                 if(HP < 1.0f) {
                     HP = 1.0f;
                 }
@@ -545,27 +555,28 @@ public class Building {
         if(Is_Operational && Construction_Speed > 0.0f && Construction_Range > 0.0f) {
             float construction_progress = Efficency * Construction_Speed * delta_time;
             foreach(Building building in City.Instance.Buildings) {
-                if (building.Is_Built) {
-                    continue;
-                }
-                float range_multiplier = 1.0f;
-                if(Tile.Coordinates.Distance(building.Tile.Coordinates) > Construction_Range) {
-                    range_multiplier = 10.0f / (10.0f + (Tile.Coordinates.Distance(building.Tile.Coordinates) - Construction_Range));
-                }
-                building.Construction_Progress = Mathf.Clamp(building.Construction_Progress + (range_multiplier * construction_progress), 0.0f, building.Construction_Time);
-                building.Update_Sprite();
-                if (building.Is_Built) {
-                    building.Update_Connectivity();
-                    if(building.On_Built != null) {
-                        building.On_Built(building);
+                if (!building.Is_Built) {
+                    float range_multiplier = 1.0f;
+                    if (Tile.Coordinates.Distance(building.Tile.Coordinates) > Construction_Range) {
+                        range_multiplier = 10.0f / (10.0f + (Tile.Coordinates.Distance(building.Tile.Coordinates) - Construction_Range));
                     }
-                    if (building.Is_Road) {
-                        foreach (Building b in Map.Instance.Get_Buildings_Around(building)) {
-                            if (b.Is_Connected && b.Is_Built && !b.Is_Deconstructing) {
-                                b.Update_Connectivity();
+                    building.Construction_Progress = Mathf.Clamp(building.Construction_Progress + (range_multiplier * construction_progress), 0.0f, building.Construction_Time);
+                    building.Update_Sprite();
+                    if (building.Is_Built) {
+                        building.Update_Connectivity();
+                        if (building.On_Built != null) {
+                            building.On_Built(building);
+                        }
+                        if (building.Is_Road) {
+                            foreach (Building b in Map.Instance.Get_Buildings_Around(building)) {
+                                if (b.Is_Connected && b.Is_Built && !b.Is_Deconstructing) {
+                                    b.Update_Connectivity();
+                                }
                             }
                         }
                     }
+                } else if(building.Is_Built && building.HP < building.Max_HP && !building.Losing_HP_From_No_Upkeep) {
+                    building.HP = Mathf.Min(building.Max_HP, building.HP + construction_progress);
                 }
             }
         }
@@ -827,7 +838,8 @@ public class Building {
             Deconstruction_Progress = Deconstruction_Progress,
             HP = HP,
             Settings = new List<SpecialSettingSaveData>(),
-            Services = new List<ServiceSaveData>()
+            Services = new List<ServiceSaveData>(),
+            Storage_Settings = new List<StorageSettingSaveData>()
         };
         foreach(KeyValuePair<Resource, float> pair in Storage) {
             data.Storage.Add(new ResourceSaveData() { Resource = pair.Key.Id, Amount = pair.Value });
@@ -862,6 +874,15 @@ public class Building {
                 Toggle_Value = setting.Toggle_Value
             });
         }
+        if (Is_Storehouse) {
+            foreach(StorageSetting setting in Storage_Settings.Settings) {
+                data.Storage_Settings.Add(new StorageSettingSaveData() {
+                    Resource = (int)setting.Resource.Type,
+                    Limit = setting.Limit,
+                    Priority = (int)setting.Priority
+                });
+            }
+        }
 
         return data;
     }
@@ -885,7 +906,7 @@ public class Building {
         if(Output_Storage[resource] == INPUT_OUTPUT_STORAGE_LIMIT) {
             Show_Alert("alert_no_room");
         }
-        Update_Delta(resource, amount_per_day);
+        Update_Delta(resource, amount_per_day * Efficency);
     }
 
     public void Process(Resource input, float input_amount, Resource output, float output_amount, float delta_time)
@@ -977,7 +998,7 @@ public class Building {
         }
     }
 
-    private float Calculate_Actual_Amount(float amount_per_day, float delta_time)
+    protected float Calculate_Actual_Amount(float amount_per_day, float delta_time)
     {
         return (amount_per_day / TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f)) * delta_time;
     }

@@ -21,6 +21,7 @@ public class BuildingSaveData {
     public float Deconstruction_Progress;
     public List<SpecialSettingSaveData> Settings;
     public List<ServiceSaveData> Services;
+    public List<StorageSettingSaveData> Storage_Settings;
 }
 
 [Serializable]
@@ -28,4 +29,12 @@ public class SpecialSettingSaveData {
     public string Name;
     public float Slider_Value;
     public bool Toggle_Value;
+}
+
+[Serializable]
+public class StorageSettingSaveData
+{
+    public int Resource;
+    public int Limit;
+    public int Priority;
 }

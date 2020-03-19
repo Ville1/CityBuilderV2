@@ -146,4 +146,27 @@ public class TimeManager : MonoBehaviour
         month = 1;
         year = 1;
     }
+
+    public void Set_Time(float p_total_days)
+    {
+        total_days = p_total_days;
+        int full_days = (int)total_days;
+        day_progress = total_days - (float)full_days;
+
+        int months = full_days / DAYS_IN_MONTH;
+        int years = months / MONTHS_IN_YEAR;
+
+        day = (full_days - (months * DAYS_IN_MONTH)) + 1;
+        month = (months - (years * MONTHS_IN_YEAR)) + 1;
+        year = years + 1;
+
+        City.Instance.Update_Grace_Time(total_days);
+    }
+
+    public float Total_Days
+    {
+        get {
+            return total_days;
+        }
+    }
 }
