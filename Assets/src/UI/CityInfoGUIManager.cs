@@ -15,6 +15,11 @@ public class CityInfoGUIManager : MonoBehaviour {
     public Text City_Name_Text;
     public Text Cash_Text;
     public Text Income_Text;
+    public Text Food_Current_Text;
+    public Text Food_Max_Text;
+    public Text Food_Produced_Text;
+    public Text Food_Consumed_Text;
+    public Text Food_Delta_Text;
 
     public GameObject Resources_Tab_Panel;
     public GameObject Resources_Content;
@@ -94,6 +99,11 @@ public class CityInfoGUIManager : MonoBehaviour {
         City_Name_Text.text = City.Instance.Name;
         Cash_Text.text = Helper.Float_To_String(City.Instance.Cash, 1);
         Income_Text.text = Helper.Float_To_String(City.Instance.Cash_Delta, 2, true);
+        Food_Current_Text.text = Helper.Float_To_String(City.Instance.Food_Current, 0);
+        Food_Max_Text.text = Helper.Float_To_String(City.Instance.Food_Max, 0);
+        Food_Produced_Text.text = Helper.Float_To_String(City.Instance.Food_Produced, 1, true);
+        Food_Consumed_Text.text = Helper.Float_To_String(City.Instance.Food_Consumed, 1);
+        Food_Delta_Text.text = Helper.Float_To_String(City.Instance.Food_Delta, 1, true);
     }
 
     private void Update_Resources()

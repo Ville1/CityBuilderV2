@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class Residence : Building {
@@ -18,6 +19,7 @@ public class Residence : Building {
     public Dictionary<Resident, int> Current_Residents { get; private set; }
     public Dictionary<Resident, float> Happiness { get; private set; }
     public Dictionary<Resident, List<string>> Happiness_Info { get; private set; }
+    public float Food_Consumed { get; private set; }
 
     private Dictionary<Resident, float> migration_progress;
     private Dictionary<ServiceType, float[]> services;
@@ -84,7 +86,12 @@ public class Residence : Building {
         }
         services = new Dictionary<ServiceType, float[]>();
         foreach (ServiceType service in Enum.GetValues(typeof(ServiceType))) {
-            services.Add(service, new float[2] { 0.0f, 0.0f });
+            ServiceSaveData service_data = data.Services.FirstOrDefault(x => x.Service == (int)service);
+            if (service_data != null) {
+                services.Add(service, new float[2] { service_data.Amount, service_data.Quality });
+            } else {
+                services.Add(service, new float[2] { 0.0f, 0.0f });
+            }
         }
     }
 

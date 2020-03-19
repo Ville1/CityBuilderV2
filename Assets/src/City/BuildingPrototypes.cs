@@ -263,6 +263,7 @@ public class BuildingPrototypes {
                 foreach(Residence residence in residences) {
                     float fuel_for_residence = residence.Service_Needed(Residence.ServiceType.Fuel) * fuel_supply_ratio * resources_for_full_service;
                     market.Input_Storage[fuel_type] -= fuel_for_residence;
+                    market.Update_Delta(fuel_type, -fuel_for_residence * TimeManager.Instance.Days_To_Seconds(1.0f));
                     residence.Serve(Residence.ServiceType.Fuel, residence.Service_Needed(Residence.ServiceType.Fuel) * fuel_supply_ratio, efficency_multiplier);
                     income += fuel_for_residence * fuel_type.Value;
                     if(market.Input_Storage[fuel_type] < 0.0f) {
@@ -327,6 +328,7 @@ public class BuildingPrototypes {
                     }
                     foreach(KeyValuePair<Resource, float> pair in food_ratios) {
                         market.Input_Storage[pair.Key] -= pair.Value * food_used;
+                        market.Update_Delta(pair.Key, -(pair.Value * food_used) * TimeManager.Instance.Days_To_Seconds(1.0f), false);
                         income += pair.Key.Value * (pair.Value * food_used);
                         if (market.Input_Storage[pair.Key] < 0.0f) {
                             //Rounding errors?

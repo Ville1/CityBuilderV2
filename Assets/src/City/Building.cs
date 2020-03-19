@@ -86,6 +86,7 @@ public class Building {
     public Dictionary<Resource, float> Per_Day_Resource_Delta { get; private set; }
     public float Per_Day_Cash_Delta { get; set; }
     public List<SpecialSetting> Special_Settings { get; private set; }
+    public float Food_Production_Per_Day { get; private set; }
 
     public GameObject GameObject { get; private set; }
     public SpriteRenderer Renderer { get { return GameObject != null ? GameObject.GetComponent<SpriteRenderer>() : null; } }
@@ -485,6 +486,7 @@ public class Building {
 
         Per_Day_Resource_Delta.Clear();
         Per_Day_Cash_Delta = 0.0f;
+        Food_Production_Per_Day = 0.0f;
 
         if (Is_Deconstructing) {
             //Move resources
@@ -824,7 +826,8 @@ public class Building {
             Construction_Progress = Construction_Progress,
             Deconstruction_Progress = Deconstruction_Progress,
             HP = HP,
-            Settings = new List<SpecialSettingSaveData>()
+            Settings = new List<SpecialSettingSaveData>(),
+            Services = new List<ServiceSaveData>()
         };
         foreach(KeyValuePair<Resource, float> pair in Storage) {
             data.Storage.Add(new ResourceSaveData() { Resource = pair.Key.Id, Amount = pair.Value });
@@ -842,6 +845,15 @@ public class Building {
             foreach (KeyValuePair<Resident, int> pair in (this as Residence).Current_Residents) {
                 data.Residents.Add(new ResidentSaveData() { Resident = (int)pair.Key, Count = pair.Value });
             }
+            foreach(Residence.ServiceType service in Enum.GetValues(typeof(Residence.ServiceType))) {
+                if ((this as Residence).Service_Level(service) > 0.0f) {
+                    data.Services.Add(new ServiceSaveData() {
+                        Service = (int)service,
+                        Amount = (this as Residence).Service_Level(service),
+                        Quality = (this as Residence).Service_Quality(service)
+                    });
+                }
+            }
         }
         foreach(SpecialSetting setting in Special_Settings) {
             data.Settings.Add(new SpecialSettingSaveData() {
@@ -850,6 +862,7 @@ public class Building {
                 Toggle_Value = setting.Toggle_Value
             });
         }
+
         return data;
     }
 
@@ -969,12 +982,15 @@ public class Building {
         return (amount_per_day / TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f)) * delta_time;
     }
 
-    private void Update_Delta(Resource resource, float amount_per_day)
+    public void Update_Delta(Resource resource, float amount_per_day, bool update_food = true)
     {
         if (Per_Day_Resource_Delta.ContainsKey(resource)) {
             Per_Day_Resource_Delta[resource] += amount_per_day;
         } else {
             Per_Day_Resource_Delta.Add(resource, amount_per_day);
+        }
+        if (resource.Is_Food && update_food) {
+            Food_Production_Per_Day += amount_per_day;
         }
     }
 

@@ -20,6 +20,7 @@ public class BuildingSaveData {
     public float Construction_Progress;
     public float Deconstruction_Progress;
     public List<SpecialSettingSaveData> Settings;
+    public List<ServiceSaveData> Services;
 }
 
 [Serializable]

@@ -22,7 +22,12 @@ public class City {
     public float Cash_Delta { get; private set; }
     public Dictionary<Resource, float> Resource_Max_Storage { get; private set; }
     public Dictionary<Resource, float> Resource_Delta { get; private set; }
-    
+    public float Food_Current { get; private set; }
+    public float Food_Max { get; private set; }
+    public float Food_Produced { get; private set; }
+    public float Food_Consumed { get; private set; }
+    public float Food_Delta { get; private set; }
+
     private float grace_time_remaining;
     private List<Building> removed_buildings;
 
@@ -100,6 +105,12 @@ public class City {
             Resource_Delta[resource] = 0.0f;
         }
         Cash_Delta = 0.0f;
+        Food_Current = 0.0f;
+        Food_Max = 0.0f;
+        Food_Produced = 0.0f;
+        Food_Consumed = 0.0f;
+        Food_Delta = 0.0f;
+
         Dictionary<Building.Resident, int> current_population = new Dictionary<Building.Resident, int>();
         Dictionary<Building.Resident, int> max_population = new Dictionary<Building.Resident, int>();
         Dictionary<Building.Resident, float> happiness = new Dictionary<Building.Resident, float>();
@@ -113,20 +124,38 @@ public class City {
         foreach (Building building in Buildings) {
             foreach(KeyValuePair<Resource, float> pair in building.Storage) {
                 Resource_Totals[pair.Key] += pair.Value;
+                if (pair.Key.Is_Food) {
+                    Food_Current += pair.Value;
+                }
             }
             foreach (KeyValuePair<Resource, float> pair in building.Input_Storage) {
                 Resource_Totals[pair.Key] += pair.Value;
+                if (pair.Key.Is_Food) {
+                    Food_Current += pair.Value;
+                }
             }
             foreach (KeyValuePair<Resource, float> pair in building.Output_Storage) {
                 Resource_Totals[pair.Key] += pair.Value;
+                if (pair.Key.Is_Food) {
+                    Food_Current += pair.Value;
+                }
             }
             foreach (KeyValuePair<Resource, float> pair in building.Per_Day_Resource_Delta) {
                 Resource_Delta[pair.Key] += pair.Value;
             }
             foreach (KeyValuePair<Resource, float> pair in building.Total_Max_Storage) {
                 Resource_Max_Storage[pair.Key] += pair.Value;
+                if (pair.Key.Is_Food) {
+                    Food_Max += pair.Value;
+                }
             }
             Cash_Delta += building.Per_Day_Cash_Delta;
+            Food_Produced += building.Food_Production_Per_Day;
+            Food_Delta += building.Food_Production_Per_Day;
+            if (building is Residence) {
+                Food_Consumed += (building as Residence).Food_Consumed;
+                Food_Delta -= (building as Residence).Food_Consumed;
+            }
             if (building.Is_Complete) {
                 if (building is Residence && building.Is_Operational) {
                     Residence residence = building as Residence;

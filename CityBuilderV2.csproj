@@ -106,6 +106,7 @@
     <Compile Include="Assets\src\Saving\ResourceSaveData.cs" />
     <Compile Include="Assets\src\Saving\SaveData.cs" />
     <Compile Include="Assets\src\Saving\SaveManager.cs" />
+    <Compile Include="Assets\src\Saving\ServiceSaveData.cs" />
     <Compile Include="Assets\src\Saving\TileSaveData.cs" />
     <Compile Include="Assets\src\SpriteManager.cs" />
     <Compile Include="Assets\src\TimeManager.cs" />
