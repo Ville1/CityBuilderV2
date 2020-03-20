@@ -88,6 +88,8 @@ public class Building {
     public List<SpecialSetting> Special_Settings { get; private set; }
     public float Food_Production_Per_Day { get; private set; }
     public bool Losing_HP_From_No_Upkeep { get; private set; }
+    public float Appeal { get; private set; }
+    public float Appeal_Range { get; private set; }
 
     public GameObject GameObject { get; private set; }
     public SpriteRenderer Renderer { get { return GameObject != null ? GameObject.GetComponent<SpriteRenderer>() : null; } }
@@ -192,6 +194,8 @@ public class Building {
         foreach(SpecialSetting setting in prototype.Special_Settings) {
             Special_Settings.Add(new SpecialSetting(setting));
         }
+        Appeal = prototype.Appeal;
+        Appeal_Range = prototype.Appeal_Range;
 
         animation_index = 0;
         animation_cooldown = Sprite.Animation_Frame_Time;
@@ -219,7 +223,8 @@ public class Building {
 
     public Building(string name, string internal_name, UI_Category category, string sprite, BuildingSize size, int hp, Dictionary<Resource, int> cost, int cash_cost, List<Resource> allowed_resources, int storage_limit, float transfer_speed,
         int construction_time, Dictionary<Resource, float> upkeep, float cash_upkeep, float construction_speed, float construction_range, Dictionary<Resident, int> workers, int max_workers, bool can_be_paused, bool is_road,
-        bool p_requires_connection, float range, int road_range, OnBuiltDelegate on_built, OnUpdateDelegate on_update, OnDeconstructDelegate on_deconstruct, OnHighlightDelegate on_highlight, List<Resource> consumes, List<Resource> produces)
+        bool p_requires_connection, float range, int road_range, OnBuiltDelegate on_built, OnUpdateDelegate on_update, OnDeconstructDelegate on_deconstruct, OnHighlightDelegate on_highlight, List<Resource> consumes, List<Resource> produces,
+        float appeal, float appeal_range)
     {
         Id = -1;
         Name = name;
@@ -263,6 +268,8 @@ public class Building {
         Permitted_Terrain = new List<string>();
         Tags = new List<Tag>();
         Special_Settings = new List<SpecialSetting>();
+        Appeal = appeal;
+        Appeal_Range = appeal_range;
     }
 
     public Building(BuildingSaveData data) : this(BuildingPrototypes.Instance.Get(data.Internal_Name), Map.Instance.Get_Tile_At(data.X, data.Y),
@@ -354,6 +361,7 @@ public class Building {
         Construction_Progress = Construction_Time;
         //TODO: Duplicate code
         Update_Connectivity();
+        Update_Appeal();
         if (On_Built != null) {
             On_Built(this);
         }
@@ -517,6 +525,7 @@ public class Building {
             Update_Sprite();
             if(Deconstruction_Progress >= Construction_Time) {
                 Delete();
+                Update_Appeal();
                 City.Instance.Remove_Building(this);
                 foreach (Building building in Map.Instance.Get_Buildings_Around(this)) {
                     building.Update_Sprite();
@@ -563,6 +572,7 @@ public class Building {
                     building.Construction_Progress = Mathf.Clamp(building.Construction_Progress + (range_multiplier * construction_progress), 0.0f, building.Construction_Time);
                     building.Update_Sprite();
                     if (building.Is_Built) {
+                        building.Update_Appeal();
                         building.Update_Connectivity();
                         if (building.On_Built != null) {
                             building.On_Built(building);
@@ -1032,6 +1042,65 @@ public class Building {
     public override string ToString()
     {
         return Is_Prototype ? string.Format("{0} prototype", Internal_Name) : string.Format("{0} (#{1})", Internal_Name, Id);
+    }
+
+    public void Update_Appeal()
+    {
+        if (Is_Deleted) {
+            foreach (Tile tile in Tiles) {
+                if (Appeal != 0.0f) {
+                    tile.Appeal -= Appeal;
+                    if (Appeal_Range != 0.0f) {
+                        foreach (Tile affected in Map.Instance.Get_Tiles_In_Circle(tile.Coordinates, Appeal_Range)) {
+                            if (affected == tile) {
+                                continue;
+                            }
+                            affected.Appeal -= Tile.Calculate_Appeal_Effect(tile.Coordinates, Appeal, Appeal_Range, affected.Coordinates);
+                        }
+                    }
+                }
+            }
+            foreach (Tile tile in Tiles) {
+                if (tile.Base_Appeal != 0.0f) {
+                    tile.Appeal += tile.Base_Appeal;
+                    if (tile.Base_Appeal_Range != 0.0f) {
+                        foreach (Tile affected in Map.Instance.Get_Tiles_In_Circle(tile.Coordinates, tile.Base_Appeal_Range)) {
+                            if (affected == tile) {
+                                continue;
+                            }
+                            affected.Appeal += Tile.Calculate_Appeal_Effect(tile.Coordinates, tile.Base_Appeal, tile.Base_Appeal_Range, affected.Coordinates);
+                        }
+                    }
+                }
+            }
+        } else {
+            foreach (Tile tile in Tiles) {
+                if (tile.Base_Appeal != 0.0f) {
+                    tile.Appeal -= tile.Base_Appeal;
+                    if (tile.Base_Appeal_Range != 0.0f) {
+                        foreach (Tile affected in Map.Instance.Get_Tiles_In_Circle(tile.Coordinates, tile.Base_Appeal_Range)) {
+                            if (affected == tile) {
+                                continue;
+                            }
+                            affected.Appeal -= Tile.Calculate_Appeal_Effect(tile.Coordinates, tile.Base_Appeal, tile.Base_Appeal_Range, affected.Coordinates);
+                        }
+                    }
+                }
+            }
+            foreach (Tile tile in Tiles) {
+                if (Appeal != 0.0f) {
+                    tile.Appeal += Appeal;
+                    if (Appeal_Range != 0.0f) {
+                        foreach (Tile affected in Map.Instance.Get_Tiles_In_Circle(tile.Coordinates, Appeal_Range)) {
+                            if (affected == tile) {
+                                continue;
+                            }
+                            affected.Appeal += Tile.Calculate_Appeal_Effect(tile.Coordinates, Appeal, Appeal_Range, affected.Coordinates);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private GameObject Get_Prefab()

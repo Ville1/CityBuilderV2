@@ -6,6 +6,11 @@ public class MenuManager : MonoBehaviour {
 
     public Button Menu_Button;
     public Button City_Button;
+    public Button Views_Button;
+    public GameObject Views_Panel;
+    public Button None_Button;
+    public Button Appeal_Button;
+    public Button Minerals_Button;
 
     /// <summary>
     /// Initializiation
@@ -16,6 +21,7 @@ public class MenuManager : MonoBehaviour {
             CustomLogger.Instance.Error(LogMessages.MULTIPLE_INSTANCES);
             return;
         }
+        Views_Panel.SetActive(false);
         Instance = this;
     }
 
@@ -25,6 +31,10 @@ public class MenuManager : MonoBehaviour {
     private void Update()
     {
         City_Button.interactable = Map.Instance != null && Map.Instance.State == Map.MapState.Normal;
+        Views_Button.interactable = Map.Instance != null && Map.Instance.State == Map.MapState.Normal;
+        None_Button.interactable = Map.Instance != null && Map.Instance.View != Map.MapView.None;
+        Appeal_Button.interactable = Map.Instance != null && Map.Instance.View != Map.MapView.Appeal;
+        Minerals_Button.interactable = Map.Instance != null && Map.Instance.View != Map.MapView.Minerals;
     }
 
     public void Menu_On_Click()
@@ -35,6 +45,31 @@ public class MenuManager : MonoBehaviour {
     public void City_On_Click()
     {
         CityInfoGUIManager.Instance.Active = true;
+    }
+
+    public void Views_On_Click()
+    {
+        Views_Panel.SetActive(!Views_Panel.activeSelf);
+    }
+
+    public void None_On_Click()
+    {
+        Map.Instance.View = Map.MapView.None;
+    }
+
+    public void Appeal_On_Click()
+    {
+        Map.Instance.View = Map.MapView.Appeal;
+    }
+
+    public void Minerals_On_Click()
+    {
+        Map.Instance.View = Map.MapView.Minerals;
+    }
+
+    public void Close_Views_Panel()
+    {
+        Views_Panel.SetActive(false);
     }
 
     public bool Interactable

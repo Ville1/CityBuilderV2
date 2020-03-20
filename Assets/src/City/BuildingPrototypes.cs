@@ -14,11 +14,11 @@ public class BuildingPrototypes {
         prototypes = new List<Building>();
 
         prototypes.Add(new Building("Townhall", Building.TOWN_HALL_INTERNAL_NAME, Building.UI_Category.Admin, "town_hall", Building.BuildingSize.s2x2, 1000, new Dictionary<Resource, int>(), 0, new List<Resource>() { Resource.Lumber, Resource.Stone, Resource.Tools, Resource.Wood },
-            2000, 15.0f, 0, new Dictionary<Resource, float>(), 0.0f, 3.0f, 50.0f, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 25, null, null, null, null, new List<Resource>(), new List<Resource>()));
+            3000, 15.0f, 0, new Dictionary<Resource, float>(), 0.0f, 3.0f, 50.0f, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 25, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.05f, 7.0f));
 
         prototypes.Add(new Residence("Cabin", "hut", Building.UI_Category.Housing, "hut", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
             { Resource.Wood, 100 }, { Resource.Stone, 15 }, { Resource.Tools, 10 }
-        }, 100, new List<Resource>(), 0, 115, new Dictionary<Resource, float>() { { Resource.Wood, 0.05f } }, 0.0f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 } }, null, null, null, null, new List<Resource>(), new List<Resource>()));
+        }, 100, new List<Resource>(), 0, 115, new Dictionary<Resource, float>() { { Resource.Wood, 0.05f } }, 0.0f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 } }, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
 
         prototypes.Add(new Building("Wood Cutters Lodge", "wood_cutters_lodge", Building.UI_Category.Forestry, "wood_cutters_lodge", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
             { Resource.Wood, 75 }, { Resource.Stone, 5 }, { Resource.Tools, 15 }
@@ -60,11 +60,11 @@ public class BuildingPrototypes {
                 }
             }
             return worked_tiles;
-        }, new List<Resource>(), new List<Resource>() { Resource.Wood, Resource.Firewood }));
+        }, new List<Resource>(), new List<Resource>() { Resource.Wood, Resource.Firewood }, 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "wood_cutters_lodge").Special_Settings.Add(new SpecialSetting("firewood_ratio", "Firewood production", SpecialSetting.SettingType.Slider, 0.0f));
 
         prototypes.Add(new Building("Cobblestone Road", "cobblestone_road", Building.UI_Category.Infrastructure, "road_nesw", Building.BuildingSize.s1x1, 10, new Dictionary<Resource, int>() { { Resource.Stone, 10 }, { Resource.Tools, 1 } }, 10,
-            new List<Resource>(), 0, 0.0f, 10, new Dictionary<Resource, float>() { { Resource.Stone, 0.01f } }, 0.0f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, true, true, 0.0f, 0, null, null, null, null, new List<Resource>(), new List<Resource>()));
+            new List<Resource>(), 0, 0.0f, 10, new Dictionary<Resource, float>() { { Resource.Stone, 0.01f } }, 0.0f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, true, true, 0.0f, 0, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "cobblestone_road").Sprite.Add_Logic(delegate (Building building) {
             Tile tile = building.Tile;
             if (tile == null) {
@@ -107,7 +107,7 @@ public class BuildingPrototypes {
                     return;
                 }
                 building.Process(Resource.Wood, 20.0f, Resource.Lumber, 10.0f, delta_time);
-            }, null, null, new List<Resource>() { Resource.Wood }, new List<Resource>() { Resource.Lumber }));
+            }, null, null, new List<Resource>() { Resource.Wood }, new List<Resource>() { Resource.Lumber }, -0.75f, 4.0f));
 
         prototypes.Add(new Building("Clear Trees", "clear_trees", Building.UI_Category.Forestry, "axe", Building.BuildingSize.s1x1, 1, new Dictionary<Resource, int>() { { Resource.Tools, 1 } }, 5, new List<Resource>(),
             0, 0.0f, 0, new Dictionary<Resource, float>(), 0.0f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 0, null, delegate (Building building, float delta_time) {
@@ -127,7 +127,7 @@ public class BuildingPrototypes {
                     building.Tile.Change_To(TilePrototypes.Instance.Get("grass"));
                     building.Deconstruct(true, false);
                 }
-            }, null, null, new List<Resource>(), new List<Resource>()));
+            }, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "clear_trees").Sprite.Animation_Frame_Time = 0.5f;
         prototypes.First(x => x.Internal_Name == "clear_trees").Sprite.Animation_Sprites = new List<string>() { "chop_trees_1", "chop_trees_2" };
         prototypes.First(x => x.Internal_Name == "clear_trees").Permitted_Terrain.Add("forest");
@@ -137,17 +137,17 @@ public class BuildingPrototypes {
         prototypes.Add(new Building("Storehouse", "storehouse", Building.UI_Category.Infrastructure, "storehouse", Building.BuildingSize.s2x2, 200, new Dictionary<Resource, int>() {
             { Resource.Stone, 30 }, { Resource.Tools, 25 }, { Resource.Lumber, 275 }
         }, 225, new List<Resource>() { Resource.Lumber, Resource.Stone, Resource.Tools, Resource.Wood, Resource.Hide, Resource.Leather },
-        2000, 65.0f, 250, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f } }, 1.0f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 } }, 10, false, false, true, 0.0f, 15, null, null, null, null, new List<Resource>(), new List<Resource>()));
+        2000, 65.0f, 250, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f } }, 1.0f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 } }, 10, false, false, true, 0.0f, 15, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
 
         prototypes.Add(new Building("Cellar", "cellar", Building.UI_Category.Infrastructure, "cellar", Building.BuildingSize.s1x1, 100, new Dictionary<Resource, int>() {
             { Resource.Wood, 15 }, { Resource.Stone, 50 }, { Resource.Tools, 10 }, { Resource.Lumber, 50 }
         }, 100, new List<Resource>() { Resource.Roots, Resource.Berries, Resource.Mushrooms, Resource.Herbs, Resource.Game, Resource.Potatoes, Resource.Bread },
-        1000, 50.0f, 110, new Dictionary<Resource, float>() { { Resource.Wood, 0.05f } }, 0.5f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 5 } }, 5, false, false, true, 0.0f, 12, null, null, null, null, new List<Resource>(), new List<Resource>()));
+        1000, 50.0f, 110, new Dictionary<Resource, float>() { { Resource.Wood, 0.05f } }, 0.5f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 5 } }, 5, false, false, true, 0.0f, 12, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
 
         prototypes.Add(new Building("Wood Stockpile", "wood_stockpile", Building.UI_Category.Infrastructure, "wood_stockpile", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
             { Resource.Wood, 25 }, { Resource.Stone, 5 }, { Resource.Tools, 5 }
         }, 100, new List<Resource>() { Resource.Wood, Resource.Lumber, Resource.Firewood },
-        1000, 45.0f, 50, new Dictionary<Resource, float>() { { Resource.Wood, 0.01f } }, 0.25f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 5 } }, 5, false, false, true, 0.0f, 12, null, null, null, null, new List<Resource>(), new List<Resource>()));
+        1000, 45.0f, 50, new Dictionary<Resource, float>() { { Resource.Wood, 0.01f } }, 0.25f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 5 } }, 5, false, false, true, 0.0f, 12, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
 
         prototypes.Add(new Building("Gatherers Lodge", "gatherers_lodge", Building.UI_Category.Forestry, "gatherers_lodge", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
             { Resource.Wood, 85 }, { Resource.Stone, 10 }, { Resource.Tools, 10 }
@@ -209,7 +209,7 @@ public class BuildingPrototypes {
                 }
             }
             return worked_tiles;
-        }, new List<Resource>(), new List<Resource>() { Resource.Roots, Resource.Berries, Resource.Mushrooms, Resource.Herbs }));
+        }, new List<Resource>(), new List<Resource>() { Resource.Roots, Resource.Berries, Resource.Mushrooms, Resource.Herbs }, 0.0f, 0.0f));
 
         prototypes.Add(new Building("Marketplace", "marketplace", Building.UI_Category.Services, "marketplace", Building.BuildingSize.s3x3, 150, new Dictionary<Resource, int>() {
             { Resource.Lumber, 20 },
@@ -369,7 +369,7 @@ public class BuildingPrototypes {
                 market.Per_Day_Cash_Delta += (income / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f);
                 City.Instance.Add_Cash(income);
             }//                                  v unnecessary list v special settings adds and removes stuff from consumption list
-        }, null, null, new List<Resource>() { Resource.Berries, Resource.Roots, Resource.Mushrooms, Resource.Herbs, Resource.Firewood, Resource.Charcoal, Resource.Game, Resource.Bread, Resource.Potatoes }, new List<Resource>()));
+        }, null, null, new List<Resource>() { Resource.Berries, Resource.Roots, Resource.Mushrooms, Resource.Herbs, Resource.Firewood, Resource.Charcoal, Resource.Game, Resource.Bread, Resource.Potatoes }, new List<Resource>(), 0.05f, 5.0f));
         Resource prefered_fuel = Resource.All.Where(x => x.Is_Fuel).OrderByDescending(x => x.Value / x.Fuel_Value).FirstOrDefault();
         foreach(Resource resource in Resource.All) {
             if (resource.Is_Food) {
@@ -429,7 +429,7 @@ public class BuildingPrototypes {
                 }
             }
             return worked_tiles;
-        }, new List<Resource>(), new List<Resource>() { Resource.Game, Resource.Hide }));
+        }, new List<Resource>(), new List<Resource>() { Resource.Game, Resource.Hide }, 0.0f, 0.0f));
 
         prototypes.Add(new Building("Quarry", "quarry", Building.UI_Category.Industry, "quarry", Building.BuildingSize.s3x3, 350, new Dictionary<Resource, int>() {
             { Resource.Wood, 65 }, { Resource.Lumber, 80 }, { Resource.Tools, 45 }
@@ -438,7 +438,12 @@ public class BuildingPrototypes {
                 return;
             }
             building.Produce(Resource.Stone, 10.0f, delta_time);
-        }, null, null, new List<Resource>(), new List<Resource>() { Resource.Stone }));
+        }, null, null, new List<Resource>(), new List<Resource>() { Resource.Stone }, -0.5f, 7.0f));
+
+        prototypes.Add(new Building("Decorative Tree", "decorative_tree", Building.UI_Category.Services, "decorative_tree", Building.BuildingSize.s1x1, 50, new Dictionary<Resource, int>() {
+            { Resource.Stone, 5 }, { Resource.Tools, 1 }
+        }, 25, new List<Resource>(), 0, 0.0f, 50, new Dictionary<Resource, float>(), 0.0f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 0, null, null, null, null,
+        new List<Resource>(), new List<Resource>(), 0.5f, 3.0f));
     }
 
     public static BuildingPrototypes Instance

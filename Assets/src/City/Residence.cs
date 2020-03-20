@@ -17,6 +17,11 @@ public class Residence : Building {
         { Resident.Citizen, new float[3] { 0.50f, 0.60f, 0.70f } },
         { Resident.Noble, new float[3] { 0.60f, 0.70f, 0.90f } }
     };
+    public static readonly Dictionary<Resident, float[]> APPEAL_THRESHOLDS = new Dictionary<Resident, float[]>() {
+        { Resident.Peasant, new float[4] { -3.5f, -2.0f, 1.00f, 2.00f } },
+        { Resident.Citizen, new float[4] { -10.0f, 0.00f, 0.50f, 3.00f } },
+        { Resident.Noble, new float[4] { -10.0f, 5.00f, 10.00f, 15.00f } }
+    };
     public static readonly Dictionary<Resident, List<ServiceType>> SERVICES_CONSUMED = new Dictionary<Resident, List<ServiceType>>() {
         { Resident.Peasant, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs } },
         { Resident.Citizen, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs } },
@@ -73,9 +78,9 @@ public class Residence : Building {
 
     public Residence(string name, string internal_name, UI_Category category, string sprite, BuildingSize size, int hp, Dictionary<Resource, int> cost, int cash_cost, List<Resource> allowed_resources, int storage_limit, int construction_time,
         Dictionary<Resource, float> upkeep, float cash_upkeep, float construction_speed, float construction_range, Dictionary<Resident, int> resident_space, OnBuiltDelegate on_built, OnUpdateDelegate on_update, OnDeconstructDelegate on_deconstruct,
-        OnHighlightDelegate on_highlight, List<Resource> consumes, List<Resource> produces) :
+        OnHighlightDelegate on_highlight, List<Resource> consumes, List<Resource> produces, float appeal, float appeal_range) :
         base(name, internal_name, category, sprite, size, hp, cost, cash_cost, allowed_resources, storage_limit, 0.0f, construction_time, upkeep, cash_upkeep, construction_speed, construction_range, new Dictionary<Resident, int>(), 0, false, false,
-            true, 0.0f, 0, on_built, on_update, on_deconstruct, on_highlight, consumes, produces)
+            true, 0.0f, 0, on_built, on_update, on_deconstruct, on_highlight, consumes, produces, appeal, appeal_range)
     {
         Resident_Space = Helper.Clone_Dictionary(resident_space);
         foreach (Resident resident in Enum.GetValues(typeof(Resident))) {
@@ -116,6 +121,17 @@ public class Residence : Building {
             } else {
                 services.Add(service, new float[2] { 0.0f, 0.0f });
             }
+        }
+    }
+
+    public float Current_Appeal
+    {
+        get {
+            float total = 0.0f;
+            foreach(Tile tile in Tiles) {
+                total += tile.Appeal;
+            }
+            return total / Tiles.Count;
         }
     }
 
@@ -205,6 +221,19 @@ public class Residence : Building {
                     }
                 }
 
+                float appeal = Current_Appeal;
+                if(appeal < APPEAL_THRESHOLDS[Resident.Peasant][1]) {
+                    float missing_appeal = Mathf.Min(APPEAL_THRESHOLDS[Resident.Peasant][1] - appeal, APPEAL_THRESHOLDS[Resident.Peasant][1] - APPEAL_THRESHOLDS[Resident.Peasant][0]);
+                    float appeal_penalty = missing_appeal * 0.10f;
+                    Happiness[Resident.Peasant] -= appeal_penalty;
+                    Happiness_Info[Resident.Peasant].Add(string.Format("Appeal: -{0}", UI_Happiness(appeal_penalty)));
+                } else if(appeal > APPEAL_THRESHOLDS[Resident.Peasant][2]) {
+                    float bonus_appeal = Mathf.Min(appeal - APPEAL_THRESHOLDS[Resident.Peasant][2], APPEAL_THRESHOLDS[Resident.Peasant][3] - APPEAL_THRESHOLDS[Resident.Peasant][2]);
+                    float appeal_bonus = bonus_appeal * 0.10f;
+                    Happiness[Resident.Peasant] += appeal_bonus;
+                    Happiness_Info[Resident.Peasant].Add(string.Format("Appeal: +{0}", UI_Happiness(appeal_bonus)));
+                }
+
                 if(services[ServiceType.Herbs][AMOUNT] != 0.0f) {
                     float base_herb_bonus = 0.05f;
                     float herb_bonus = base_herb_bonus * Mathf.Clamp(services[ServiceType.Herbs][QUALITY], 0.9f, 1.1f);
@@ -259,6 +288,19 @@ public class Residence : Building {
                 }
             }
 
+            float appeal = Current_Appeal;
+            if (appeal < APPEAL_THRESHOLDS[Resident.Citizen][1]) {
+                float missing_appeal = Mathf.Min(APPEAL_THRESHOLDS[Resident.Citizen][1] - appeal, APPEAL_THRESHOLDS[Resident.Citizen][1] - APPEAL_THRESHOLDS[Resident.Citizen][0]);
+                float appeal_penalty = missing_appeal * 0.10f;
+                Happiness[Resident.Citizen] -= appeal_penalty;
+                Happiness_Info[Resident.Citizen].Add(string.Format("Appeal: -{0}", UI_Happiness(appeal_penalty)));
+            } else if (appeal > APPEAL_THRESHOLDS[Resident.Citizen][2]) {
+                float bonus_appeal = Mathf.Min(appeal - APPEAL_THRESHOLDS[Resident.Citizen][2], APPEAL_THRESHOLDS[Resident.Citizen][3] - APPEAL_THRESHOLDS[Resident.Citizen][2]);
+                float appeal_bonus = bonus_appeal * 0.10f;
+                Happiness[Resident.Citizen] += appeal_bonus;
+                Happiness_Info[Resident.Citizen].Add(string.Format("Appeal: +{0}", UI_Happiness(appeal_bonus)));
+            }
+
             if (services[ServiceType.Herbs][AMOUNT] != 0.0f) {
                 float base_herb_bonus = 0.05f;
                 float herb_bonus = base_herb_bonus * Mathf.Clamp(services[ServiceType.Herbs][QUALITY], 0.75f, 1.1f);
@@ -310,6 +352,19 @@ public class Residence : Building {
                     Happiness[Resident.Noble] += bonus;
                     Happiness_Info[Resident.Noble].Add(string.Format("Food quality: +{0}", UI_Happiness(bonus)));
                 }
+            }
+
+            float appeal = Current_Appeal;
+            if (appeal < APPEAL_THRESHOLDS[Resident.Noble][1]) {
+                float missing_appeal = Mathf.Min(APPEAL_THRESHOLDS[Resident.Noble][1] - appeal, APPEAL_THRESHOLDS[Resident.Noble][1] - APPEAL_THRESHOLDS[Resident.Noble][0]);
+                float appeal_penalty = missing_appeal * 0.10f;
+                Happiness[Resident.Noble] -= appeal_penalty;
+                Happiness_Info[Resident.Noble].Add(string.Format("Appeal: -{0}", UI_Happiness(appeal_penalty)));
+            } else if (appeal > APPEAL_THRESHOLDS[Resident.Noble][2]) {
+                float bonus_appeal = Mathf.Min(appeal - APPEAL_THRESHOLDS[Resident.Noble][2], APPEAL_THRESHOLDS[Resident.Noble][3] - APPEAL_THRESHOLDS[Resident.Noble][2]);
+                float appeal_bonus = bonus_appeal * 0.10f;
+                Happiness[Resident.Noble] += appeal_bonus;
+                Happiness_Info[Resident.Noble].Add(string.Format("Appeal: +{0}", UI_Happiness(appeal_bonus)));
             }
 
             if (services[ServiceType.Herbs][AMOUNT] != 0.0f) {

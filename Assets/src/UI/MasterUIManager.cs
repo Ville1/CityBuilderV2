@@ -58,6 +58,7 @@ public class MasterUIManager : MonoBehaviour {
         if (SpecialSettingsGUIManager.Instance != null && typeof(SpecialSettingsGUIManager).Name != type_name) {
             SpecialSettingsGUIManager.Instance.Active = false;
         }
+        MenuManager.Instance.Close_Views_Panel();
     }
 
     public bool Intercept_Keyboard_Input

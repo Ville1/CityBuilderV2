@@ -24,7 +24,7 @@ public class Tile
     public Building Building { get; set; }
     public float Base_Appeal { get; private set; }
     public float Base_Appeal_Range { get; private set; }
-    public float Appeal { get { return Base_Appeal; } }
+    public float Appeal { get; set; }
     public List<Building> Worked_By { get; private set; }
 
     protected Color highlight_color;
@@ -182,6 +182,16 @@ public class Tile
     {
         GameObject.Destroy(GameObject);
         Destroyed = true;
+    }
+
+    public static float Calculate_Appeal_Effect(Coordinates source, float appeal, float range, Coordinates target)
+    {
+        float distance = source.Distance(target);
+        if(distance > range) {
+            return 0.0f;
+        }
+        float distance_multiplier = Mathf.Max((1.0f - distance / range), 0.5f);
+        return appeal * distance_multiplier;
     }
 
     public static Coordinates Parse_Coordinates_From_GameObject_Name(string name)

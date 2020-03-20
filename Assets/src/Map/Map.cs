@@ -6,6 +6,7 @@ using UnityEngine;
 public class Map : MonoBehaviour
 {
     public enum MapState { Inactive, Normal, Generating, Loading, Saving }
+    public enum MapView { None, Appeal, Minerals }
     public static readonly float Z_LEVEL = 0.0f;
 
     public static Map Instance { get; private set; }
@@ -31,6 +32,7 @@ public class Map : MonoBehaviour
     private int loop_progress;
     private List<Tile> fine_tuned_tiles;
     private bool city_loaded;
+    public MapView view;
 
     /// <summary>
     /// Initializiation
@@ -85,6 +87,13 @@ public class Map : MonoBehaviour
             return;
         } else if (State == MapState.Normal) {
             City.Instance.Update(Time.deltaTime);
+            if(View == MapView.Appeal) {
+                for(int x = 0; x < Width; x++) {
+                    for(int y = 0; y < Height; y++) {
+                        tiles[x][y].Show_Text(Helper.Float_To_String(tiles[x][y].Appeal, 1));
+                    }
+                }
+            }
         }
     }
     
@@ -96,6 +105,7 @@ public class Map : MonoBehaviour
         TimeManager.Instance.Reset_Time();
         Active = false;
         State = MapState.Generating;
+        View = MapView.None;
         Width = width;
         Height = height;
         forest_count_setting = Mathf.Clamp01(forest_count);
@@ -248,6 +258,7 @@ public class Map : MonoBehaviour
     public void Finish_Generation()
     {
         fine_tuned_tiles.Clear();
+        Update_Appeal();
         State = MapState.Normal;
         ProgressBarManager.Instance.Active = false;
         City.Instance.Start_New("PLACEHOLDER");
@@ -424,14 +435,77 @@ public class Map : MonoBehaviour
                 }
             }
         }
+        Update_Appeal();
         TimeManager.Instance.Set_Time(SaveManager.Instance.Data.Days);
         SaveManager.Instance.Finish_Loading();
         State = MapState.Normal;
+        View = MapView.None;
         ProgressBarManager.Instance.Active = false;
         Active = true;
         CameraManager.Instance.Set_Camera_Location(Get_Tile_At(Width / 2, Height / 2).Coordinates.Vector);
         BuildMenuManager.Instance.Interactable = true;
         TopGUIManager.Instance.Active = true;
+    }
+
+    private void Update_Appeal()
+    {
+        for (int x = 0; x < Width; x++) {
+            for (int y = 0; y < Height; y++) {
+                tiles[x][y].Appeal = 0.0f;
+            }
+        }
+        for (int x = 0; x < Width; x++) {
+            for (int y = 0; y < Height; y++) {
+                Tile tile = tiles[x][y];
+                float appeal = tile.Base_Appeal;
+                float range = tile.Base_Appeal_Range;
+                if(tile.Building != null && tile.Building.Is_Built) {
+                    appeal = tile.Building.Appeal;
+                    range = tile.Building.Appeal_Range;
+                }
+                if(appeal == 0.0f && range == 0.0f) {
+                    continue;
+                }
+                tile.Appeal += appeal;
+                if (range == 0.0f) {
+                    continue;
+                }
+                List<Tile> affected_tiles = Get_Tiles_In_Circle(tile.Coordinates, range);
+                foreach(Tile affected in affected_tiles) {
+                    if(affected == tile) {
+                        continue;
+                    }
+                    affected.Appeal += Tile.Calculate_Appeal_Effect(tile.Coordinates, appeal, range, affected.Coordinates);
+                }
+            }
+        }
+    }
+
+    public MapView View {
+        get {
+            return view;
+        }
+        set {
+            if(view == value) {
+                return;
+            }
+            view = value;
+            for(int x = 0; x < Width; x++) {
+                for(int y = 0; y < Height; y++) {
+                    switch (view) {
+                        case MapView.Appeal:
+                            tiles[x][y].Show_Text(Helper.Float_To_String(tiles[x][y].Appeal, 1));
+                            break;
+                        case MapView.Minerals:
+                            tiles[x][y].Show_Text("WIP");
+                            break;
+                        default:
+                            tiles[x][y].Hide_Text();
+                            break;
+                    }
+                }
+            }
+        }
     }
 
     public Tile Get_Tile_At(int x, int y, Coordinates.Direction? offset = null)
