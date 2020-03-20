@@ -12,15 +12,23 @@ public class Residence : Building {
         { Resident.Citizen, 0.4f },
         { Resident.Noble, 0.25f }
     };
-    public static readonly Dictionary<Resident, float[]> DESIRED_FOOD_QUALITY = new Dictionary<Resident, float[]>() {
-        { Resident.Peasant, new float[2] { 0.15f, 0.25f } },
-        { Resident.Citizen, new float[2] { 0.35f, 0.50f } },
-        { Resident.Noble, new float[2] { 0.5f, 0.75f } }
+    public static readonly Dictionary<Resident, float[]> FOOD_QUALITY_THRESHOLDS = new Dictionary<Resident, float[]>() {
+        { Resident.Peasant, new float[3] { 0.20f, 0.40f, 0.50f } },
+        { Resident.Citizen, new float[3] { 0.50f, 0.60f, 0.70f } },
+        { Resident.Noble, new float[3] { 0.60f, 0.70f, 0.90f } }
+    };
+    public static readonly Dictionary<Resident, List<ServiceType>> SERVICES_CONSUMED = new Dictionary<Resident, List<ServiceType>>() {
+        { Resident.Peasant, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs } },
+        { Resident.Citizen, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs } },
+        { Resident.Noble, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs } }
+    };
+    public static readonly Dictionary<ServiceType, float> OTHER_SERVICE_CONSUMPTION = new Dictionary<ServiceType, float>() {
+        { ServiceType.Herbs, 0.005f }
     };
     public static readonly float FUEL_CONSUMPTION_PER_TILE = 0.025f;//Per day
     public static readonly float FUEL_CONSUMPTION_PER_RESIDENT = 0.005f;//Per day
     public static readonly float FOOD_CONSUMPTION = 0.10f;//Per day, per resident
-    public static readonly float OTHER_SERVICE_CONSUMPTION = 0.0f;//Per day
+    public static readonly float UNEMPLOYMENT_PENALTY_THRESHOLD = 0.1f;
     public static readonly float MAX_UNEMPLOYMENT_PENALTY = 0.5f;
     public static readonly float STARVATION_PENALTY = 1.0f;
     public static readonly float NO_FUEL_PENALTY = 0.25f;
@@ -29,7 +37,7 @@ public class Residence : Building {
     public static readonly float RESOURCES_FOR_FULL_SERVICE = 10.0f;
     public static readonly float MAX_DISREPAIR_PENALTY = 0.75f;
 
-    public enum ServiceType { Food, Fuel }
+    public enum ServiceType { Food, Fuel, Herbs }
 
     public Dictionary<Resident, int> Resident_Space { get; private set; }
     public Dictionary<Resident, int> Current_Residents { get; private set; }
@@ -136,6 +144,19 @@ public class Residence : Building {
         services[ServiceType.Food][AMOUNT] = Math.Max(services[ServiceType.Food][AMOUNT] - (food_consumed / RESOURCES_FOR_FULL_SERVICE), 0.0f);
         services[ServiceType.Fuel][AMOUNT] = Math.Max(services[ServiceType.Fuel][AMOUNT] - (fuel_consumed / RESOURCES_FOR_FULL_SERVICE), 0.0f);
         Food_Consumed = (Current_Residents[Resident.Peasant] + Current_Residents[Resident.Citizen] + Current_Residents[Resident.Noble]) * FOOD_CONSUMPTION;
+        
+        foreach(ServiceType service in Enum.GetValues(typeof(ServiceType))) {
+            if(!OTHER_SERVICE_CONSUMPTION.ContainsKey(service)) {
+                continue;
+            }
+            consumers = Consumer_Count(service);
+            float consumed_per_day = consumers * OTHER_SERVICE_CONSUMPTION[service];
+            float consumed = Calculate_Actual_Amount(consumed_per_day, delta_time);
+            services[service][AMOUNT] = Math.Max(services[service][AMOUNT] - (consumed / RESOURCES_FOR_FULL_SERVICE), 0.0f);
+            if (services[service][AMOUNT] == 0.0f) {
+                services[service][QUALITY] = 0.0f;
+            }
+        }
 
         if (Resident_Space[Resident.Peasant] != 0) {
             if (City.Instance.Grace_Time) {
@@ -145,9 +166,10 @@ public class Residence : Building {
                 Happiness[Resident.Peasant] = BASE_HAPPINESS[Resident.Peasant];
                 Happiness_Info[Resident.Peasant].Add(string.Format("Base: {0}", UI_Happiness(BASE_HAPPINESS[Resident.Peasant])));
 
-                if(City.Instance.Unemployment[Resident.Peasant] > 0.0f) {
-                    Happiness[Resident.Peasant] -= MAX_UNEMPLOYMENT_PENALTY * City.Instance.Unemployment[Resident.Peasant];
-                    Happiness_Info[Resident.Peasant].Add(string.Format("Unemployment: -{0}", UI_Happiness(MAX_UNEMPLOYMENT_PENALTY * City.Instance.Unemployment[Resident.Peasant])));
+                float unemployment = City.Instance.Unemployment[Resident.Peasant] - UNEMPLOYMENT_PENALTY_THRESHOLD;
+                if (unemployment > 0.0f) {
+                    Happiness[Resident.Peasant] -= MAX_UNEMPLOYMENT_PENALTY * unemployment;
+                    Happiness_Info[Resident.Peasant].Add(string.Format("Unemployment: -{0}", UI_Happiness(MAX_UNEMPLOYMENT_PENALTY * unemployment)));
                 }
 
                 if(HP < Max_HP) {
@@ -160,18 +182,34 @@ public class Residence : Building {
                     Happiness[Resident.Peasant] -= NO_FUEL_PENALTY;
                     Happiness_Info[Resident.Peasant].Add(string.Format("No fuel: -{0}", UI_Happiness(NO_FUEL_PENALTY)));
                 } else if(services[ServiceType.Fuel][QUALITY] < BAD_FUEL_SERVICE_PENALTY_THRESHOLD) {
-                    //TODO: This
+                    float fuel_penalty = 0.1f * ((BAD_FUEL_SERVICE_PENALTY_THRESHOLD - services[ServiceType.Fuel][QUALITY]) / BAD_FUEL_SERVICE_PENALTY_THRESHOLD);
+                    Happiness[Resident.Peasant] -= fuel_penalty;
+                    Happiness_Info[Resident.Peasant].Add(string.Format("Bad fuel service: -{0}", UI_Happiness(fuel_penalty)));
                 }
 
                 if (services[ServiceType.Food][AMOUNT] == 0.0f) {
                     Happiness[Resident.Peasant] -= STARVATION_PENALTY;
                     Happiness_Info[Resident.Peasant].Add(string.Format("Starvation: -{0}", UI_Happiness(STARVATION_PENALTY)));
                 } else {
-                    if(services[ServiceType.Food][QUALITY] < DESIRED_FOOD_QUALITY[Resident.Peasant][0]) {
-                        //TODO: Penalty
-                    } else if (services[ServiceType.Food][QUALITY] > DESIRED_FOOD_QUALITY[Resident.Peasant][1]) {
-                        //TODO: Bonus
+                    if(services[ServiceType.Food][QUALITY] < FOOD_QUALITY_THRESHOLDS[Resident.Peasant][0]) {
+                        float missing_quality = FOOD_QUALITY_THRESHOLDS[Resident.Peasant][0] - services[ServiceType.Food][QUALITY];
+                        float penalty = missing_quality * 0.5f;
+                        Happiness[Resident.Peasant] -= penalty;
+                        Happiness_Info[Resident.Peasant].Add(string.Format("Food quality: -{0}", UI_Happiness(penalty)));
+                    } else if (services[ServiceType.Food][QUALITY] > FOOD_QUALITY_THRESHOLDS[Resident.Peasant][1]) {
+                        float extra_quality = services[ServiceType.Food][QUALITY] - FOOD_QUALITY_THRESHOLDS[Resident.Peasant][1];
+                        extra_quality = Math.Min(extra_quality, FOOD_QUALITY_THRESHOLDS[Resident.Peasant][2] - FOOD_QUALITY_THRESHOLDS[Resident.Peasant][1]);
+                        float bonus = extra_quality * 0.5f;
+                        Happiness[Resident.Peasant] += bonus;
+                        Happiness_Info[Resident.Peasant].Add(string.Format("Food quality: +{0}", UI_Happiness(bonus)));
                     }
+                }
+
+                if(services[ServiceType.Herbs][AMOUNT] != 0.0f) {
+                    float base_herb_bonus = 0.05f;
+                    float herb_bonus = base_herb_bonus * Mathf.Clamp(services[ServiceType.Herbs][QUALITY], 0.9f, 1.1f);
+                    Happiness[Resident.Peasant] += herb_bonus;
+                    Happiness_Info[Resident.Peasant].Add(string.Format("Herbs: +{0}", UI_Happiness(herb_bonus)));
                 }
 
                 Happiness[Resident.Peasant] = Math.Max(0.0f, Happiness[Resident.Peasant]);
@@ -182,9 +220,10 @@ public class Residence : Building {
             Happiness[Resident.Citizen] = BASE_HAPPINESS[Resident.Citizen];
             Happiness_Info[Resident.Citizen].Add(string.Format("Base: {0}", UI_Happiness(BASE_HAPPINESS[Resident.Citizen])));
 
-            if (City.Instance.Unemployment[Resident.Citizen] > 0.0f) {
-                Happiness[Resident.Citizen] -= MAX_UNEMPLOYMENT_PENALTY * City.Instance.Unemployment[Resident.Citizen];
-                Happiness_Info[Resident.Citizen].Add(string.Format("Unemployment: -{0}", UI_Happiness(MAX_UNEMPLOYMENT_PENALTY * City.Instance.Unemployment[Resident.Citizen])));
+            float unemployment = City.Instance.Unemployment[Resident.Citizen] - UNEMPLOYMENT_PENALTY_THRESHOLD;
+            if (unemployment > 0.0f) {
+                Happiness[Resident.Citizen] -= MAX_UNEMPLOYMENT_PENALTY * unemployment;
+                Happiness_Info[Resident.Citizen].Add(string.Format("Unemployment: -{0}", UI_Happiness(MAX_UNEMPLOYMENT_PENALTY * unemployment)));
             }
 
             if (HP < Max_HP) {
@@ -197,18 +236,34 @@ public class Residence : Building {
                 Happiness[Resident.Citizen] -= NO_FUEL_PENALTY;
                 Happiness_Info[Resident.Citizen].Add(string.Format("No fuel: -{0}", UI_Happiness(NO_FUEL_PENALTY)));
             } else if (services[ServiceType.Fuel][QUALITY] < BAD_FUEL_SERVICE_PENALTY_THRESHOLD) {
-                //TODO: This
+                float fuel_penalty = 0.15f * ((BAD_FUEL_SERVICE_PENALTY_THRESHOLD - services[ServiceType.Fuel][QUALITY]) / BAD_FUEL_SERVICE_PENALTY_THRESHOLD);
+                Happiness[Resident.Citizen] -= fuel_penalty;
+                Happiness_Info[Resident.Citizen].Add(string.Format("Bad fuel service: -{0}", UI_Happiness(fuel_penalty)));
             }
 
             if (services[ServiceType.Food][AMOUNT] == 0.0f) {
                 Happiness[Resident.Citizen] -= STARVATION_PENALTY;
                 Happiness_Info[Resident.Citizen].Add(string.Format("Starvation: -{0}", UI_Happiness(STARVATION_PENALTY)));
             } else {
-                if (services[ServiceType.Food][QUALITY] < DESIRED_FOOD_QUALITY[Resident.Citizen][0]) {
-                    //TODO: Penalty
-                } else if (services[ServiceType.Food][QUALITY] > DESIRED_FOOD_QUALITY[Resident.Citizen][1]) {
-                    //TODO: Bonus
+                if (services[ServiceType.Food][QUALITY] < FOOD_QUALITY_THRESHOLDS[Resident.Citizen][0]) {
+                    float missing_quality = FOOD_QUALITY_THRESHOLDS[Resident.Citizen][0] - services[ServiceType.Food][QUALITY];
+                    float penalty = missing_quality * 0.5f;
+                    Happiness[Resident.Citizen] -= penalty;
+                    Happiness_Info[Resident.Citizen].Add(string.Format("Food quality: -{0}", UI_Happiness(penalty)));
+                } else if (services[ServiceType.Food][QUALITY] > FOOD_QUALITY_THRESHOLDS[Resident.Citizen][1]) {
+                    float extra_quality = services[ServiceType.Food][QUALITY] - FOOD_QUALITY_THRESHOLDS[Resident.Citizen][1];
+                    extra_quality = Math.Min(extra_quality, FOOD_QUALITY_THRESHOLDS[Resident.Citizen][2] - FOOD_QUALITY_THRESHOLDS[Resident.Citizen][1]);
+                    float bonus = extra_quality * 0.5f;
+                    Happiness[Resident.Citizen] += bonus;
+                    Happiness_Info[Resident.Citizen].Add(string.Format("Food quality: +{0}", UI_Happiness(bonus)));
                 }
+            }
+
+            if (services[ServiceType.Herbs][AMOUNT] != 0.0f) {
+                float base_herb_bonus = 0.05f;
+                float herb_bonus = base_herb_bonus * Mathf.Clamp(services[ServiceType.Herbs][QUALITY], 0.75f, 1.1f);
+                Happiness[Resident.Citizen] += herb_bonus;
+                Happiness_Info[Resident.Citizen].Add(string.Format("Herbs: +{0}", UI_Happiness(herb_bonus)));
             }
 
             Happiness[Resident.Citizen] = Math.Max(0.0f, Happiness[Resident.Citizen]);
@@ -218,9 +273,10 @@ public class Residence : Building {
             Happiness[Resident.Noble] = BASE_HAPPINESS[Resident.Noble];
             Happiness_Info[Resident.Noble].Add(string.Format("Base: {0}", UI_Happiness(BASE_HAPPINESS[Resident.Noble])));
 
-            if (City.Instance.Unemployment[Resident.Noble] > 0.0f) {
-                Happiness[Resident.Noble] -= MAX_UNEMPLOYMENT_PENALTY * City.Instance.Unemployment[Resident.Noble];
-                Happiness_Info[Resident.Noble].Add(string.Format("Unemployment: -{0}", UI_Happiness(MAX_UNEMPLOYMENT_PENALTY * City.Instance.Unemployment[Resident.Noble])));
+            float unemployment = City.Instance.Unemployment[Resident.Noble] - UNEMPLOYMENT_PENALTY_THRESHOLD;
+            if (unemployment > 0.0f) {
+                Happiness[Resident.Noble] -= (MAX_UNEMPLOYMENT_PENALTY * unemployment) * 0.5f;
+                Happiness_Info[Resident.Noble].Add(string.Format("Unemployment: -{0}", UI_Happiness((MAX_UNEMPLOYMENT_PENALTY * unemployment) * 0.5f)));
             }
 
             if (HP < Max_HP) {
@@ -230,21 +286,37 @@ public class Residence : Building {
             }
 
             if (services[ServiceType.Fuel][AMOUNT] == 0.0f) {
-                Happiness[Resident.Citizen] -= NO_FUEL_PENALTY;
-                Happiness_Info[Resident.Citizen].Add(string.Format("No fuel: -{0}", UI_Happiness(NO_FUEL_PENALTY)));
+                Happiness[Resident.Noble] -= NO_FUEL_PENALTY;
+                Happiness_Info[Resident.Noble].Add(string.Format("No fuel: -{0}", UI_Happiness(NO_FUEL_PENALTY)));
             } else if (services[ServiceType.Fuel][QUALITY] < BAD_FUEL_SERVICE_PENALTY_THRESHOLD) {
-                //TODO: This
+                float fuel_penalty = 0.25f * ((BAD_FUEL_SERVICE_PENALTY_THRESHOLD - services[ServiceType.Fuel][QUALITY]) / BAD_FUEL_SERVICE_PENALTY_THRESHOLD);
+                Happiness[Resident.Noble] -= fuel_penalty;
+                Happiness_Info[Resident.Noble].Add(string.Format("Bad fuel service: -{0}", UI_Happiness(fuel_penalty)));
             }
 
             if (services[ServiceType.Food][AMOUNT] == 0.0f) {
-                Happiness[Resident.Citizen] -= STARVATION_PENALTY;
-                Happiness_Info[Resident.Citizen].Add(string.Format("Starvation: -{0}", UI_Happiness(STARVATION_PENALTY)));
+                Happiness[Resident.Noble] -= STARVATION_PENALTY;
+                Happiness_Info[Resident.Noble].Add(string.Format("Starvation: -{0}", UI_Happiness(STARVATION_PENALTY)));
             } else {
-                if (services[ServiceType.Food][QUALITY] < DESIRED_FOOD_QUALITY[Resident.Citizen][0]) {
-                    //TODO: Penalty
-                } else if (services[ServiceType.Food][QUALITY] > DESIRED_FOOD_QUALITY[Resident.Citizen][1]) {
-                    //TODO: Bonus
+                if (services[ServiceType.Food][QUALITY] < FOOD_QUALITY_THRESHOLDS[Resident.Noble][0]) {
+                    float missing_quality = FOOD_QUALITY_THRESHOLDS[Resident.Noble][0] - services[ServiceType.Food][QUALITY];
+                    float penalty = missing_quality * 1.25f;
+                    Happiness[Resident.Noble] -= penalty;
+                    Happiness_Info[Resident.Noble].Add(string.Format("Food quality: -{0}", UI_Happiness(penalty)));
+                } else if (services[ServiceType.Food][QUALITY] > FOOD_QUALITY_THRESHOLDS[Resident.Noble][1]) {
+                    float extra_quality = services[ServiceType.Food][QUALITY] - FOOD_QUALITY_THRESHOLDS[Resident.Noble][1];
+                    extra_quality = Math.Min(extra_quality, FOOD_QUALITY_THRESHOLDS[Resident.Noble][2] - FOOD_QUALITY_THRESHOLDS[Resident.Noble][1]);
+                    float bonus = extra_quality * 1.10f;
+                    Happiness[Resident.Noble] += bonus;
+                    Happiness_Info[Resident.Noble].Add(string.Format("Food quality: +{0}", UI_Happiness(bonus)));
                 }
+            }
+
+            if (services[ServiceType.Herbs][AMOUNT] != 0.0f) {
+                float base_herb_bonus = 0.025f;
+                float herb_bonus = base_herb_bonus * Mathf.Clamp(services[ServiceType.Herbs][QUALITY], 0.75f, 1.1f);
+                Happiness[Resident.Noble] += herb_bonus;
+                Happiness_Info[Resident.Noble].Add(string.Format("Herbs: +{0}", UI_Happiness(herb_bonus)));
             }
 
             Happiness[Resident.Noble] = Math.Max(0.0f, Happiness[Resident.Noble]);
@@ -291,6 +363,9 @@ public class Residence : Building {
 
     public float Service_Needed(ServiceType service)
     {
+        if(Max_Consumer_Count(service) == 0) {
+            return 0.0f;
+        }
         return 1.0f - services[service][AMOUNT];
     }
 
@@ -307,5 +382,27 @@ public class Residence : Building {
     private string UI_Happiness(float happiness)
     {
         return Mathf.RoundToInt(100.0f * happiness).ToString();
+    }
+
+    private int Consumer_Count(ServiceType service)
+    {
+        int count = 0;
+        foreach(KeyValuePair<Resident, List<ServiceType>> pair in SERVICES_CONSUMED) {
+            if (pair.Value.Contains(service) && (pair.Key != Resident.Peasant || !City.Instance.Grace_Time)) {
+                count += Current_Residents[pair.Key];
+            }
+        }
+        return count;
+    }
+
+    private int Max_Consumer_Count(ServiceType service)
+    {
+        int count = 0;
+        foreach (KeyValuePair<Resident, List<ServiceType>> pair in SERVICES_CONSUMED) {
+            if (pair.Value.Contains(service)) {
+                count += Resident_Space[pair.Key];
+            }
+        }
+        return count;
     }
 }

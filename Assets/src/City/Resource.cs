@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 
 public class Resource {
-    public enum ResourceType { Wood, Stone, Lumber, Tools, Roots, Berries, Mushrooms, Herbs, Firewood, Charcoal, Game, Hide, Leather }
+    public enum ResourceType { Wood, Stone, Lumber, Tools, Roots, Berries, Mushrooms, Herbs, Firewood, Charcoal, Game, Hide, Leather, Potatoes, Bread }
     public enum FoodType { None, Meat, Vegetable }
 
     public static Resource Wood { get { return Get(ResourceType.Wood); } }
@@ -18,6 +18,8 @@ public class Resource {
     public static Resource Game { get { return Get(ResourceType.Game); } }
     public static Resource Hide { get { return Get(ResourceType.Hide); } }
     public static Resource Leather { get { return Get(ResourceType.Leather); } }
+    public static Resource Potatoes { get { return Get(ResourceType.Potatoes); } }
+    public static Resource Bread { get { return Get(ResourceType.Bread); } }
     private static Dictionary<ResourceType, Resource> resources;
 
     public int Id { get { return (int)Type; } }
@@ -77,15 +79,20 @@ public class Resource {
             resources.Add(ResourceType.Stone, new Resource(ResourceType.Stone, "Stone", "stone", SpriteManager.SpriteType.UI, 0.55f));
             resources.Add(ResourceType.Lumber, new Resource(ResourceType.Lumber, "Lumber", "lumber", SpriteManager.SpriteType.UI, 1.0f));
             resources.Add(ResourceType.Tools, new Resource(ResourceType.Tools, "Tools", "tools", SpriteManager.SpriteType.UI, 3.0f));
-            resources.Add(ResourceType.Roots, new Resource(ResourceType.Roots, "Roots", null, SpriteManager.SpriteType.UI, FoodType.Vegetable, 0.25f, 0.75f));
-            resources.Add(ResourceType.Berries, new Resource(ResourceType.Berries, "Berries", null, SpriteManager.SpriteType.UI, FoodType.Vegetable, 0.75f, 1.25f));
-            resources.Add(ResourceType.Mushrooms, new Resource(ResourceType.Mushrooms, "Mushrooms", null, SpriteManager.SpriteType.UI, FoodType.Vegetable, 0.55f, 0.95f));
-            resources.Add(ResourceType.Herbs, new Resource(ResourceType.Herbs, "Herbs", null, SpriteManager.SpriteType.UI, FoodType.Vegetable, 1.25f, 5.0f));
+
             resources.Add(ResourceType.Firewood, new Resource(ResourceType.Firewood, "Firewood", null, SpriteManager.SpriteType.UI, 0.75f, 1.0f));
             resources.Add(ResourceType.Charcoal, new Resource(ResourceType.Charcoal, "Charcoal", null, SpriteManager.SpriteType.UI, 1.0f, 10.0f));
-            resources.Add(ResourceType.Game, new Resource(ResourceType.Game, "Game", null, SpriteManager.SpriteType.UI, FoodType.Meat, 1.05f, 1.15f));
+
             resources.Add(ResourceType.Hide, new Resource(ResourceType.Hide, "Hide", null, SpriteManager.SpriteType.UI, 0.25f));
             resources.Add(ResourceType.Leather, new Resource(ResourceType.Leather, "Leather", null, SpriteManager.SpriteType.UI, 1.00f));
+            resources.Add(ResourceType.Herbs, new Resource(ResourceType.Herbs, "Herbs", null, SpriteManager.SpriteType.UI, 5.0f));
+
+            resources.Add(ResourceType.Game, new Resource(ResourceType.Game, "Game", null, SpriteManager.SpriteType.UI, FoodType.Meat, 1.05f, 1.15f));
+            resources.Add(ResourceType.Roots, new Resource(ResourceType.Roots, "Roots", null, SpriteManager.SpriteType.UI, FoodType.Vegetable, 0.15f, 0.75f));
+            resources.Add(ResourceType.Berries, new Resource(ResourceType.Berries, "Berries", null, SpriteManager.SpriteType.UI, FoodType.Vegetable, 0.75f, 1.25f));
+            resources.Add(ResourceType.Mushrooms, new Resource(ResourceType.Mushrooms, "Mushrooms", null, SpriteManager.SpriteType.UI, FoodType.Vegetable, 0.30f, 0.95f));
+            resources.Add(ResourceType.Potatoes, new Resource(ResourceType.Potatoes, "Potatoes", null, SpriteManager.SpriteType.UI, FoodType.Vegetable, 0.70f, 0.85f));
+            resources.Add(ResourceType.Bread, new Resource(ResourceType.Bread, "Bread", null, SpriteManager.SpriteType.UI, FoodType.Vegetable, 1.10f, 1.0f));
         }
         return resources[type];
     }
