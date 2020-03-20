@@ -23,7 +23,7 @@ public class Residence : Building {
         { Resident.Noble, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs } }
     };
     public static readonly Dictionary<ServiceType, float> OTHER_SERVICE_CONSUMPTION = new Dictionary<ServiceType, float>() {
-        { ServiceType.Herbs, 0.005f }
+        { ServiceType.Herbs, 0.0025f }
     };
     public static readonly float FUEL_CONSUMPTION_PER_TILE = 0.025f;//Per day
     public static readonly float FUEL_CONSUMPTION_PER_RESIDENT = 0.005f;//Per day

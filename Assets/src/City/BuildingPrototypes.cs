@@ -188,11 +188,12 @@ public class BuildingPrototypes {
                     }
                 }
             }
-            float multiplier = 0.5f;
-            building.Produce(Resource.Roots, roots * multiplier, delta_time);
-            building.Produce(Resource.Berries, berries * multiplier, delta_time);
-            building.Produce(Resource.Mushrooms, mushrooms * multiplier, delta_time);
-            building.Produce(Resource.Herbs, herbs * multiplier, delta_time);
+            float food_multiplier = 0.75f;
+            float herb_multiplier = 1.00f;
+            building.Produce(Resource.Roots, roots * food_multiplier, delta_time);
+            building.Produce(Resource.Berries, berries * food_multiplier, delta_time);
+            building.Produce(Resource.Mushrooms, mushrooms * food_multiplier, delta_time);
+            building.Produce(Resource.Herbs, herbs * herb_multiplier, delta_time);
         }, delegate (Building building) {
             foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
                 if (tile.Worked_By.Contains(building)) {
@@ -408,7 +409,7 @@ public class BuildingPrototypes {
                     }
                 }
             }
-            float multiplier = 0.5f;
+            float multiplier = 0.35f;
             game = Mathf.Max((game * 0.1f) * multiplier, 0.0f);
             float hide = game * 0.25f;
             building.Produce(Resource.Game, game, delta_time);
