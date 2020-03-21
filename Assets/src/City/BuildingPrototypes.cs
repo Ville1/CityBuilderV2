@@ -143,7 +143,7 @@ public class BuildingPrototypes {
 
         prototypes.Add(new Building("Cellar", "cellar", Building.UI_Category.Infrastructure, "cellar", Building.BuildingSize.s1x1, 100, new Dictionary<Resource, int>() {
             { Resource.Wood, 15 }, { Resource.Stone, 50 }, { Resource.Tools, 10 }, { Resource.Lumber, 50 }
-        }, 100, new List<Resource>() { Resource.Roots, Resource.Berries, Resource.Mushrooms, Resource.Herbs, Resource.Game, Resource.Potatoes, Resource.Bread },
+        }, 100, new List<Resource>() { Resource.Roots, Resource.Berries, Resource.Mushrooms, Resource.Herbs, Resource.Game, Resource.Potatoes, Resource.Bread, Resource.Ale },
         1000, 50.0f, 110, new Dictionary<Resource, float>() { { Resource.Wood, 0.05f } }, 0.5f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 5 } }, 5, false, false, true, 0.0f, 12, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
 
         prototypes.Add(new Building("Wood Stockpile", "wood_stockpile", Building.UI_Category.Infrastructure, "wood_stockpile", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
@@ -195,7 +195,7 @@ public class BuildingPrototypes {
                     }
                 }
             }
-            float food_multiplier = 0.75f;
+            float food_multiplier = 0.65f;
             float herb_multiplier = 1.00f;
             building.Produce(Resource.Roots, roots * food_multiplier, delta_time);
             building.Produce(Resource.Berries, berries * food_multiplier, delta_time);
@@ -253,7 +253,8 @@ public class BuildingPrototypes {
             float food_needed = 0.0f;
             float fuel_needed = 0.0f;
             float herbs_needed = 0.0f;
-            foreach(Building building in market.Get_Connected_Buildings(market.Road_Range).Select(x => x.Key).ToArray()) {
+            float salt_needed = 0.0f;
+            foreach (Building building in market.Get_Connected_Buildings(market.Road_Range).Select(x => x.Key).ToArray()) {
                 if(!(building is Residence)) {
                     continue;
                 }
@@ -261,9 +262,10 @@ public class BuildingPrototypes {
                 food_needed += residence.Service_Needed(Residence.ServiceType.Food) * resources_for_full_service;
                 fuel_needed += residence.Service_Needed(Residence.ServiceType.Fuel) * resources_for_full_service;
                 herbs_needed += residence.Service_Needed(Residence.ServiceType.Herbs) * resources_for_full_service;
+                salt_needed += residence.Service_Needed(Residence.ServiceType.Salt) * resources_for_full_service;
                 residences.Add(residence);
             }
-            if(residences.Count == 0 || (food_needed == 0.0f && fuel_needed == 0.0f && herbs_needed == 0.0f)) {
+            if(residences.Count == 0 || (food_needed == 0.0f && fuel_needed == 0.0f && herbs_needed == 0.0f && salt_needed == 0.0f)) {
                 return;
             }
 
@@ -373,11 +375,32 @@ public class BuildingPrototypes {
                 market.Update_Delta(Resource.Herbs, (-herbs_used / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f));
             }
 
+            float salt = market.Input_Storage.ContainsKey(Resource.Salt) ? market.Input_Storage[Resource.Salt] : 0.0f;
+            if (salt_needed != 0.0f && salt != 0.0f) {
+                float salt_ratio = Math.Min(salt / salt_needed, 1.0f);
+                float salt_used = 0.0f;
+                foreach (Residence residence in residences) {
+                    float salt_for_residence = (residence.Service_Needed(Residence.ServiceType.Salt) * resources_for_full_service) * salt_ratio;
+                    salt_used += salt_for_residence;
+                    residence.Serve(Residence.ServiceType.Salt, residence.Service_Needed(Residence.ServiceType.Salt) * salt_ratio, efficency_multiplier);
+                }
+                market.Input_Storage[Resource.Salt] -= salt_used;
+                if (market.Input_Storage[Resource.Salt] < 0.0f) {
+                    //Rounding errors?
+                    if (market.Input_Storage[Resource.Salt] < -0.00001f) {
+                        CustomLogger.Instance.Error("Negative salt: {0}");
+                    }
+                    market.Input_Storage[Resource.Salt] = 0.0f;
+                }
+                income += salt_used * Resource.Salt.Value;
+                market.Update_Delta(Resource.Salt, (-salt_used / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f));
+            }
+
             if (income != 0.0f) {
                 market.Per_Day_Cash_Delta += (income / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f);
                 City.Instance.Add_Cash(income);
             }//                                  v unnecessary list v special settings adds and removes stuff from consumption list MIGHT ACTUALLY BE NECESSARY, DONT REMOVE
-        }, null, null, new List<Resource>() { Resource.Berries, Resource.Roots, Resource.Mushrooms, Resource.Herbs, Resource.Firewood, Resource.Charcoal, Resource.Game, Resource.Bread, Resource.Potatoes }, new List<Resource>(), 0.05f, 5.0f));
+        }, null, null, new List<Resource>() { Resource.Berries, Resource.Roots, Resource.Mushrooms, Resource.Herbs, Resource.Firewood, Resource.Charcoal, Resource.Coal, Resource.Game, Resource.Bread, Resource.Potatoes, Resource.Salt }, new List<Resource>(), 0.05f, 5.0f));
         Resource prefered_fuel = Resource.All.Where(x => x.Is_Fuel).OrderByDescending(x => x.Value / x.Fuel_Value).FirstOrDefault();
         foreach(Resource resource in Resource.All) {
             if (resource.Is_Food) {
@@ -386,6 +409,8 @@ public class BuildingPrototypes {
                 prototypes.First(x => x.Internal_Name == "marketplace").Special_Settings.Add(new SpecialSetting(resource.ToString().ToLower(), resource.UI_Name, SpecialSetting.SettingType.Toggle, 0.0f, resource == prefered_fuel));
             }
         }
+        prototypes.First(x => x.Internal_Name == "marketplace").Special_Settings.Add(new SpecialSetting(Resource.Herbs.ToString().ToLower(), Resource.Herbs.UI_Name, SpecialSetting.SettingType.Toggle, 0.0f, true));
+        prototypes.First(x => x.Internal_Name == "marketplace").Special_Settings.Add(new SpecialSetting(Resource.Salt.ToString().ToLower(), Resource.Salt.UI_Name, SpecialSetting.SettingType.Toggle, 0.0f, true));
 
         prototypes.Add(new Building("Hunting Lodge", "hunting_lodge", Building.UI_Category.Forestry, "hunting_lodge", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
             { Resource.Wood, 85 }, { Resource.Stone, 10 }, { Resource.Tools, 10 }
@@ -419,7 +444,7 @@ public class BuildingPrototypes {
                     }
                 }
             }
-            float multiplier = 0.35f;
+            float multiplier = 0.45f;
             game = Mathf.Max((game * 0.1f) * multiplier, 0.0f);
             float hide = game * 0.25f;
             building.Produce(Resource.Game, game, delta_time);
@@ -568,6 +593,214 @@ public class BuildingPrototypes {
         }, null, null, new List<Resource>() { Resource.Iron_Bars, Resource.Lumber, Resource.Charcoal, Resource.Coal, Resource.Firewood }, new List<Resource>() { Resource.Tools }, -1.00f, 4.0f));
         prototypes.First(x => x.Internal_Name == "smithy").Special_Settings.Add(new SpecialSetting("fuel", "Fuel", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() { "Firewood (2.5/day)", "Charcoal (1.25/day)", "Coal (1.25/day)" }, 0));
 
+        prototypes.Add(new Building("Small Farm", "small_farm", Building.UI_Category.Agriculture, "small_farm", Building.BuildingSize.s2x2, 125, new Dictionary<Resource, int>() {
+            { Resource.Lumber, 110 }, { Resource.Stone, 15 }, { Resource.Tools, 10 }
+        }, 100, new List<Resource>(), 0, 0.0f, 135, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f } }, 1.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 } }, 10, true, false, true, 5.0f, 0, delegate (Building building) {
+            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
+                tile.Worked_By.Add(building);
+            }
+        }, delegate (Building building, float delta_time) {
+            if (!building.Is_Operational) {
+                return;
+            }
+            float potatoes = 0.0f;
+            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
+                if (tile.Building != null && tile.Building.Internal_Name == "potato_field" && tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building) {
+                    if (tile.Internal_Name == "grass") {
+                        potatoes += 0.10f;
+                    } else if (tile.Internal_Name == "fertile_ground") {
+                        potatoes += 0.15f;
+                    }
+                }
+            }
+            float multiplier = 1.045f;
+            building.Produce(Resource.Potatoes, potatoes * multiplier, delta_time);
+        }, delegate (Building building) {
+            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
+                if (tile.Worked_By.Contains(building)) {
+                    tile.Worked_By.Remove(building);
+                }
+            }
+        }, delegate (Building building) {
+            List<Tile> worked_tiles = new List<Tile>();
+            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
+                Building b = tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name);
+                if (tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building) {
+                    worked_tiles.Add(tile);
+                }
+            }
+            return worked_tiles;
+        }, new List<Resource>(), new List<Resource>() { Resource.Potatoes }, 0.0f, 0.0f));
+
+        prototypes.Add(new Building("Potato Field", "potato_field", Building.UI_Category.Agriculture, "potato_field", Building.BuildingSize.s1x1, 50, new Dictionary<Resource, int>() {
+            { Resource.Tools, 1 }
+        }, 10, new List<Resource>(), 0, 0.0f, 20, new Dictionary<Resource, float>(), 0.0f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 0, null, null, null, null,
+        new List<Resource>(), new List<Resource>(), -0.05f, 1.5f));
+
+        prototypes.Add(new Building("Brewery", "brewery", Building.UI_Category.Agriculture, "brewery", Building.BuildingSize.s2x2, 90, new Dictionary<Resource, int>() {
+            { Resource.Lumber, 120 }, { Resource.Stone, 15 }, { Resource.Tools, 15 }
+        }, 110, new List<Resource>(), 0, 50.0f, 135, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f } }, 1.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() {
+        { Building.Resident.Peasant, 5 }, { Building.Resident.Citizen, 5 } }, 5, true, false, true, 0.0f, 5, null, delegate (Building building, float delta_time) {
+            if (!building.Is_Operational) {
+                return;
+            }
+            building.Process(new Dictionary<Resource, float>() { { Resource.Potatoes, 5.0f }, { Resource.Lumber, 1.0f } }, new Dictionary<Resource, float>() { { Resource.Ale, 5.0f } }, delta_time);
+        }, null, null, new List<Resource>() { Resource.Potatoes, Resource.Lumber }, new List<Resource>() { Resource.Ale }, 0.0f, 0.0f));
+
+        prototypes.Add(new Building("Tavern", "tavern", Building.UI_Category.Services, "tavern", Building.BuildingSize.s2x2, 175, new Dictionary<Resource, int>() {
+            { Resource.Lumber, 175 }, { Resource.Stone, 175 }, { Resource.Tools, 15 }
+        }, 205, new List<Resource>(), 0, 0.0f, 350, new Dictionary<Resource, float>() {
+            { Resource.Lumber, 0.05f }, { Resource.Stone, 0.05f }
+        }, 1.5f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() {
+            { Building.Resident.Peasant, 10 },
+            { Building.Resident.Citizen, 10 }
+        }, 10, true, false, true, 0.0f, 10, null, delegate (Building tavern, float delta_time) {
+            foreach (SpecialSetting setting in tavern.Special_Settings) {
+                if (setting.Type == SpecialSetting.SettingType.Toggle) {
+                    Resource resource = Resource.All.FirstOrDefault(x => x.Type.ToString().ToLower() == setting.Name);
+                    if (resource != null) {
+                        if (setting.Toggle_Value && !tavern.Consumes.Contains(resource)) {
+                            tavern.Consumes.Add(resource);
+                        } else if (!setting.Toggle_Value && tavern.Consumes.Contains(resource)) {
+                            tavern.Consumes.Remove(resource);
+                        }
+                    }
+                }
+            }
+            List<Resource> fuel_types = new List<Resource>() { Resource.Firewood, Resource.Charcoal, Resource.Coal };
+            Resource selected_fuel = fuel_types[tavern.Special_Settings.First(x => x.Name == "fuel").Dropdown_Selection];
+            foreach (Resource fuel_type in fuel_types) {
+                if (fuel_type != selected_fuel && tavern.Consumes.Contains(fuel_type)) {
+                    tavern.Consumes.Remove(fuel_type);
+                }
+            }
+            if (!tavern.Consumes.Contains(selected_fuel)) {
+                tavern.Consumes.Add(selected_fuel);
+            }
+            if (!tavern.Is_Operational || tavern.Efficency == 0.0f) {
+                return;
+            }
+            float income = 0.0f;
+            List<Residence> residences = new List<Residence>();
+            float ale_needed = 0.0f;
+            foreach (Building building in tavern.Get_Connected_Buildings(tavern.Road_Range).Select(x => x.Key).ToArray()) {
+                if (!(building is Residence)) {
+                    continue;
+                }
+                Residence residence = building as Residence;
+                ale_needed += residence.Service_Needed(Residence.ServiceType.Tavern) * Residence.RESOURCES_FOR_FULL_SERVICE;
+                residences.Add(residence);
+            }
+            if (residences.Count == 0 || ale_needed == 0.0f) {
+                return;
+            }
+
+
+            float fuel = tavern.Input_Storage[selected_fuel];
+            float fuel_used_per_day = selected_fuel == Resource.Firewood ? 1.0f : 0.5f;
+            tavern.Input_Storage[selected_fuel] = Mathf.Max(0.0f, tavern.Input_Storage[selected_fuel] - Building.Calculate_Actual_Amount(fuel_used_per_day, delta_time));
+            tavern.Update_Delta(selected_fuel, -fuel_used_per_day);
+            fuel = tavern.Input_Storage[selected_fuel];
+
+            if (ale_needed > 0.0f) {
+                float food_needed = ale_needed * 0.1f;
+                float total_food = 0.0f;
+                float total_ale = tavern.Input_Storage.ContainsKey(Resource.Ale) ? tavern.Input_Storage[Resource.Ale] : 0.0f;
+                foreach (KeyValuePair<Resource, float> pair in tavern.Input_Storage) {
+                    if (pair.Key.Is_Food) {
+                        total_food += pair.Value;
+                    }
+                }
+
+                if (total_ale > 0.0f && fuel > 0.0f) {
+                    float ale_ratio = Math.Min(1.0f, total_ale / ale_needed);
+                    float food_ratio = Math.Min(1.0f, total_food / food_needed);
+                    float food_used = 0.0f;
+                    float ale_used = 0.0f;
+                    float unique_food_count = 0.0f;
+                    float min_food_ratio = -1.0f;
+                    float food_quality = 0.0f;
+                    Dictionary<Resource, float> food_ratios = null;
+                    if (total_food != 0.0f) {
+                        food_ratios = new Dictionary<Resource, float>();
+                        foreach (KeyValuePair<Resource, float> pair in tavern.Input_Storage) {
+                            if (pair.Key.Is_Food) {
+                                float ratio = pair.Value / total_food;
+                                food_ratios.Add(pair.Key, ratio);
+                                if (pair.Value > 0.0f) {
+                                    unique_food_count += pair.Key.Food_Quality;
+                                    if (ratio < min_food_ratio || min_food_ratio == -1.0f) {
+                                        min_food_ratio = ratio;
+                                    }
+                                }
+                            }
+                        }
+                        bool has_meat = false;
+                        bool has_vegetables = false;
+                        foreach (KeyValuePair<Resource, float> pair in tavern.Input_Storage) {
+                            if (pair.Key.Is_Food && pair.Value > 0.0f) {
+                                if (pair.Key.Food_Type == Resource.FoodType.Meat) {
+                                    has_meat = true;
+                                } else if (pair.Key.Food_Type == Resource.FoodType.Vegetable) {
+                                    has_vegetables = true;
+                                }
+                            }
+                        }
+                        float disparity = (1.0f / unique_food_count) - min_food_ratio;
+                        food_quality = unique_food_count * (1.0f - disparity);
+                        food_quality = (Mathf.Pow(food_quality, 0.5f) + ((food_quality - 1.0f) * 0.1f)) / 4.0f;
+                        food_quality *= ((tavern.Efficency + 2.0f) / 3.0f);
+                        food_quality *= 1.5f;
+                        food_quality = Mathf.Clamp01(food_quality);
+                        if (!(has_meat && has_vegetables)) {
+                            food_quality *= 0.5f;
+                        }
+                    }
+                    foreach (Residence residence in residences) {
+                        float ale_for_residence = (residence.Service_Needed(Residence.ServiceType.Tavern) * Residence.RESOURCES_FOR_FULL_SERVICE) * ale_ratio;
+                        ale_used += ale_for_residence;
+                        food_used += ((ale_for_residence * 0.1f) * food_ratio);
+                        residence.Serve(Residence.ServiceType.Tavern, residence.Service_Needed(Residence.ServiceType.Tavern) * ale_ratio, tavern.Efficency * ((food_quality + 1.0f) / 2.0f));
+                    }
+                    tavern.Input_Storage[Resource.Ale] -= ale_used;
+                    income += Resource.Ale.Value * ale_used;
+                    tavern.Update_Delta(Resource.Ale, (-ale_used / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f), false);
+                    if (tavern.Input_Storage[Resource.Ale] < 0.0f) {
+                        //Rounding errors?
+                        if (tavern.Input_Storage[Resource.Ale] < -0.00001f) {
+                            CustomLogger.Instance.Error("Negative ale");
+                        }
+                        tavern.Input_Storage[Resource.Ale] = 0.0f;
+                    }
+                    if (food_ratios != null) {
+                        foreach (KeyValuePair<Resource, float> pair in food_ratios) {
+                            tavern.Input_Storage[pair.Key] -= pair.Value * food_used;
+                            tavern.Update_Delta(pair.Key, (-(pair.Value * food_used) / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f), false);
+                            income += pair.Key.Value * (pair.Value * food_used);
+                            if (tavern.Input_Storage[pair.Key] < 0.0f) {
+                                //Rounding errors?
+                                if (tavern.Input_Storage[pair.Key] < -0.00001f) {
+                                    CustomLogger.Instance.Error(string.Format("Negative food: {0}", pair.Key.ToString()));
+                                }
+                                tavern.Input_Storage[pair.Key] = 0.0f;
+                            }
+                        }
+                    }
+                } else {
+                    tavern.Show_Alert("alert_no_resources");
+                }
+            }
+            if (income != 0.0f) {
+                tavern.Per_Day_Cash_Delta += (income / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f);
+                City.Instance.Add_Cash(income);
+            }
+        }, null, null, new List<Resource>() { Resource.Berries, Resource.Roots, Resource.Mushrooms, Resource.Firewood, Resource.Charcoal, Resource.Coal, Resource.Game, Resource.Bread, Resource.Potatoes, Resource.Ale }, new List<Resource>(), 0.05f, 3.0f));
+        prototypes.First(x => x.Internal_Name == "tavern").Special_Settings.Add(new SpecialSetting("fuel", "Fuel", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() { "Firewood (1/day)", "Charcoal (0.5/day)", "Coal (0.5/day)" }, 0));
+        foreach (Resource resource in Resource.All) {
+            if (resource.Is_Food) {
+                prototypes.First(x => x.Internal_Name == "tavern").Special_Settings.Add(new SpecialSetting(resource.ToString().ToLower(), string.Format("Serve {0}", resource.UI_Name.ToLower()), SpecialSetting.SettingType.Toggle, 0.0f, true));
+            }
+        }
     }
 
     public static BuildingPrototypes Instance

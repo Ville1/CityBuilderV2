@@ -1021,7 +1021,7 @@ public class Building {
         }
     }
 
-    protected float Calculate_Actual_Amount(float amount_per_day, float delta_time)
+    public static float Calculate_Actual_Amount(float amount_per_day, float delta_time)
     {
         return (amount_per_day / TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f)) * delta_time;
     }
@@ -1124,7 +1124,7 @@ public class Building {
         return PrefabManager.Instance.Building_Generic;
     }
 
-    private void Show_Alert(string sprite)
+    public void Show_Alert(string sprite)
     {
         if (!active_alerts.Contains(sprite)) {
             active_alerts.Add(sprite);

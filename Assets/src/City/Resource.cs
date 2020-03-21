@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 
 public class Resource {
-    public enum ResourceType { Wood, Stone, Lumber, Tools, Roots, Berries, Mushrooms, Herbs, Firewood, Charcoal, Game, Hide, Leather, Potatoes, Bread, Iron_Ore, Coal, Salt, Iron_Bars }
+    public enum ResourceType { Wood, Stone, Lumber, Tools, Roots, Berries, Mushrooms, Herbs, Firewood, Charcoal, Game, Hide, Leather, Potatoes, Bread, Iron_Ore, Coal, Salt, Iron_Bars, Ale }
     public enum FoodType { None, Meat, Vegetable }
 
     public static Resource Wood { get { return Get(ResourceType.Wood); } }
@@ -24,6 +24,7 @@ public class Resource {
     public static Resource Coal { get { return Get(ResourceType.Coal); } }
     public static Resource Salt { get { return Get(ResourceType.Salt); } }
     public static Resource Iron_Bars { get { return Get(ResourceType.Iron_Bars); } }
+    public static Resource Ale { get { return Get(ResourceType.Ale); } }
     private static Dictionary<ResourceType, Resource> resources;
 
     public int Id { get { return (int)Type; } }
@@ -93,7 +94,8 @@ public class Resource {
             resources.Add(ResourceType.Herbs, new Resource(ResourceType.Herbs, "Herbs", null, SpriteManager.SpriteType.UI, 5.0f));
             resources.Add(ResourceType.Iron_Ore, new Resource(ResourceType.Iron_Ore, "Iron Ore", null, SpriteManager.SpriteType.UI, 1.0f));
             resources.Add(ResourceType.Iron_Bars, new Resource(ResourceType.Iron_Bars, "Iron Bars", null, SpriteManager.SpriteType.UI, 2.5f));
-            resources.Add(ResourceType.Salt, new Resource(ResourceType.Salt, "Salt", null, SpriteManager.SpriteType.UI, 1.0f));
+            resources.Add(ResourceType.Salt, new Resource(ResourceType.Salt, "Salt", null, SpriteManager.SpriteType.UI, 1.05f));
+            resources.Add(ResourceType.Ale, new Resource(ResourceType.Ale, "Ale", null, SpriteManager.SpriteType.UI, 1.25f));
 
             resources.Add(ResourceType.Game, new Resource(ResourceType.Game, "Game", null, SpriteManager.SpriteType.UI, FoodType.Meat, 1.05f, 1.15f));
             resources.Add(ResourceType.Roots, new Resource(ResourceType.Roots, "Roots", null, SpriteManager.SpriteType.UI, FoodType.Vegetable, 0.15f, 0.75f));
