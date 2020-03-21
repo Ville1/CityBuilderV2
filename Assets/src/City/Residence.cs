@@ -407,7 +407,7 @@ public class Residence : Building {
         float new_quality_total = served * quality;
         float total_quality = remaining_quality_total + new_quality_total;
         services[service][AMOUNT] += served;
-        services[service][QUALITY] = quality;
+        services[service][QUALITY] = total_quality;
         if(services[service][AMOUNT] < 0.0f || services[service][AMOUNT] > 1.0f) {
             CustomLogger.Instance.Error(string.Format("services[service][AMOUNT] = {0}", services[service][AMOUNT]));
         }

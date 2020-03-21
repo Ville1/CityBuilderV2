@@ -34,9 +34,11 @@ public class BuildingPrototypes {
             foreach(Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
                 if (tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building) {
                     if(tile.Internal_Name == "forest") {
-                        wood += 0.75f;
-                    } else if(tile.Internal_Name == "sparse_forest") {
                         wood += 1.75f;
+                    } else if(tile.Internal_Name == "sparse_forest") {
+                        wood += 0.75f;
+                    } else if (tile.Internal_Name.StartsWith("hill_")) {
+                        wood += 0.25f;
                     }
                 }
             }
@@ -185,6 +187,11 @@ public class BuildingPrototypes {
                         berries   += 0.020f;
                         mushrooms += 0.050f;
                         herbs     += 0.010f;
+                    } else if (tile.Internal_Name.StartsWith("hill_")) {
+                        roots     += 0.025f;
+                        berries   += 0.010f;
+                        mushrooms += 0.015f;
+                        herbs     += 0.004f;
                     }
                 }
             }
@@ -406,6 +413,8 @@ public class BuildingPrototypes {
                         game += 0.10f;
                     } else if (tile.Internal_Name == "fertile_ground") {
                         game += 0.125f;
+                    } else if (tile.Internal_Name.StartsWith("hill_")) {
+                        game += 0.35f;
                     }
                 }
             }

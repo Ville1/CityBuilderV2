@@ -77,9 +77,35 @@ public class Tile
         Terrain = prototype.Terrain;
         Sprite = prototype.Sprite;
         Buildable = prototype.Buildable;
+        float old_base_appeal = Base_Appeal;
+        float old_base_appeal_range = Base_Appeal_Range;
         Base_Appeal = prototype.Base_Appeal;
         Base_Appeal_Range = prototype.Base_Appeal_Range;
         SpriteRenderer.sprite = SpriteManager.Instance.Get(Sprite, SpriteManager.SpriteType.Terrain);
+        if(Map.Instance.State == Map.MapState.Normal && Building == null) {
+            if (old_base_appeal != 0.0f) {
+                Appeal -= old_base_appeal;
+                if (old_base_appeal_range != 0.0f) {
+                    foreach (Tile affected in Map.Instance.Get_Tiles_In_Circle(Coordinates, old_base_appeal_range)) {
+                        if (affected == this) {
+                            continue;
+                        }
+                        affected.Appeal -= Tile.Calculate_Appeal_Effect(Coordinates, old_base_appeal, old_base_appeal_range, affected.Coordinates);
+                    }
+                }
+            }
+            if (Base_Appeal != 0.0f) {
+                Appeal += Base_Appeal;
+                if (Base_Appeal_Range != 0.0f) {
+                    foreach (Tile affected in Map.Instance.Get_Tiles_In_Circle(Coordinates, Base_Appeal_Range)) {
+                        if (affected == this) {
+                            continue;
+                        }
+                        affected.Appeal += Tile.Calculate_Appeal_Effect(Coordinates, Base_Appeal, Base_Appeal_Range, affected.Coordinates);
+                    }
+                }
+            }
+        }
     }
 
     public Coordinates Coordinates

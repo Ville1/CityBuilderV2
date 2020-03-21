@@ -23,6 +23,9 @@ public class NewGameGUIManager : MonoBehaviour
     public InputField Forest_Size_Input;
     public Slider Forest_Density_Slider;
     public InputField Forest_Density_Input;
+    
+    public InputField Hills_Input;
+    public Slider Hills_Slider;
 
     /// <summary>
     /// Initializiation
@@ -74,15 +77,18 @@ public class NewGameGUIManager : MonoBehaviour
         Forest_Size_Input.text = "50%";
         Forest_Density_Slider.value = 0.5f;
         Forest_Density_Input.text = "50%";
+        Hills_Slider.value = 0.5f;
+        Hills_Input.text = "50%";
     }
     
     public void Update_Sliders()
     {
         Update_Size_Slider(Width_Input, Width_Slider);
         Update_Size_Slider(Height_Input, Height_Slider);
-        Update_Forest_Slider(Forest_Count_Input, Forest_Count_Slider);
-        Update_Forest_Slider(Forest_Size_Input, Forest_Size_Slider);
-        Update_Forest_Slider(Forest_Density_Input, Forest_Density_Slider);
+        Update_Terrain_Slider(Forest_Count_Input, Forest_Count_Slider);
+        Update_Terrain_Slider(Forest_Size_Input, Forest_Size_Slider);
+        Update_Terrain_Slider(Forest_Density_Input, Forest_Density_Slider);
+        Update_Terrain_Slider(Hills_Input, Hills_Slider);
     }
 
     private void Update_Size_Slider(InputField input, Slider slider)
@@ -102,7 +108,7 @@ public class NewGameGUIManager : MonoBehaviour
     }
 
 
-    private void Update_Forest_Slider(InputField input, Slider slider)
+    private void Update_Terrain_Slider(InputField input, Slider slider)
     {
         if (!input.text.EndsWith("%")) {
             input.text = input.text + "%";
@@ -126,9 +132,10 @@ public class NewGameGUIManager : MonoBehaviour
     {
         Update_Size_Input(Width_Input, Width_Slider);
         Update_Size_Input(Height_Input, Height_Slider);
-        Update_Forest_Input(Forest_Count_Input, Forest_Count_Slider);
-        Update_Forest_Input(Forest_Size_Input, Forest_Size_Slider);
-        Update_Forest_Input(Forest_Density_Input, Forest_Density_Slider);
+        Update_Terrain_Input(Forest_Count_Input, Forest_Count_Slider);
+        Update_Terrain_Input(Forest_Size_Input, Forest_Size_Slider);
+        Update_Terrain_Input(Forest_Density_Input, Forest_Density_Slider);
+        Update_Terrain_Input(Hills_Input, Hills_Slider);
     }
 
     private void Update_Size_Input(InputField input, Slider slider)
@@ -136,7 +143,7 @@ public class NewGameGUIManager : MonoBehaviour
         input.text = (Mathf.RoundToInt(slider.value * (SIZE_MAX - SIZE_MIN)) + SIZE_MIN).ToString();
     }
 
-    private void Update_Forest_Input(InputField input, Slider slider)
+    private void Update_Terrain_Input(InputField input, Slider slider)
     {
         input.text = Helper.Float_To_String(slider.value * 100.0f, 0) + "%";
     }
@@ -153,7 +160,7 @@ public class NewGameGUIManager : MonoBehaviour
             CustomLogger.Instance.Warning(string.Format("Invalid height: {0}", Height_Input.text));
             return;
         }
-        Map.Instance.Start_Generation(width, height, Forest_Count_Slider.value, Forest_Size_Slider.value, Forest_Density_Slider.value);
+        Map.Instance.Start_Generation(width, height, Forest_Count_Slider.value, Forest_Size_Slider.value, Forest_Density_Slider.value, Hills_Slider.value);
         Active = false;
     }
 

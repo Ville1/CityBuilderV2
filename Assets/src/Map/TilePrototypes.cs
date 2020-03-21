@@ -10,10 +10,21 @@ public class TilePrototypes {
     {
         prototypes = new List<Tile>();
 
+        prototypes.Add(new Tile("placeholder", "Placeholder", "terrain_placeholder", false, 0.0f, 0.0f));
         prototypes.Add(new Tile("grass", "Grass", "grass", true, 0.0f, 0.0f));
         prototypes.Add(new Tile("fertile_ground", "Fertile ground", "fertile_ground", true, 1.0f, 1.0f));
         prototypes.Add(new Tile("sparse_forest", "Sparse forest", "sparse_forest", false, 2.0f, 1.5f));
         prototypes.Add(new Tile("forest", "Forest", "forest", false, 3.0f, 2.0f));
+
+        prototypes.Add(new Tile("hill_1", "Hill", "hill_1", false, 0.05f, 4.0f));
+        prototypes.Add(new Tile("hill_2", "Hill", "hill_2", false, 0.05f, 4.0f));
+        prototypes.Add(new Tile("hill_3", "Hill", "hill_3", false, 0.05f, 4.0f));
+        prototypes.Add(new Tile("hill_4", "Hill", "hill_4", false, 0.05f, 4.0f));
+        prototypes.Add(new Tile("hill_5", "Hill", "hill_5", false, 0.05f, 4.0f));
+        prototypes.Add(new Tile("hill_6", "Hill", "hill_6", false, 0.05f, 4.0f));
+        prototypes.Add(new Tile("hill_7", "Hill", "hill_7", false, 0.05f, 4.0f));
+        prototypes.Add(new Tile("hill_8", "Hill", "hill_8", false, 0.05f, 4.0f));
+        prototypes.Add(new Tile("hill_9", "Hill", "hill_9", false, 0.05f, 4.0f));
     }
 
     public static TilePrototypes Instance

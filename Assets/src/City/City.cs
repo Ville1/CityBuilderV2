@@ -347,7 +347,6 @@ public class City {
         if (prototype.Is_Town_Hall) {
             Has_Town_Hall = true;
             Building town_hall = new Building(prototype, tile, tiles, false);
-            town_hall.Update_Appeal();
             Cash = 5000.0f;
             town_hall.Store_Resources(Resource.Wood, 750.0f);
             town_hall.Store_Resources(Resource.Stone, 1250.0f);

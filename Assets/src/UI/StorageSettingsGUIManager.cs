@@ -112,6 +112,26 @@ public class StorageSettingsGUIManager : MonoBehaviour {
         Total_Text.text = string.Format("Total: {0} / {1}", Helper.Float_To_String(building.Current_Storage_Amount, 1), building.Storage_Limit);
     }
 
+    public void Allow_All()
+    {
+        if (!Active) {
+            return;
+        }
+        foreach (KeyValuePair<Resource, GameObject> pair in rows) {
+            pair.Value.GetComponentInChildren<InputField>().text = building.Storage_Limit.ToString();
+        }
+    }
+
+    public void Clear_All()
+    {
+        if (!Active) {
+            return;
+        }
+        foreach (KeyValuePair<Resource, GameObject> pair in rows) {
+            pair.Value.GetComponentInChildren<InputField>().text = "0";
+        }
+    }
+
     public void Apply()
     {
         if (!Active) {

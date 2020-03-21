@@ -218,6 +218,12 @@ public class Building {
         active_alerts = new List<string>();
         alert_change_cooldown = ALERT_CHANGE_INTERVAL;
 
+        if (Is_Built && !Is_Preview) {
+            Update_Appeal();
+            if(On_Built != null) {
+                On_Built(this);
+            }
+        }
         Update_Sprite();
     }
 
@@ -608,7 +614,12 @@ public class Building {
                             building.Output_Storage[resource] -= resources_taken;
                             resources_transfered += resources_taken;
                             Storage[resource] += resources_taken;
-                        } else if(building.Is_Storehouse && building.Allowed_Resources.Contains(resource) && (int)Storage_Settings.Get(resource).Priority > (int)building.Storage_Settings.Get(resource).Priority) {
+                        } else if(!building.Consumes.Contains(resource) && building.Input_Storage.ContainsKey(resource) && building.Input_Storage[resource] > 0.0f) {
+                            float resources_taken = Mathf.Min(building.Input_Storage[resource], take);
+                            building.Input_Storage[resource] -= resources_taken;
+                            resources_transfered += resources_taken;
+                            Storage[resource] += resources_taken;
+                        } else if (building.Is_Storehouse && building.Allowed_Resources.Contains(resource) && (int)Storage_Settings.Get(resource).Priority > (int)building.Storage_Settings.Get(resource).Priority) {
                             float resources_taken = building.Take_Resources(resource, take);
                             resources_transfered += resources_taken;
                             Storage[resource] += resources_taken;
@@ -1044,7 +1055,7 @@ public class Building {
         return Is_Prototype ? string.Format("{0} prototype", Internal_Name) : string.Format("{0} (#{1})", Internal_Name, Id);
     }
 
-    public void Update_Appeal()
+    protected void Update_Appeal()
     {
         if (Is_Deleted) {
             foreach (Tile tile in Tiles) {

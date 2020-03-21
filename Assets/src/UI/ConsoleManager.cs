@@ -199,6 +199,30 @@ public class ConsoleManager : MonoBehaviour
             return "There you go!";
         });
 
+        commands.Add("change_tile", (string[] arguments) => {
+            if (arguments.Length != 4) {
+                return "Invalid number of arguments";
+            }
+            int x;
+            if (!int.TryParse(arguments[1], out x)) {
+                return "Invalid x-coordinate";
+            }
+            int y;
+            if (!int.TryParse(arguments[2], out y)) {
+                return "Invalid y-coordinate";
+            }
+            Tile prototype = TilePrototypes.Instance.Get(arguments[3]);
+            if(prototype == null) {
+                return "Invalid tile name";
+            }
+            Tile tile = Map.Instance.Get_Tile_At(x, y);
+            if(tile == null) {
+                return "Tile not found";
+            }
+            tile.Change_To(prototype);
+            return "Changed";
+        });
+
         Update_Output();
         Panel.SetActive(false);
     }
