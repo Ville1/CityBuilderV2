@@ -29,6 +29,7 @@ public class SpecialSettingSaveData {
     public string Name;
     public float Slider_Value;
     public bool Toggle_Value;
+    public int Dropdown_Selection;
 }
 
 [Serializable]

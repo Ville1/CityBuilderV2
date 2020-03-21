@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 
 public class Resource {
-    public enum ResourceType { Wood, Stone, Lumber, Tools, Roots, Berries, Mushrooms, Herbs, Firewood, Charcoal, Game, Hide, Leather, Potatoes, Bread }
+    public enum ResourceType { Wood, Stone, Lumber, Tools, Roots, Berries, Mushrooms, Herbs, Firewood, Charcoal, Game, Hide, Leather, Potatoes, Bread, Iron_Ore, Coal, Salt, Iron_Bars }
     public enum FoodType { None, Meat, Vegetable }
 
     public static Resource Wood { get { return Get(ResourceType.Wood); } }
@@ -20,6 +20,10 @@ public class Resource {
     public static Resource Leather { get { return Get(ResourceType.Leather); } }
     public static Resource Potatoes { get { return Get(ResourceType.Potatoes); } }
     public static Resource Bread { get { return Get(ResourceType.Bread); } }
+    public static Resource Iron_Ore { get { return Get(ResourceType.Iron_Ore); } }
+    public static Resource Coal { get { return Get(ResourceType.Coal); } }
+    public static Resource Salt { get { return Get(ResourceType.Salt); } }
+    public static Resource Iron_Bars { get { return Get(ResourceType.Iron_Bars); } }
     private static Dictionary<ResourceType, Resource> resources;
 
     public int Id { get { return (int)Type; } }
@@ -82,10 +86,14 @@ public class Resource {
 
             resources.Add(ResourceType.Firewood, new Resource(ResourceType.Firewood, "Firewood", null, SpriteManager.SpriteType.UI, 0.75f, 1.0f));
             resources.Add(ResourceType.Charcoal, new Resource(ResourceType.Charcoal, "Charcoal", null, SpriteManager.SpriteType.UI, 1.0f, 10.0f));
+            resources.Add(ResourceType.Coal, new Resource(ResourceType.Coal, "Coal", null, SpriteManager.SpriteType.UI, 1.0f, 10.0f));
 
             resources.Add(ResourceType.Hide, new Resource(ResourceType.Hide, "Hide", null, SpriteManager.SpriteType.UI, 0.25f));
             resources.Add(ResourceType.Leather, new Resource(ResourceType.Leather, "Leather", null, SpriteManager.SpriteType.UI, 1.00f));
             resources.Add(ResourceType.Herbs, new Resource(ResourceType.Herbs, "Herbs", null, SpriteManager.SpriteType.UI, 5.0f));
+            resources.Add(ResourceType.Iron_Ore, new Resource(ResourceType.Iron_Ore, "Iron Ore", null, SpriteManager.SpriteType.UI, 1.0f));
+            resources.Add(ResourceType.Iron_Bars, new Resource(ResourceType.Iron_Bars, "Iron Bars", null, SpriteManager.SpriteType.UI, 2.5f));
+            resources.Add(ResourceType.Salt, new Resource(ResourceType.Salt, "Salt", null, SpriteManager.SpriteType.UI, 1.0f));
 
             resources.Add(ResourceType.Game, new Resource(ResourceType.Game, "Game", null, SpriteManager.SpriteType.UI, FoodType.Meat, 1.05f, 1.15f));
             resources.Add(ResourceType.Roots, new Resource(ResourceType.Roots, "Roots", null, SpriteManager.SpriteType.UI, FoodType.Vegetable, 0.15f, 0.75f));

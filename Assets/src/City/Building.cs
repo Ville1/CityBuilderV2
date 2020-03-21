@@ -333,6 +333,7 @@ public class Building {
             } else {
                 setting.Slider_Value = saved_setting.Slider_Value;
                 setting.Toggle_Value = saved_setting.Toggle_Value;
+                setting.Dropdown_Selection = saved_setting.Dropdown_Selection;
             }
         }
         if(Is_Storehouse && data.Storage_Settings != null) {
@@ -654,7 +655,7 @@ public class Building {
             float resources_transfered = 0.0f;
             float max_transfer = Transfer_Speed * delta_days * Efficency;
             foreach (Building building in connected_buildings) {
-                if (building.Id == Id) {
+                if (building.Id == Id || !building.Is_Complete) {
                     continue;
                 }
                 foreach (Resource resource in building.Consumes) {
@@ -892,7 +893,8 @@ public class Building {
             data.Settings.Add(new SpecialSettingSaveData() {
                 Name = setting.Name,
                 Slider_Value = setting.Slider_Value,
-                Toggle_Value = setting.Toggle_Value
+                Toggle_Value = setting.Toggle_Value,
+                Dropdown_Selection = setting.Dropdown_Selection
             });
         }
         if (Is_Storehouse) {
@@ -1246,6 +1248,10 @@ public class Building {
 
     private void Update_Sprite(bool ignore_adjacent = false)
     {
+        int order = Map.Instance.Height - (int)GameObject.transform.position.y;
+        if(Renderer.sortingOrder != order) {
+            Renderer.sortingOrder = order;
+        }
         if (!ignore_adjacent) {
             foreach (Building building in Map.Instance.Get_Buildings_Around(this)) {
                 if (!building.Sprite.Simple) {

@@ -138,7 +138,7 @@ public class BuildingPrototypes {
 
         prototypes.Add(new Building("Storehouse", "storehouse", Building.UI_Category.Infrastructure, "storehouse", Building.BuildingSize.s2x2, 200, new Dictionary<Resource, int>() {
             { Resource.Stone, 30 }, { Resource.Tools, 25 }, { Resource.Lumber, 275 }
-        }, 225, new List<Resource>() { Resource.Lumber, Resource.Stone, Resource.Tools, Resource.Wood, Resource.Hide, Resource.Leather },
+        }, 225, new List<Resource>() { Resource.Lumber, Resource.Stone, Resource.Tools, Resource.Wood, Resource.Firewood, Resource.Hide, Resource.Leather, Resource.Salt, Resource.Coal, Resource.Charcoal, Resource.Iron_Ore, Resource.Iron_Bars },
         2000, 65.0f, 250, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f } }, 1.0f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 } }, 10, false, false, true, 0.0f, 15, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
 
         prototypes.Add(new Building("Cellar", "cellar", Building.UI_Category.Infrastructure, "cellar", Building.BuildingSize.s1x1, 100, new Dictionary<Resource, int>() {
@@ -228,6 +228,21 @@ public class BuildingPrototypes {
             { Building.Resident.Peasant, 10 },
             { Building.Resident.Citizen, 10 }
         }, 10, true, true, true, 0.0f, 10, null, delegate (Building market, float delta_time) {
+            List<Resource> allowed_fuels = new List<Resource>();
+            foreach (SpecialSetting setting in market.Special_Settings) {
+                Resource resource = Resource.All.First(x => x.Type.ToString().ToLower() == setting.Name);
+                if (setting.Toggle_Value) {
+                    if (resource.Is_Fuel) {
+                        allowed_fuels.Add(resource);
+                    }
+                    if (!market.Consumes.Contains(resource)) {
+                        market.Consumes.Add(resource);
+                    }
+                } else if (market.Consumes.Contains(resource)) {
+                    market.Consumes.Remove(resource);
+                }
+            }
+
             if (!market.Is_Operational || market.Efficency == 0.0f) {
                 return;
             }
@@ -252,20 +267,6 @@ public class BuildingPrototypes {
                 return;
             }
 
-            List<Resource> allowed_fuels = new List<Resource>();
-            foreach (SpecialSetting setting in market.Special_Settings) {
-                Resource resource = Resource.All.First(x => x.Type.ToString().ToLower() == setting.Name);
-                if (setting.Toggle_Value) {
-                    if (resource.Is_Fuel) {
-                        allowed_fuels.Add(resource);
-                    }
-                    if (!market.Consumes.Contains(resource)) {
-                        market.Consumes.Add(resource);
-                    }
-                } else if (market.Consumes.Contains(resource)) {
-                    market.Consumes.Remove(resource);
-                }
-            }
             Resource fuel_type = market.Input_Storage.Where(x => allowed_fuels.Contains(x.Key)).OrderByDescending(x => x.Key.Value).FirstOrDefault().Key;
             if(fuel_type != null && fuel_needed > 0.0f && market.Input_Storage[fuel_type] > 0.0f) {
                 float fuel_available = market.Input_Storage[fuel_type] * fuel_type.Fuel_Value;
@@ -375,7 +376,7 @@ public class BuildingPrototypes {
             if (income != 0.0f) {
                 market.Per_Day_Cash_Delta += (income / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f);
                 City.Instance.Add_Cash(income);
-            }//                                  v unnecessary list v special settings adds and removes stuff from consumption list
+            }//                                  v unnecessary list v special settings adds and removes stuff from consumption list MIGHT ACTUALLY BE NECESSARY, DONT REMOVE
         }, null, null, new List<Resource>() { Resource.Berries, Resource.Roots, Resource.Mushrooms, Resource.Herbs, Resource.Firewood, Resource.Charcoal, Resource.Game, Resource.Bread, Resource.Potatoes }, new List<Resource>(), 0.05f, 5.0f));
         Resource prefered_fuel = Resource.All.Where(x => x.Is_Fuel).OrderByDescending(x => x.Value / x.Fuel_Value).FirstOrDefault();
         foreach(Resource resource in Resource.All) {
@@ -453,6 +454,120 @@ public class BuildingPrototypes {
             { Resource.Stone, 5 }, { Resource.Tools, 1 }
         }, 25, new List<Resource>(), 0, 0.0f, 50, new Dictionary<Resource, float>(), 0.0f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 0, null, null, null, null,
         new List<Resource>(), new List<Resource>(), 0.5f, 3.0f));
+
+        prototypes.Add(new Building("Mine", "mine", Building.UI_Category.Industry, "mine", Building.BuildingSize.s2x2, 200, new Dictionary<Resource, int>() {
+            { Resource.Wood, 90 }, { Resource.Lumber, 90 }, { Resource.Stone, 15 }, { Resource.Tools, 40 }
+        }, 250, new List<Resource>(), 0, 0.0f, 250, new Dictionary<Resource, float>() { { Resource.Wood, 0.10f } }, 2.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 15 } }, 15, true, false, true, 5.0f, 0, delegate (Building building) {
+            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
+                tile.Worked_By.Add(building);
+            }
+        }, delegate (Building building, float delta_time) {
+            if (!building.Is_Operational) {
+                return;
+            }
+            float iron_ore = 0.0f;
+            float coal = 0.0f;
+            float salt = 0.0f;
+            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
+                if (tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building) {
+                    if (tile.Minerals.ContainsKey(Mineral.Iron)) {
+                        iron_ore += tile.Minerals[Mineral.Iron];
+                    }
+                    if (tile.Minerals.ContainsKey(Mineral.Coal)) {
+                        coal += tile.Minerals[Mineral.Coal];
+                    }
+                    if (tile.Minerals.ContainsKey(Mineral.Salt)) {
+                        salt += tile.Minerals[Mineral.Salt];
+                    }
+                }
+            }
+            float multiplier = 0.35f;
+            building.Produce(Resource.Iron_Ore, iron_ore * multiplier, delta_time);
+            building.Produce(Resource.Coal, coal * multiplier, delta_time);
+            building.Produce(Resource.Salt, salt * multiplier, delta_time);
+        }, delegate (Building building) {
+            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
+                if (tile.Worked_By.Contains(building)) {
+                    tile.Worked_By.Remove(building);
+                }
+            }
+        }, delegate (Building building) {
+            List<Tile> worked_tiles = new List<Tile>();
+            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
+                Building b = tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name);
+                if (tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building) {
+                    worked_tiles.Add(tile);
+                }
+            }
+            return worked_tiles;
+        }, new List<Resource>(), new List<Resource>() { Resource.Iron_Ore, Resource.Coal, Resource.Salt }, -0.5f, 5.0f));
+
+        prototypes.Add(new Building("Charcoal Burner", "charcoal_burner", Building.UI_Category.Forestry, "charcoal_burner", Building.BuildingSize.s2x2, 75, new Dictionary<Resource, int>() {
+            { Resource.Lumber, 50 }, { Resource.Stone, 5 }, { Resource.Tools, 5 }
+        }, 45, new List<Resource>(), 0, 50.0f, 55, new Dictionary<Resource, float>() { { Resource.Lumber, 0.01f } }, 0.50f, 0.0f, 0, new Dictionary<Building.Resident, int>() {
+        { Building.Resident.Peasant, 5 } }, 5, true, false, true, 0.0f, 5, null, delegate (Building building, float delta_time) {
+            List<Resource> fuel_types = new List<Resource>() { Resource.Firewood, Resource.Charcoal, Resource.Coal };
+            Resource selected_fuel = fuel_types[building.Special_Settings.First(x => x.Name == "fuel").Dropdown_Selection];
+            foreach(Resource fuel_type in fuel_types) {
+                if(fuel_type != selected_fuel && building.Consumes.Contains(fuel_type)) {
+                    building.Consumes.Remove(fuel_type);
+                }
+            }
+            if (!building.Consumes.Contains(selected_fuel)) {
+                building.Consumes.Add(selected_fuel);
+            }
+            if (!building.Is_Operational) {
+                return;
+            }
+            float fuel_usage = selected_fuel == Resource.Firewood ? 2.5f : 1.25f;
+            building.Process(new Dictionary<Resource, float>() { { Resource.Wood, 5.0f }, { selected_fuel, fuel_usage } }, new Dictionary<Resource, float>() { { Resource.Charcoal, 5.0f } }, delta_time);
+        }, null, null, new List<Resource>() { Resource.Wood, Resource.Charcoal, Resource.Coal, Resource.Firewood }, new List<Resource>() { Resource.Charcoal }, -1.50f, 6.0f));
+        prototypes.First(x => x.Internal_Name == "charcoal_burner").Special_Settings.Add(new SpecialSetting("fuel", "Fuel", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() { "Firewood (2.5/day)", "Charcoal (1.25/day)", "Coal (1.25/day)" }, 0));
+
+        prototypes.Add(new Building("Foundry", "foundry", Building.UI_Category.Industry, "foundry", Building.BuildingSize.s2x2, 225, new Dictionary<Resource, int>() {
+            { Resource.Lumber, 75 }, { Resource.Stone, 130 }, { Resource.Tools, 20 }
+        }, 160, new List<Resource>(), 0, 50.0f, 205, new Dictionary<Resource, float>() { { Resource.Stone, 0.05f }, { Resource.Lumber, 0.01f } }, 1.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() {
+        { Building.Resident.Peasant, 10 } }, 10, true, false, true, 0.0f, 5, null, delegate (Building building, float delta_time) {
+            List<Resource> fuel_types = new List<Resource>() { Resource.Firewood, Resource.Charcoal, Resource.Coal };
+            Resource selected_fuel = fuel_types[building.Special_Settings.First(x => x.Name == "fuel").Dropdown_Selection];
+            foreach (Resource fuel_type in fuel_types) {
+                if (fuel_type != selected_fuel && building.Consumes.Contains(fuel_type)) {
+                    building.Consumes.Remove(fuel_type);
+                }
+            }
+            if (!building.Consumes.Contains(selected_fuel)) {
+                building.Consumes.Add(selected_fuel);
+            }
+            if (!building.Is_Operational) {
+                return;
+            }
+            float fuel_usage = selected_fuel == Resource.Firewood ? 10.0f : 5.0f;
+            building.Process(new Dictionary<Resource, float>() { { Resource.Iron_Ore, 20.0f }, { selected_fuel, fuel_usage } }, new Dictionary<Resource, float>() { { Resource.Iron_Bars, 10.0f } }, delta_time);
+        }, null, null, new List<Resource>() { Resource.Iron_Ore, Resource.Charcoal, Resource.Coal, Resource.Firewood }, new List<Resource>() { Resource.Iron_Bars }, -1.25f, 6.0f));
+        prototypes.First(x => x.Internal_Name == "foundry").Special_Settings.Add(new SpecialSetting("fuel", "Fuel", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() { "Firewood (10/day)", "Charcoal (5/day)", "Coal (5/day)" }, 0));
+
+        prototypes.Add(new Building("Smithy", "smithy", Building.UI_Category.Industry, "smithy", Building.BuildingSize.s2x2, 225, new Dictionary<Resource, int>() {
+            { Resource.Lumber, 65 }, { Resource.Stone, 100 }, { Resource.Tools, 30 }
+        }, 150, new List<Resource>(), 0, 50.0f, 165, new Dictionary<Resource, float>() { { Resource.Stone, 0.05f }, { Resource.Lumber, 0.01f } }, 2.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() {
+        { Building.Resident.Peasant, 5 }, { Building.Resident.Citizen, 5 } }, 5, true, false, true, 0.0f, 5, null, delegate (Building building, float delta_time) {
+            List<Resource> fuel_types = new List<Resource>() { Resource.Firewood, Resource.Charcoal, Resource.Coal };
+            Resource selected_fuel = fuel_types[building.Special_Settings.First(x => x.Name == "fuel").Dropdown_Selection];
+            foreach (Resource fuel_type in fuel_types) {
+                if (fuel_type != selected_fuel && building.Consumes.Contains(fuel_type)) {
+                    building.Consumes.Remove(fuel_type);
+                }
+            }
+            if (!building.Consumes.Contains(selected_fuel)) {
+                building.Consumes.Add(selected_fuel);
+            }
+            if (!building.Is_Operational) {
+                return;
+            }
+            float fuel_usage = selected_fuel == Resource.Firewood ? 2.5f : 1.25f;
+            building.Process(new Dictionary<Resource, float>() { { Resource.Iron_Bars, 5.0f }, { Resource.Lumber, 1.0f }, { selected_fuel, fuel_usage } }, new Dictionary<Resource, float>() { { Resource.Tools, 2.5f } }, delta_time);
+        }, null, null, new List<Resource>() { Resource.Iron_Bars, Resource.Lumber, Resource.Charcoal, Resource.Coal, Resource.Firewood }, new List<Resource>() { Resource.Tools }, -1.00f, 4.0f));
+        prototypes.First(x => x.Internal_Name == "smithy").Special_Settings.Add(new SpecialSetting("fuel", "Fuel", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() { "Firewood (2.5/day)", "Charcoal (1.25/day)", "Coal (1.25/day)" }, 0));
+
     }
 
     public static BuildingPrototypes Instance

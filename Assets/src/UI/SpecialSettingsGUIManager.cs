@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,6 +11,7 @@ public class SpecialSettingsGUIManager : MonoBehaviour {
     public GameObject Slider_Row_Prototype;
     public GameObject Input_Field_Row_Prototype;
     public GameObject Toggle_Row_Prototype;
+    public GameObject Dropdown_Row_Prototype;
 
     private Building building;
     private Dictionary<SpecialSetting, GameObject> rows;
@@ -29,6 +31,7 @@ public class SpecialSettingsGUIManager : MonoBehaviour {
         Slider_Row_Prototype.SetActive(false);
         Input_Field_Row_Prototype.SetActive(false);
         Toggle_Row_Prototype.SetActive(false);
+        Dropdown_Row_Prototype.SetActive(false);
         rows = new Dictionary<SpecialSetting, GameObject>();
         row_id = 0;
     }
@@ -73,8 +76,23 @@ public class SpecialSettingsGUIManager : MonoBehaviour {
         rows.Clear();
 
         foreach(SpecialSetting setting in building.Special_Settings) {
+            GameObject prototype = null;
+            switch (setting.Type) {
+                case SpecialSetting.SettingType.Input:
+                    prototype = Input_Field_Row_Prototype;
+                    break;
+                case SpecialSetting.SettingType.Slider:
+                    prototype = Slider_Row_Prototype;
+                    break;
+                case SpecialSetting.SettingType.Toggle:
+                    prototype = Toggle_Row_Prototype;
+                    break;
+                case SpecialSetting.SettingType.Dropdown:
+                    prototype = Dropdown_Row_Prototype;
+                    break;
+            }
             GameObject row = GameObject.Instantiate(
-                setting.Type == SpecialSetting.SettingType.Input ? Input_Field_Row_Prototype : (setting.Type == SpecialSetting.SettingType.Slider ? Slider_Row_Prototype : Toggle_Row_Prototype),
+                prototype,
                 new Vector3(
                     Input_Field_Row_Prototype.transform.position.x,
                     Input_Field_Row_Prototype.transform.position.y - (20.0f * rows.Count),
@@ -99,9 +117,15 @@ public class SpecialSettingsGUIManager : MonoBehaviour {
             } else if (setting.Type == SpecialSetting.SettingType.Toggle) {
                 GameObject.Find(string.Format("{0}/Toggle", row.name)).GetComponentInChildren<Text>().text = setting.Label;
                 GameObject.Find(string.Format("{0}/Toggle", row.name)).GetComponentInChildren<Toggle>().isOn = setting.Toggle_Value;
+            } else if(setting.Type == SpecialSetting.SettingType.Dropdown) {
+                GameObject.Find(string.Format("{0}/LabelText", row.name)).GetComponent<Text>().text = setting.Label;
+                Dropdown dropdown = GameObject.Find(string.Format("{0}/Dropdown", row.name)).GetComponent<Dropdown>();
+                List<Dropdown.OptionData> options = setting.Dropdown_Options.Select(x => new Dropdown.OptionData(x)).ToList();
+                dropdown.options = options;
+                dropdown.value = setting.Dropdown_Selection;
             }
 
-                rows.Add(setting, row);
+            rows.Add(setting, row);
         }
         Content.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, rows.Count * 20.0f);
     }
@@ -120,6 +144,8 @@ public class SpecialSettingsGUIManager : MonoBehaviour {
 
             } else if(pair.Key.Type == SpecialSetting.SettingType.Toggle) {
                 pair.Key.Toggle_Value = GameObject.Find(string.Format("{0}/Toggle", pair.Value.name)).GetComponentInChildren<Toggle>().isOn;
+            } else if(pair.Key.Type == SpecialSetting.SettingType.Dropdown) {
+                pair.Key.Dropdown_Selection = GameObject.Find(string.Format("{0}/Dropdown", pair.Value.name)).GetComponentInChildren<Dropdown>().value;
             }
         }
         Active = false;
