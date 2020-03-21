@@ -13,8 +13,8 @@ public class TilePrototypes {
         prototypes.Add(new Tile("placeholder", "Placeholder", "terrain_placeholder", false, 0.0f, 0.0f));
         prototypes.Add(new Tile("grass", "Grass", "grass", true, 0.0f, 0.0f));
         prototypes.Add(new Tile("fertile_ground", "Fertile ground", "fertile_ground", true, 1.0f, 1.0f));
-        prototypes.Add(new Tile("sparse_forest", "Sparse forest", "sparse_forest", false, 2.0f, 1.5f));
-        prototypes.Add(new Tile("forest", "Forest", "forest", false, 3.0f, 2.0f));
+        prototypes.Add(new Tile("sparse_forest", "Sparse forest", "sparse_forest", false, 1.0f, 1.5f));
+        prototypes.Add(new Tile("forest", "Forest", "forest", false, 1.0f, 2.0f));
 
         prototypes.Add(new Tile("hill_1", "Hill", "hill_1", false, 0.05f, 4.0f));
         prototypes.Add(new Tile("hill_2", "Hill", "hill_2", false, 0.05f, 4.0f));

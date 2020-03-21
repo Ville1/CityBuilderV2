@@ -3,11 +3,28 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+public enum Mineral { Iron, Coal, Salt }
 public class Map : MonoBehaviour
 {
     public enum MapState { Inactive, Normal, Generating, Loading, Saving }
     public enum MapView { None, Appeal, Minerals }
+
     public static readonly float Z_LEVEL = 0.0f;
+    public static Dictionary<Mineral, int> MINERAL_BASE_SPAWN_CHANCE = new Dictionary<Mineral, int>() {
+        { Mineral.Iron, 8 },
+        { Mineral.Coal, 6 },
+        { Mineral.Salt, 5 }
+    };
+    public static Dictionary<Mineral, float> MINERAL_VEIN_SIZE = new Dictionary<Mineral, float>() {
+        { Mineral.Iron, 4.0f },
+        { Mineral.Coal, 5.0f },
+        { Mineral.Salt, 3.0f }
+    };
+    public static Dictionary<Mineral, float> MINERAL_VEIN_RICHNESS = new Dictionary<Mineral, float>() {
+        { Mineral.Iron, 1.0f },
+        { Mineral.Coal, 0.75f },
+        { Mineral.Salt, 0.75f }
+    };
 
     public static Map Instance { get; private set; }
     
@@ -33,6 +50,8 @@ public class Map : MonoBehaviour
     private int loop_progress;
     private List<Tile> fine_tuned_tiles;
     private bool city_loaded;
+    private List<Mineral> minerals_spawned;
+    private bool mineral_safety_spawn;
     public MapView view;
 
     /// <summary>
@@ -119,6 +138,8 @@ public class Map : MonoBehaviour
         generation_index_y = 0;
         loop_progress = 0;
         fine_tuned_tiles = new List<Tile>();
+        minerals_spawned = new List<Mineral>();
+        mineral_safety_spawn = false;
 
         tiles = new List<List<Tile>>();
         for(int x = 0; x < width; x++) {
@@ -134,10 +155,10 @@ public class Map : MonoBehaviour
 
     private void Generation_Loop_1()
     {
-        Tile tile = new Tile(generation_index_x, generation_index_y, TilePrototypes.Instance.Get(RNG.Instance.Next(0, 100) < (100 - Mathf.RoundToInt(3.0f * forest_count_setting)) ? "grass" : "forest"));
+        Tile tile = new Tile(generation_index_x, generation_index_y, TilePrototypes.Instance.Get(RNG.Instance.Next(0, 100) < (100 - Mathf.RoundToInt(2.0f * forest_count_setting)) ? "grass" : "forest"));
         tiles[generation_index_x][generation_index_y] = tile;
 
-        int hill_chance = (int)(hills_setting * 3.0f);
+        int hill_chance = (int)(hills_setting * 2.0f);
         if(hill_chance > 0 && RNG.Instance.Next(0, 100) < hill_chance) {
             tile.Change_To(TilePrototypes.Instance.Get("hill_7"));
         }
@@ -227,6 +248,36 @@ public class Map : MonoBehaviour
             }
         }
 
+        if (tile.Minerals.Count == 0) {
+            List<Mineral> spawn = new List<Mineral>();
+            foreach (Mineral mineral in Enum.GetValues(typeof(Mineral))) {
+                int chance = tile.Internal_Name.StartsWith("hill_") ? Mathf.RoundToInt(MINERAL_BASE_SPAWN_CHANCE[mineral] * 1.25f) : MINERAL_BASE_SPAWN_CHANCE[mineral];
+                if (RNG.Instance.Next(0, 10000) < chance) {
+                    spawn.Add(mineral);
+                }
+            }
+            if (spawn.Count > 0) {
+                Mineral mineral = spawn.Count == 1 ? spawn[0] : RNG.Instance.Item(spawn);
+                if (!minerals_spawned.Contains(mineral)) {
+                    minerals_spawned.Add(mineral);
+                }
+                float amount = 3.0f * (MINERAL_VEIN_RICHNESS[mineral] * (0.25f + (1.50f * RNG.Instance.Next_F())));
+                tile.Minerals.Add(mineral, amount);
+                foreach (Tile t in Get_Tiles_In_Circle(tile.Coordinates, MINERAL_VEIN_SIZE[mineral])) {
+                    float distance = t.Coordinates.Distance(tile.Coordinates);
+                    int chance = Mathf.RoundToInt(((MINERAL_VEIN_RICHNESS[mineral] * 35.0f) + (MINERAL_BASE_SPAWN_CHANCE[mineral] * 0.5f)) * (((MINERAL_VEIN_SIZE[mineral] - distance) + 1) / (MINERAL_VEIN_SIZE[mineral]) + 1));
+                    if (RNG.Instance.Next(0, 100) < chance) {
+                        amount = 3.0f * (MINERAL_VEIN_RICHNESS[mineral] * (0.25f + (1.50f * RNG.Instance.Next_F())));
+                        if (t.Minerals.ContainsKey(mineral)) {
+                            t.Minerals[mineral] = amount;
+                        } else {
+                            t.Minerals.Add(mineral, amount);
+                        }
+                    }
+                }
+            }
+        }
+
         loop_progress++;
         generation_index_x++;
         if (generation_index_x == Width) {
@@ -286,6 +337,32 @@ public class Map : MonoBehaviour
         } else if (tile.Internal_Name == "grass" && RNG.Instance.Next(0, 100) <= Mathf.RoundToInt(4.0f + ((forest_count_setting + forest_density_setting + forest_size_setting) / 1.5f))) {
             tile.Change_To(TilePrototypes.Instance.Get("fertile_ground"));
             fine_tuned_tiles.Add(tile);
+        }
+
+        if (!mineral_safety_spawn) {
+            mineral_safety_spawn = true;
+            foreach(Mineral mineral in Enum.GetValues(typeof(Mineral))) {
+                if (!minerals_spawned.Contains(mineral) && MINERAL_BASE_SPAWN_CHANCE[mineral] > 5) {
+                    int spawn_chance = MINERAL_BASE_SPAWN_CHANCE[mineral] * 10;
+                    if(RNG.Instance.Next(0, 100) < spawn_chance) {
+                        Tile random_tile = Get_Tile_At(RNG.Instance.Next(0, Width), RNG.Instance.Next(0, Height));
+                        float amount = 1.5f * (MINERAL_VEIN_RICHNESS[mineral] * (0.25f + (1.50f * RNG.Instance.Next_F())));
+                        random_tile.Minerals.Add(mineral, amount);
+                        foreach (Tile t in Get_Tiles_In_Circle(random_tile.Coordinates, MINERAL_VEIN_SIZE[mineral] * 0.5f)) {
+                            float distance = t.Coordinates.Distance(random_tile.Coordinates);
+                            int chance = Mathf.RoundToInt(((MINERAL_VEIN_RICHNESS[mineral] * 35.0f) + (MINERAL_BASE_SPAWN_CHANCE[mineral] * 0.5f)) * (((MINERAL_VEIN_SIZE[mineral] - distance) + 1) / (MINERAL_VEIN_SIZE[mineral]) + 1));
+                            if (RNG.Instance.Next(0, 100) < chance) {
+                                amount = 1.5f * (MINERAL_VEIN_RICHNESS[mineral] * (0.25f + (1.50f * RNG.Instance.Next_F())));
+                                if (t.Minerals.ContainsKey(mineral)) {
+                                    t.Minerals[mineral] = amount;
+                                } else {
+                                    t.Minerals.Add(mineral, amount);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         loop_progress++;
@@ -479,6 +556,9 @@ public class Map : MonoBehaviour
                         tiles[x][y].Worked_By.Add(building);
                     }
                 }
+                foreach(MineralSaveData mineral_data in SaveManager.Instance.Get_Tile(x, y).Minerals) {
+                    tiles[x][y].Minerals.Add((Mineral)mineral_data.Mineral, mineral_data.Amount);
+                }
             }
         }
         Update_Appeal();
@@ -543,7 +623,7 @@ public class Map : MonoBehaviour
                             tiles[x][y].Show_Text(Helper.Float_To_String(tiles[x][y].Appeal, 1));
                             break;
                         case MapView.Minerals:
-                            tiles[x][y].Show_Text("WIP");
+                            tiles[x][y].Show_Text(tiles[x][y].Mineral_String());
                             break;
                         default:
                             tiles[x][y].Hide_Text();

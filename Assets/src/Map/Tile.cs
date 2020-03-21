@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using UnityEngine;
 
 public class Tile
@@ -26,6 +27,7 @@ public class Tile
     public float Base_Appeal_Range { get; private set; }
     public float Appeal { get; set; }
     public List<Building> Worked_By { get; private set; }
+    public Dictionary<Mineral, float> Minerals { get; private set; }
 
     protected Color highlight_color;
     protected bool show_coordinates;
@@ -56,6 +58,7 @@ public class Tile
         text_game_object = GameObject.GetComponentInChildren<TextMesh>().gameObject;
         text_game_object.SetActive(false);
         text_game_object.GetComponentInChildren<MeshRenderer>().sortingLayerName = "Text";
+        Minerals = new Dictionary<Mineral, float>();
 
         Change_To(prototype);
     }
@@ -69,6 +72,7 @@ public class Tile
         Buildable = buildable;
         Base_Appeal = appeal;
         Base_Appeal_Range = appeal_range;
+        Minerals = new Dictionary<Mineral, float>();
     }
     
     public void Change_To(Tile prototype)
@@ -192,8 +196,21 @@ public class Tile
             X = X,
             Y = Y,
             Internal_Name = Internal_Name,
-            Worked_By = Worked_By.Select(x => x.Id).ToList()
+            Worked_By = Worked_By.Select(x => x.Id).ToList(),
+            Minerals = Minerals.Select(x => new MineralSaveData() { Mineral = (int)x.Key, Amount = x.Value }).ToList()
         };
+    }
+
+    public string Mineral_String()
+    {
+        if(Minerals.Count == 0) {
+            return string.Empty;
+        }
+        StringBuilder builder = new StringBuilder();
+        foreach(KeyValuePair<Mineral, float> mineral_data in Minerals) {
+            builder.Append(mineral_data.Key.ToString().ToUpper()[0]).Append(": ").Append(Helper.Float_To_String(mineral_data.Value, 1)).Append(", ");
+        }
+        return builder.Remove(builder.Length - 2, 2).ToString();
     }
 
     public override string ToString()
