@@ -29,6 +29,7 @@ public class SpriteData {
     public SpriteData Clone()
     {
         SpriteData data = new SpriteData(Name);
+        data.Type = Type;
         data.Logic = Logic;
         data.Animation_Frame_Time = Animation_Frame_Time;
         data.Animation_Sprites = Helper.Clone_List(Animation_Sprites);

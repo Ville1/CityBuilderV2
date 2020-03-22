@@ -50,7 +50,7 @@ public class RNG
     
     public T Item<T>(List<T> list)
     {
-        return list[Next(list.Count)];
+        return list[Next(list.Count - 1)];
     }
 
     public List<T> Shuffle<T>(List<T> list)

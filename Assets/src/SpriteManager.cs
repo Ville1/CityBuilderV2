@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class SpriteManager
 {
-    public enum SpriteType { Building, Terrain, UI };
+    public enum SpriteType { Building, Terrain, UI, Entity };
     private static SpriteManager instance;
 
     private Dictionary<SpriteType, string> prefixes;
@@ -19,6 +19,7 @@ public class SpriteManager
         prefixes.Add(SpriteType.Building, "building");
         prefixes.Add(SpriteType.Terrain, "terrain");
         prefixes.Add(SpriteType.UI, "ui");
+        prefixes.Add(SpriteType.Entity, "entity");
 
         CustomLogger.Instance.Debug("Loading sprites...");
         foreach (Sprite texture in Resources.LoadAll<Sprite>("images/buildings")) {
@@ -35,6 +36,12 @@ public class SpriteManager
             sprites.Add(prefixes[SpriteType.UI] + "_" + texture.name, texture);
             CustomLogger.Instance.Debug("UI sprite loaded: " + texture.name);
         }
+
+        foreach (Sprite texture in Resources.LoadAll<Sprite>("images/entities")) {
+            sprites.Add(prefixes[SpriteType.Entity] + "_" + texture.name, texture);
+            CustomLogger.Instance.Debug("Entity sprite loaded: " + texture.name);
+        }
+
         CustomLogger.Instance.Debug("All sprites loaded");
     }
 

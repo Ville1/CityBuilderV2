@@ -28,6 +28,7 @@ public class Tile
     public float Appeal { get; set; }
     public List<Building> Worked_By { get; private set; }
     public Dictionary<Mineral, float> Minerals { get; private set; }
+    public List<Entity> Entities { get; private set; }
 
     protected Color highlight_color;
     protected bool show_coordinates;
@@ -59,6 +60,7 @@ public class Tile
         text_game_object.SetActive(false);
         text_game_object.GetComponentInChildren<MeshRenderer>().sortingLayerName = "Text";
         Minerals = new Dictionary<Mineral, float>();
+        Entities = new List<Entity>();
 
         Change_To(prototype);
     }

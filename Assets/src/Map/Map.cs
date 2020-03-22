@@ -30,10 +30,12 @@ public class Map : MonoBehaviour
     
     public GameObject Tile_Container;
     public GameObject Building_Container;
+    public GameObject Entity_Container;
 
     public int Width { get; private set; }
     public int Height { get; private set; }
     public MapState State { get; private set; }
+    public List<Entity> Entities { get; private set; }
 
     private float forest_count_setting;
     private float forest_size_setting;
@@ -52,7 +54,8 @@ public class Map : MonoBehaviour
     private bool city_loaded;
     private List<Mineral> minerals_spawned;
     private bool mineral_safety_spawn;
-    public MapView view;
+    private MapView view;
+    private List<Entity> entities_to_be_deleted;
 
     /// <summary>
     /// Initializiation
@@ -114,6 +117,13 @@ public class Map : MonoBehaviour
                     }
                 }
             }
+            foreach(Entity entity in entities_to_be_deleted) {
+                entity.Delete();
+            }
+            entities_to_be_deleted.Clear();
+            foreach(Entity entity in Entities) {
+                entity.Update(Time.deltaTime);
+            }
         }
     }
     
@@ -126,6 +136,8 @@ public class Map : MonoBehaviour
         Active = false;
         State = MapState.Generating;
         View = MapView.None;
+        Entities = new List<Entity>();
+        entities_to_be_deleted = new List<Entity>();
         Width = width;
         Height = height;
         forest_count_setting = Mathf.Clamp01(forest_count);
@@ -475,6 +487,8 @@ public class Map : MonoBehaviour
         TimeManager.Instance.Reset_Time();
         Active = false;
         State = MapState.Loading;
+        Entities = new List<Entity>();
+        entities_to_be_deleted = new List<Entity>();
         SaveManager.Instance.Start_Loading(path);
         save_load_loop = 1;
         loop_progress = 0;
@@ -631,6 +645,13 @@ public class Map : MonoBehaviour
                     }
                 }
             }
+        }
+    }
+
+    public void Delete_Entity(Entity entity)
+    {
+        if (!entities_to_be_deleted.Contains(entity)) {
+            entities_to_be_deleted.Add(entity);
         }
     }
 
@@ -894,6 +915,12 @@ public class Map : MonoBehaviour
             for (int y = 0; y < Height; y++) {
                 tiles[x][y].Delete();
             }
+        }
+        if(Entities != null) {
+            foreach(Entity entity in Entities) {
+                entity.Delete(true);
+            }
+            Entities.Clear();
         }
     }
 }

@@ -90,6 +90,7 @@ public class Building {
     public bool Losing_HP_From_No_Upkeep { get; private set; }
     public float Appeal { get; private set; }
     public float Appeal_Range { get; private set; }
+    public List<Entity> Entities_Spawned { get; private set; }
 
     public GameObject GameObject { get; private set; }
     public SpriteRenderer Renderer { get { return GameObject != null ? GameObject.GetComponent<SpriteRenderer>() : null; } }
@@ -125,6 +126,9 @@ public class Building {
             Tiles = tiles;
             foreach (Tile t in tiles) {
                 t.Building = this;
+                foreach(Entity entity in t.Entities) {
+                    Map.Instance.Delete_Entity(entity);
+                }
             }
         }
         Is_Preview = is_preview;
@@ -196,6 +200,7 @@ public class Building {
         }
         Appeal = prototype.Appeal;
         Appeal_Range = prototype.Appeal_Range;
+        Entities_Spawned = new List<Entity>();
 
         animation_index = 0;
         animation_cooldown = Sprite.Animation_Frame_Time;
@@ -1048,6 +1053,10 @@ public class Building {
             }
             foreach (Tile t in Tiles) {
                 t.Building = null;
+            }
+            foreach(Entity entity in Entities_Spawned) {
+                entity.Spawner = null;
+                Map.Instance.Delete_Entity(entity);
             }
         }
     }
