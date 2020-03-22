@@ -138,7 +138,7 @@ public class BuildingPrototypes {
 
         prototypes.Add(new Building("Storehouse", "storehouse", Building.UI_Category.Infrastructure, "storehouse", Building.BuildingSize.s2x2, 200, new Dictionary<Resource, int>() {
             { Resource.Stone, 30 }, { Resource.Tools, 25 }, { Resource.Lumber, 275 }
-        }, 225, new List<Resource>() { Resource.Lumber, Resource.Stone, Resource.Tools, Resource.Wood, Resource.Firewood, Resource.Hide, Resource.Leather, Resource.Salt, Resource.Coal, Resource.Charcoal, Resource.Iron_Ore, Resource.Iron_Bars, Resource.Wool },
+        }, 225, new List<Resource>() { Resource.Lumber, Resource.Stone, Resource.Tools, Resource.Wood, Resource.Firewood, Resource.Hide, Resource.Leather, Resource.Salt, Resource.Coal, Resource.Charcoal, Resource.Iron_Ore, Resource.Iron_Bars, Resource.Wool, Resource.Yarn, Resource.Cloth },
         2000, 65.0f, 250, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f } }, 1.0f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 } }, 10, false, false, true, 0.0f, 15, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
 
         prototypes.Add(new Building("Cellar", "cellar", Building.UI_Category.Infrastructure, "cellar", Building.BuildingSize.s1x1, 100, new Dictionary<Resource, int>() {
@@ -818,7 +818,7 @@ public class BuildingPrototypes {
 
         prototypes.Add(new Building("Shepherd's Hut", "shepherds_hut", Building.UI_Category.Agriculture, "shepherds_hut", Building.BuildingSize.s2x2, 85, new Dictionary<Resource, int>() {
             { Resource.Wood, 25 }, { Resource.Lumber, 20 }, { Resource.Stone, 10 }, { Resource.Tools, 10 }
-        }, 85, new List<Resource>(), 0, 0.0f, 75, new Dictionary<Resource, float>(), 0.75f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 5 } }, 5, true, false, true, 4.0f, 0, delegate (Building building) {
+        }, 85, new List<Resource>(), 0, 0.0f, 75, new Dictionary<Resource, float>() { { Resource.Wood, 0.01f }, { Resource.Lumber, 0.01f } }, 0.75f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 5 } }, 5, true, false, true, 4.0f, 0, delegate (Building building) {
             foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
                 tile.Worked_By.Add(building);
             }
@@ -930,6 +930,19 @@ public class BuildingPrototypes {
             }
         }, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "tax_office").Special_Settings.Add(new SpecialSetting("tax_rate", "Tax rate", SpecialSetting.SettingType.Dropdown, 0.0f, false, new List<string>() { "Very low", "Low", "Medium", "High", "Very high" }, 2));
+
+        prototypes.Add(new Building("Weaver's Workshop", "weavers_workshop", Building.UI_Category.Industry, "weavers_workshop", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
+            { Resource.Lumber, 80 }, { Resource.Stone, 10 }, { Resource.Tools, 10 }
+        }, 90, new List<Resource>(), 0, 50.0f, 90, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f } }, 1.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() {
+        { Building.Resident.Peasant, 5 }, { Building.Resident.Citizen, 5 } }, 5, true, false, true, 0.0f, 5, null, delegate (Building building, float delta_time) {
+            if (!building.Is_Operational) {
+                return;
+            }
+            Resource output = building.Special_Settings.First(x => x.Name == "output").Dropdown_Selection == 0 ? Resource.Cloth : Resource.Yarn;
+            float output_amount = building.Special_Settings.First(x => x.Name == "output").Dropdown_Selection == 0 ? 2.5f : 5.0f;
+            building.Process(Resource.Wool, 5.0f, output, output_amount, delta_time);
+        }, null, null, new List<Resource>() { Resource.Wool }, new List<Resource>() { Resource.Cloth, Resource.Yarn }, 0.0f, 0.0f));
+        prototypes.First(x => x.Internal_Name == "weavers_workshop").Special_Settings.Add(new SpecialSetting("output", "Production", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() { "Cloth (2.5/day)", "Yarn (5/day)" }, 0));
     }
 
     public static BuildingPrototypes Instance

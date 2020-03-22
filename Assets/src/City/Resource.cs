@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 
 public class Resource {
-    public enum ResourceType { Wood, Stone, Lumber, Tools, Roots, Berries, Mushrooms, Herbs, Firewood, Charcoal, Game, Hide, Leather, Potatoes, Bread, Iron_Ore, Coal, Salt, Iron_Bars, Ale, Wool, Mutton }
+    public enum ResourceType { Wood, Stone, Lumber, Tools, Roots, Berries, Mushrooms, Herbs, Firewood, Charcoal, Game, Hide, Leather, Potatoes, Bread, Iron_Ore, Coal, Salt, Iron_Bars, Ale, Wool, Cloth, Yarn, Mutton }
     public enum FoodType { None, Meat, Vegetable }
 
     public static Resource Wood { get { return Get(ResourceType.Wood); } }
@@ -27,6 +27,8 @@ public class Resource {
     public static Resource Ale { get { return Get(ResourceType.Ale); } }
     public static Resource Wool { get { return Get(ResourceType.Wool); } }
     public static Resource Mutton { get { return Get(ResourceType.Mutton); } }
+    public static Resource Cloth { get { return Get(ResourceType.Cloth); } }
+    public static Resource Yarn { get { return Get(ResourceType.Yarn); } }
     private static Dictionary<ResourceType, Resource> resources;
 
     public int Id { get { return (int)Type; } }
@@ -99,6 +101,8 @@ public class Resource {
             resources.Add(ResourceType.Salt, new Resource(ResourceType.Salt, "Salt", null, SpriteManager.SpriteType.UI, 1.05f));
             resources.Add(ResourceType.Ale, new Resource(ResourceType.Ale, "Ale", null, SpriteManager.SpriteType.UI, 1.25f));
             resources.Add(ResourceType.Wool, new Resource(ResourceType.Wool, "Wool", null, SpriteManager.SpriteType.UI, 0.50f));
+            resources.Add(ResourceType.Yarn, new Resource(ResourceType.Yarn, "Yarn", null, SpriteManager.SpriteType.UI, 0.75f));
+            resources.Add(ResourceType.Cloth, new Resource(ResourceType.Cloth, "Cloth", null, SpriteManager.SpriteType.UI, 1.00f));
 
             resources.Add(ResourceType.Game, new Resource(ResourceType.Game, "Game", null, SpriteManager.SpriteType.UI, FoodType.Meat, 1.05f, 1.15f));
             resources.Add(ResourceType.Roots, new Resource(ResourceType.Roots, "Roots", null, SpriteManager.SpriteType.UI, FoodType.Vegetable, 0.15f, 0.75f));
