@@ -14,6 +14,7 @@ public class City {
     public List<Building> Buildings { get; private set; }
     public float Cash { get; private set; }
     public Dictionary<Resource, float> Resource_Totals { get; private set; }
+    public Dictionary<Resource, float> Usable_Resource_Totals { get; private set; }
     public bool Grace_Time { get { return grace_time_remaining > 0.0f; } }
     public float Grace_Time_Remaining { get { return grace_time_remaining; } set { grace_time_remaining = value; } }
     public Dictionary<Building.Resident, float> Unemployment { get; private set; }
@@ -34,10 +35,12 @@ public class City {
     private City()
     {
         Resource_Totals = new Dictionary<Resource, float>();
+        Usable_Resource_Totals = new Dictionary<Resource, float>();
         Resource_Max_Storage = new Dictionary<Resource, float>();
         Resource_Delta = new Dictionary<Resource, float>();
         foreach (Resource resource in Resource.All) {
             Resource_Totals.Add(resource, 0.0f);
+            Usable_Resource_Totals.Add(resource, 0.0f);
             Resource_Max_Storage.Add(resource, 0.0f);
             Resource_Delta.Add(resource, 0.0f);
         }
@@ -110,6 +113,7 @@ public class City {
         //Update statistics
         foreach(Resource resource in Resource.All) {
             Resource_Totals[resource] = 0.0f;
+            Usable_Resource_Totals[resource] = 0.0f;
             Resource_Max_Storage[resource] = 0.0f;
             Resource_Delta[resource] = 0.0f;
         }
@@ -133,6 +137,7 @@ public class City {
         foreach (Building building in Buildings) {
             foreach(KeyValuePair<Resource, float> pair in building.Storage) {
                 Resource_Totals[pair.Key] += pair.Value;
+                Usable_Resource_Totals[pair.Key] += pair.Value;
                 if (pair.Key.Is_Food) {
                     Food_Current += pair.Value;
                 }
@@ -251,7 +256,7 @@ public class City {
         int citizen_current = current_population[Building.Resident.Citizen];
         int citizen_max = max_population[Building.Resident.Citizen];
         float citizen_happiness = citizen_current > 0 ? happiness[Building.Resident.Citizen] / citizen_current : 0.0f;
-        Happiness[Building.Resident.Citizen] = peasant_happiness;
+        Happiness[Building.Resident.Citizen] = citizen_happiness;
         int citizen_employment = workers_allocated[Building.Resident.Citizen] - workers_required[Building.Resident.Citizen] + available_workers[Building.Resident.Citizen];
         float citizen_employment_relative = citizen_current == 0 ? 0.0f : citizen_employment / (float)citizen_current;
         Unemployment[Building.Resident.Citizen] = citizen_employment_relative > 0.0f ? citizen_employment_relative : 0.0f;
@@ -259,12 +264,12 @@ public class City {
         int noble_current = current_population[Building.Resident.Noble];
         int noble_max = max_population[Building.Resident.Noble];
         float noble_happiness = noble_current > 0 ? happiness[Building.Resident.Noble] / noble_current : 0.0f;
-        Happiness[Building.Resident.Noble] = peasant_happiness;
+        Happiness[Building.Resident.Noble] = noble_happiness;
         int noble_employment = workers_allocated[Building.Resident.Noble] - workers_required[Building.Resident.Noble] + available_workers[Building.Resident.Noble];
         float noble_employment_relative = noble_current == 0 ? 0.0f : noble_employment / (float)noble_current;
         Unemployment[Building.Resident.Citizen] = noble_employment_relative > 0.0f ? noble_employment_relative : 0.0f;
-        TopGUIManager.Instance.Update_City_Info(Name, Cash, Cash_Delta, Mathf.RoundToInt(Resource_Totals[Resource.Wood]), Mathf.RoundToInt(Resource_Totals[Resource.Lumber]), Mathf.RoundToInt(Resource_Totals[Resource.Stone]),
-            Mathf.RoundToInt(Resource_Totals[Resource.Tools]), peasant_current, peasant_max, peasant_happiness, peasant_employment_relative, peasant_employment, citizen_current, citizen_max, citizen_happiness,
+        TopGUIManager.Instance.Update_City_Info(Name, Cash, Cash_Delta, Mathf.RoundToInt(Usable_Resource_Totals[Resource.Wood]), Mathf.RoundToInt(Usable_Resource_Totals[Resource.Lumber]), Mathf.RoundToInt(Usable_Resource_Totals[Resource.Stone]),
+            Mathf.RoundToInt(Usable_Resource_Totals[Resource.Tools]), peasant_current, peasant_max, peasant_happiness, peasant_employment_relative, peasant_employment, citizen_current, citizen_max, citizen_happiness,
             citizen_employment_relative, citizen_employment, noble_current, noble_max, noble_happiness, noble_employment_relative, noble_employment);
     }
 
@@ -329,7 +334,7 @@ public class City {
             return false;
         }
         foreach(KeyValuePair<Resource, int> pair in prototype.Cost) {
-            if(Resource_Totals[pair.Key] < pair.Value) {
+            if(Usable_Resource_Totals[pair.Key] < pair.Value) {
                 message = string.Format("Not enough {0}", pair.Key.ToString().ToLower());
                 return false;
             }
@@ -347,17 +352,18 @@ public class City {
         if (prototype.Is_Town_Hall) {
             Has_Town_Hall = true;
             Building town_hall = new Building(prototype, tile, tiles, false);
-            Cash = 5000.0f;
+            Cash = 12000.0f;
             town_hall.Store_Resources(Resource.Wood, 750.0f);
-            town_hall.Store_Resources(Resource.Stone, 1250.0f);
-            town_hall.Store_Resources(Resource.Tools, 1000.0f);
+            town_hall.Store_Resources(Resource.Stone, 1000.0f);
+            town_hall.Store_Resources(Resource.Tools, 1250.0f);
             Buildings.Add(town_hall);
             return;
         }
         Cash -= prototype.Cash_Cost;
         foreach(KeyValuePair<Resource, int> pair in prototype.Cost) {
-            if(Take_From_Storage(pair.Key, pair.Value) != pair.Value) {
-                CustomLogger.Instance.Error(string.Format("Failed to take {0} {1}", pair.Value, pair.Key));
+            float taken = Take_From_Storage(pair.Key, pair.Value);
+            if (taken != pair.Value) {
+                CustomLogger.Instance.Error(string.Format("Failed to take {0} {1}, only {2} taken", pair.Value, pair.Key, taken));
             }
         }
         if(BuildingPrototypes.Instance.Is_Residence(prototype.Internal_Name)) {
@@ -396,7 +402,7 @@ public class City {
     {
         float amount_added = 0.0f;
         foreach (Building building in Buildings) {
-            if (!building.Allowed_Resources.Contains(resouce)) {
+            if (!building.Allowed_Resources.Contains(resouce) || !building.Is_Complete) {
                 continue;
             }
             amount_added += building.Store_Resources(resouce, amount - amount_added);

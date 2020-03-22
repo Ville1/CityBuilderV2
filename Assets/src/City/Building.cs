@@ -1135,7 +1135,7 @@ public class Building {
 
     public void Show_Alert(string sprite)
     {
-        if (!active_alerts.Contains(sprite)) {
+        if (!active_alerts.Contains(sprite) && !Map.Instance.Hide_Alerts) {
             active_alerts.Add(sprite);
         }
     }

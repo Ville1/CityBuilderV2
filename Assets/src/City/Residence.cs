@@ -178,6 +178,9 @@ public class Residence : Building {
                 services[service][QUALITY] = 0.0f;
             }
         }
+        if(services[ServiceType.Taxes][AMOUNT] != 0.0f && Current_Residents[Resident.Peasant] + Current_Residents[Resident.Citizen] + Current_Residents[Resident.Noble] == 0) {
+            services[ServiceType.Taxes][AMOUNT] = 0.0f;
+        }
 
         if (Resident_Space[Resident.Peasant] != 0) {
             if (City.Instance.Grace_Time) {
@@ -449,8 +452,8 @@ public class Residence : Building {
             Happiness[Resident.Noble] = Math.Max(0.0f, Happiness[Resident.Noble]);
         }
 
-        float migration_threshold = 0.5f;
-        float emigration_threshold = 0.25f;
+        float migration_threshold = 0.35f;
+        float emigration_threshold = 0.20f;
         foreach (Resident resident in Enum.GetValues(typeof(Resident))) {
             if(Happiness[resident] >= migration_threshold && Resident_Space[resident] - Current_Residents[resident] > 0) {
                 migration_progress[resident] += (delta_time / (float)((int)resident + 2));
@@ -475,7 +478,7 @@ public class Residence : Building {
             return;
         }
         float served = Math.Min(needed, amount);
-        float remaining_quality_total = services[service][QUALITY] * services[service][AMOUNT];
+        float remaining_quality_total = float.IsNaN(services[service][QUALITY]) ? 0.0f : services[service][QUALITY] * services[service][AMOUNT];
         float new_quality_total = served * quality;
         float total_quality = remaining_quality_total + new_quality_total;
         services[service][AMOUNT] += served;

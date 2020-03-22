@@ -16,7 +16,7 @@ public class Map : MonoBehaviour
         { Mineral.Salt, 5 }
     };
     public static Dictionary<Mineral, float> MINERAL_VEIN_SIZE = new Dictionary<Mineral, float>() {
-        { Mineral.Iron, 4.0f },
+        { Mineral.Iron, 5.0f },
         { Mineral.Coal, 5.0f },
         { Mineral.Salt, 3.0f }
     };
@@ -36,6 +36,7 @@ public class Map : MonoBehaviour
     public int Height { get; private set; }
     public MapState State { get; private set; }
     public List<Entity> Entities { get; private set; }
+    public bool Hide_Alerts { get; set; }
 
     private float forest_count_setting;
     private float forest_size_setting;

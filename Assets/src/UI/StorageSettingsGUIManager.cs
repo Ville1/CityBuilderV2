@@ -94,7 +94,6 @@ public class StorageSettingsGUIManager : MonoBehaviour {
 
             GameObject resource_text = GameObject.Find(string.Format("{0}/ResourceNameText", row.name));
             resource_text.GetComponentInChildren<Text>().text = setting.Resource.ToString();
-            var a = resource_text.GetComponentInChildren<Text>();
             GameObject current_text = GameObject.Find(string.Format("{0}/CurrentAmountText", row.name));
             current_text.GetComponentInChildren<Text>().text = Helper.Float_To_String(building.Storage.ContainsKey(setting.Resource) ? building.Storage[setting.Resource] : 0.0f, 1);
             row.GetComponentInChildren<InputField>().text = setting.Limit.ToString();
@@ -110,6 +109,7 @@ public class StorageSettingsGUIManager : MonoBehaviour {
             rows.Add(setting.Resource, row);
         }
         Total_Text.text = string.Format("Total: {0} / {1}", Helper.Float_To_String(building.Current_Storage_Amount, 1), building.Storage_Limit);
+        Scroll_Content.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 25.0f * rows.Count);
     }
 
     public void Allow_All()

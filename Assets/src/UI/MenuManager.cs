@@ -11,6 +11,7 @@ public class MenuManager : MonoBehaviour {
     public Button None_Button;
     public Button Appeal_Button;
     public Button Minerals_Button;
+    public Button Alerts_Button;
 
     /// <summary>
     /// Initializiation
@@ -35,6 +36,7 @@ public class MenuManager : MonoBehaviour {
         None_Button.interactable = Map.Instance != null && Map.Instance.View != Map.MapView.None;
         Appeal_Button.interactable = Map.Instance != null && Map.Instance.View != Map.MapView.Appeal;
         Minerals_Button.interactable = Map.Instance != null && Map.Instance.View != Map.MapView.Minerals;
+        Alerts_Button.GetComponentInChildren<Text>().text = string.Format("Alerts ({0})", Map.Instance != null && !Map.Instance.Hide_Alerts ? "y" : "n");
     }
 
     public void Menu_On_Click()
@@ -65,6 +67,11 @@ public class MenuManager : MonoBehaviour {
     public void Minerals_On_Click()
     {
         Map.Instance.View = Map.MapView.Minerals;
+    }
+
+    public void Alerts_On_Click()
+    {
+        Map.Instance.Hide_Alerts = !Map.Instance.Hide_Alerts;
     }
 
     public void Close_Views_Panel()
