@@ -23,15 +23,16 @@ public class Residence : Building {
         { Resident.Noble, new float[4] { -10.0f, 5.00f, 10.00f, 15.00f } }
     };
     public static readonly Dictionary<Resident, List<ServiceType>> SERVICES_CONSUMED = new Dictionary<Resident, List<ServiceType>>() {
-        { Resident.Peasant, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Tavern, ServiceType.Chapel } },
-        { Resident.Citizen, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Tavern, ServiceType.Chapel } },
-        { Resident.Noble, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt } }
+        { Resident.Peasant, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Tavern, ServiceType.Chapel, ServiceType.Taxes } },
+        { Resident.Citizen, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Tavern, ServiceType.Chapel, ServiceType.Taxes } },
+        { Resident.Noble, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Taxes } }
     };
     public static readonly Dictionary<ServiceType, float> OTHER_SERVICE_CONSUMPTION = new Dictionary<ServiceType, float>() {
         { ServiceType.Herbs, 0.0025f },
         { ServiceType.Salt, 0.1f },
         { ServiceType.Tavern, 0.1f },
-        { ServiceType.Chapel, 0.05f }
+        { ServiceType.Chapel, 0.05f },
+        { ServiceType.Taxes, 2.00f }
     };
     public static readonly float FUEL_CONSUMPTION_PER_TILE = 0.025f;//Per day
     public static readonly float FUEL_CONSUMPTION_PER_RESIDENT = 0.005f;//Per day
@@ -44,8 +45,9 @@ public class Residence : Building {
     public static readonly float BAD_FUEL_SERVICE_PENALTY_THRESHOLD = 0.25f;
     public static readonly float RESOURCES_FOR_FULL_SERVICE = 10.0f;
     public static readonly float MAX_DISREPAIR_PENALTY = 0.75f;
+    public static readonly float MAX_TAX_PENALTY = 0.25f;
 
-    public enum ServiceType { Food, Fuel, Herbs, Salt, Tavern, Chapel }
+    public enum ServiceType { Food, Fuel, Herbs, Salt, Tavern, Chapel, Taxes }
 
     public Dictionary<Resident, int> Resident_Space { get; private set; }
     public Dictionary<Resident, int> Current_Residents { get; private set; }
@@ -265,6 +267,12 @@ public class Residence : Building {
                     Happiness_Info[Resident.Peasant].Add(string.Format("Chapel: +{0}", UI_Happiness(chapel_bonus)));
                 }
 
+                if (services[ServiceType.Taxes][AMOUNT] != 0.0f) {
+                    float tax_penalty = MAX_TAX_PENALTY * services[ServiceType.Taxes][QUALITY];
+                    Happiness[Resident.Peasant] -= tax_penalty;
+                    Happiness_Info[Resident.Peasant].Add(string.Format("Taxes: -{0}", UI_Happiness(tax_penalty)));
+                }
+
                 Happiness[Resident.Peasant] = Math.Max(0.0f, Happiness[Resident.Peasant]);
             }
         }
@@ -353,6 +361,12 @@ public class Residence : Building {
                 Happiness_Info[Resident.Citizen].Add(string.Format("Chapel: +{0}", UI_Happiness(chapel_bonus)));
             }
 
+            if (services[ServiceType.Taxes][AMOUNT] != 0.0f) {
+                float tax_penalty = MAX_TAX_PENALTY * services[ServiceType.Taxes][QUALITY];
+                Happiness[Resident.Citizen] -= tax_penalty;
+                Happiness_Info[Resident.Citizen].Add(string.Format("Taxes: -{0}", UI_Happiness(tax_penalty)));
+            }
+
             Happiness[Resident.Citizen] = Math.Max(0.0f, Happiness[Resident.Citizen]);
         }
 
@@ -424,6 +438,12 @@ public class Residence : Building {
                 float salt_bonus = base_salt_bonus * Mathf.Clamp(services[ServiceType.Salt][QUALITY], 0.9f, 1.1f);
                 Happiness[Resident.Noble] += salt_bonus;
                 Happiness_Info[Resident.Noble].Add(string.Format("Salt: +{0}", UI_Happiness(salt_bonus)));
+            }
+
+            if (services[ServiceType.Taxes][AMOUNT] != 0.0f) {
+                float tax_penalty = MAX_TAX_PENALTY * services[ServiceType.Taxes][QUALITY];
+                Happiness[Resident.Noble] -= tax_penalty;
+                Happiness_Info[Resident.Noble].Add(string.Format("Taxes: -{0}", UI_Happiness(tax_penalty)));
             }
 
             Happiness[Resident.Noble] = Math.Max(0.0f, Happiness[Resident.Noble]);

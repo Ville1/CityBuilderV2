@@ -804,7 +804,7 @@ public class BuildingPrototypes {
 
         prototypes.Add(new Building("Chapel", "chapel", Building.UI_Category.Services, "chapel", Building.BuildingSize.s2x2, 250, new Dictionary<Resource, int>() {
             { Resource.Lumber, 60 }, { Resource.Stone, 175 }, { Resource.Tools, 20 }
-        }, 210, new List<Resource>(), 0, 50.0f, 235, new Dictionary<Resource, float>() { { Resource.Stone, 0.05f }, { Resource.Lumber, 0.01f } }, 2.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() {
+        }, 210, new List<Resource>(), 0, 0.0f, 235, new Dictionary<Resource, float>() { { Resource.Stone, 0.05f }, { Resource.Lumber, 0.01f } }, 2.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() {
         { Building.Resident.Citizen, 5 } }, 5, true, false, true, 0.0f, 12, null, delegate (Building chapel, float delta_time) {
             if (!chapel.Is_Operational) {
                 return;
@@ -878,6 +878,58 @@ public class BuildingPrototypes {
             }
             return worked_tiles;
         }, new List<Resource>(), new List<Resource>() { Resource.Mutton, Resource.Wool }, 0.0f, 0.0f));
+
+        prototypes.Add(new Residence("Abode", "abode", Building.UI_Category.Housing, "abode", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
+            { Resource.Lumber, 50 }, { Resource.Stone, 75 }, { Resource.Tools, 10 }
+        }, 150, new List<Resource>(), 0, 125, new Dictionary<Resource, float>() { { Resource.Lumber, 0.025f }, { Resource.Stone, 0.025f } }, 0.0f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Citizen, 5 } }, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
+
+        prototypes.Add(new Building("Tax Office", "tax_office", Building.UI_Category.Services, "tax_office", Building.BuildingSize.s2x2, 150, new Dictionary<Resource, int>() {
+            { Resource.Lumber, 90 }, { Resource.Stone, 90 }, { Resource.Tools, 10 }
+        }, 225, new List<Resource>(), 0, 0.0f, 235, new Dictionary<Resource, float>() { { Resource.Stone, 0.025f }, { Resource.Lumber, 0.025f } }, 1.50f, 0.0f, 0, new Dictionary<Building.Resident, int>() {
+        { Building.Resident.Citizen, 5 } }, 5, true, false, true, 0.0f, 10, null, delegate (Building office, float delta_time) {
+            if (!office.Is_Operational) {
+                return;
+            }
+            int tax_rate = office.Special_Settings.First(x => x.Name == "tax_rate").Dropdown_Selection;
+            float tax_rate_multiplier = 1.0f;
+            switch (tax_rate) {
+                case 0: //Very low
+                    tax_rate_multiplier = 0.1f;
+                    break;
+                case 1: //Low
+                    tax_rate_multiplier = 0.25f;
+                    break;
+                case 2: //Medium
+                    tax_rate_multiplier = 0.5f;
+                    break;
+                case 3: //High
+                    tax_rate_multiplier = 0.75f;
+                    break;
+                case 4: //Very high
+                    tax_rate_multiplier = 1.0f;
+                    break;
+            }
+            float income = 0.0f;
+            Dictionary<Building.Resident, float> base_tax_income = new Dictionary<Building.Resident, float>() {
+                { Building.Resident.Peasant, 0.025f },
+                { Building.Resident.Citizen, 0.10f },
+                { Building.Resident.Noble, 0.15f }
+            };
+            foreach (Building building in office.Get_Connected_Buildings(office.Road_Range).Select(x => x.Key).ToArray()) {
+                if (building is Residence) {
+                    (building as Residence).Serve(Residence.ServiceType.Taxes, 1.0f, tax_rate_multiplier);
+                    foreach(Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
+                        income += (building as Residence).Current_Residents[resident] * base_tax_income[resident] * tax_rate_multiplier;
+                    }
+                }
+            }
+            if (income != 0.0f) {
+                income *= office.Efficency;
+                office.Per_Day_Cash_Delta += (income / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f);
+                City.Instance.Add_Cash(income);
+            }
+        }, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
+        prototypes.First(x => x.Internal_Name == "tax_office").Special_Settings.Add(new SpecialSetting("tax_rate", "Tax rate", SpecialSetting.SettingType.Dropdown, 0.0f, false, new List<string>() { "Very low", "Low", "Medium", "High", "Very high" }, 2));
     }
 
     public static BuildingPrototypes Instance
