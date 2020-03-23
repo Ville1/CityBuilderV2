@@ -331,7 +331,7 @@ public class Residence : Building {
                 Happiness_Info[Resident.Citizen].Add(string.Format("Appeal: -{0}", UI_Happiness(appeal_penalty)));
             } else if (appeal > APPEAL_THRESHOLDS[Resident.Citizen][2]) {
                 float bonus_appeal = Mathf.Min(appeal - APPEAL_THRESHOLDS[Resident.Citizen][2], APPEAL_THRESHOLDS[Resident.Citizen][3] - APPEAL_THRESHOLDS[Resident.Citizen][2]);
-                float appeal_bonus = bonus_appeal * 0.10f;
+                float appeal_bonus = bonus_appeal * 0.025f;
                 Happiness[Resident.Citizen] += appeal_bonus;
                 Happiness_Info[Resident.Citizen].Add(string.Format("Appeal: +{0}", UI_Happiness(appeal_bonus)));
             }
@@ -477,10 +477,13 @@ public class Residence : Building {
         if (needed == 0.0f) {
             return;
         }
+        if (float.IsNaN(services[service][QUALITY])) {
+            CustomLogger.Instance.Error(string.Format("{0} service quality is NaN", service.ToString()));
+        }
         float served = Math.Min(needed, amount);
         float remaining_quality_total = float.IsNaN(services[service][QUALITY]) ? 0.0f : services[service][QUALITY] * services[service][AMOUNT];
-        float new_quality_total = served * quality;
-        float total_quality = remaining_quality_total + new_quality_total;
+        float new_quality_total = served * quality; //TODO: Double check this for any weirdess
+        float total_quality = services[service][AMOUNT] == 0.0f ? new_quality_total : remaining_quality_total + new_quality_total;
         services[service][AMOUNT] += served;
         services[service][QUALITY] = total_quality;
         if(services[service][AMOUNT] < 0.0f || services[service][AMOUNT] > 1.0f) {

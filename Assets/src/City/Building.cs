@@ -551,7 +551,18 @@ public class Building {
         }
 
         if(Cash_Upkeep > 0.0f) {
-            float amount = Cash_Upkeep * (Is_Paused ? PAUSE_UPKEEP_MULTIPLIER : 1.0f);
+            float amount = Cash_Upkeep;
+            if (Is_Paused) {
+                amount *= PAUSE_UPKEEP_MULTIPLIER;
+            } else {
+                int total_workers = Current_Workers[Resident.Peasant] + Current_Workers[Resident.Citizen] + Current_Workers[Resident.Noble];
+                if(total_workers > Max_Workers_Total) {
+                    CustomLogger.Instance.Error(string.Format("Too many workers: {0} / {1}", total_workers, Max_Workers_Total));
+                } else if(total_workers < Max_Workers_Total) {
+                    float multiplier = (0.5f + (0.5f * (1.0f - ((Max_Workers_Total - total_workers) / (float)Max_Workers_Total))));
+                    amount *= multiplier;
+                }
+            }
             Per_Day_Cash_Delta -= amount;
             City.Instance.Take_Cash(Calculate_Actual_Amount(amount, delta_time));
         }
@@ -701,7 +712,6 @@ public class Building {
             if (Is_Town_Hall || Max_Workers_Total == 0) {
                 return 1.0f;
             }
-            //TODO: worker types, worker happiness, HP
             float workers = 0.0f;
             float workers_needed = Max_Workers_Total;
             float worker_happiness_total = 0.0f;
@@ -716,9 +726,9 @@ public class Building {
             float multiplier = 1.0f;
             float average_happiness = Mathf.Clamp01(worker_happiness_total / workers);
 
-            float happiness_penalty_threshold = 0.35f;
-            float happiness_penalty_max = 0.35f;
-            float happiness_bonus_threshold = 0.65f;
+            float happiness_penalty_threshold = 0.40f;
+            float happiness_penalty_max = 0.65f;
+            float happiness_bonus_threshold = 0.60f;
             float happiness_bonus_max = 0.35f;
             if (average_happiness < happiness_penalty_threshold) {
                 float penalty = happiness_penalty_max * ((happiness_penalty_threshold - average_happiness) / happiness_penalty_threshold);

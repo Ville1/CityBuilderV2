@@ -740,11 +740,11 @@ public class Map : MonoBehaviour
             int y_end = tile.Coordinates.Y + building.Height;
             for(int x = x_start; x <= x_end; x++) {
                 Tile north = Get_Tile_At(x, y_end);
-                if(north != null) {
+                if(north != null && x != x_start && x != x_end) {
                     tiles.Add(north);
                 }
                 Tile south = Get_Tile_At(x, y_start);
-                if(south != null) {
+                if(south != null && x != x_start && x != x_end) {
                     tiles.Add(south);
                 }
             }

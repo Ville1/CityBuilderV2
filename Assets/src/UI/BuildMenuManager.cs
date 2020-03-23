@@ -78,7 +78,7 @@ public class BuildMenuManager : MonoBehaviour
                         }
                     }
                 }
-                if(preview_building.Road_Range != 0) {
+                if (preview_building.Road_Range != 0) {
                     Dictionary<Building, int> connected_buildings = preview_building.Get_Connected_Buildings(preview_building.Road_Range);
                     foreach(KeyValuePair<Building, int> pair in connected_buildings) {
                         foreach(Tile t in pair.Key.Tiles) {

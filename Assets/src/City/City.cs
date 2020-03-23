@@ -197,11 +197,14 @@ public class City {
             workers_allocated.Add(resident, 0);
         }
         foreach (Building building in Buildings) {
-            if (!building.Requires_Workers || !(building.Is_Complete && (building.Is_Connected || !building.Requires_Connection) && (!building.Is_Paused || PAUSED_BUILDINGS_KEEP_WORKERS))) {
+            if (!building.Requires_Workers) {
                 continue;
             }
             foreach (Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
                 building.Current_Workers[resident] = 0;
+            }
+            if(!(building.Is_Complete && (building.Is_Connected || !building.Requires_Connection) && (!building.Is_Paused || PAUSED_BUILDINGS_KEEP_WORKERS))) {
+                continue;
             }
             if (building.Is_Complete && (building.Is_Connected || !building.Requires_Connection) && (!building.Is_Paused || PAUSED_BUILDINGS_KEEP_WORKERS)) {
                 foreach (Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
