@@ -865,8 +865,10 @@ public class BuildingPrototypes {
             }
             wool /= 9.0f;
             float mutton = wool * 0.5f;
+            float hide = mutton * 0.4f;
             building.Produce(Resource.Wool, wool, delta_time);
             building.Produce(Resource.Mutton, mutton, delta_time);
+            building.Produce(Resource.Hide, hide, delta_time);
         }, delegate (Building building) {
             foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
                 if (tile.Worked_By.Contains(building)) {
@@ -882,7 +884,7 @@ public class BuildingPrototypes {
                 }
             }
             return worked_tiles;
-        }, new List<Resource>(), new List<Resource>() { Resource.Mutton, Resource.Wool }, 0.0f, 0.0f));
+        }, new List<Resource>(), new List<Resource>() { Resource.Mutton, Resource.Wool, Resource.Hide }, 0.0f, 0.0f));
 
         prototypes.Add(new Residence("Abode", "abode", Building.UI_Category.Housing, "abode", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
             { Resource.Lumber, 50 }, { Resource.Stone, 75 }, { Resource.Tools, 10 }
@@ -950,6 +952,17 @@ public class BuildingPrototypes {
         }, null, null, new List<Resource>() { Resource.Wool }, new List<Resource>() { Resource.Cloth, Resource.Yarn }, 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "weavers_workshop").Special_Settings.Add(new SpecialSetting("output", "Production", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() { "Cloth (2.5/day)", "Yarn (5/day)" }, 0));
         prototypes.First(x => x.Internal_Name == "weavers_workshop").Sprites.Add(new SpriteData("weavers_workshop_1"));
+
+        prototypes.Add(new Building("Tannery", "tannery", Building.UI_Category.Industry, "tannery", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
+            { Resource.Lumber, 75 }, { Resource.Stone, 10 }, { Resource.Tools, 10 }
+        }, 85, new List<Resource>(), 0, 50.0f, 85, new Dictionary<Resource, float>() { { Resource.Lumber, 0.025f } }, 0.75f, 0.0f, 0, new Dictionary<Building.Resident, int>() {
+        { Building.Resident.Peasant, 5 } }, 5, true, false, true, 0.0f, 5, null, delegate (Building building, float delta_time) {
+            if (!building.Is_Operational) {
+                return;
+            }
+            building.Process(Resource.Hide, 5.0f, Resource.Leather, 5.0f , delta_time);
+        }, null, null, new List<Resource>() { Resource.Hide }, new List<Resource>() { Resource.Leather }, -1.25f, 6.0f));
+        prototypes.First(x => x.Internal_Name == "tannery").Sprites.Add(new SpriteData("tannery_1"));
     }
 
     public static BuildingPrototypes Instance
