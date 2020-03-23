@@ -95,6 +95,7 @@ public class LoadGUIManager : MonoBehaviour
             button.onClick = click;
             file_buttons.Add(button);
         }
+        Scroll_View_Content.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 20.0f * file_buttons.Count);
     }
 
     public void Select_File(string file)

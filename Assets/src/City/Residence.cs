@@ -23,8 +23,8 @@ public class Residence : Building {
         { Resident.Noble, new float[4] { -10.0f, 5.00f, 10.00f, 15.00f } }
     };
     public static readonly Dictionary<Resident, List<ServiceType>> SERVICES_CONSUMED = new Dictionary<Resident, List<ServiceType>>() {
-        { Resident.Peasant, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Tavern, ServiceType.Chapel, ServiceType.Taxes } },
-        { Resident.Citizen, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Tavern, ServiceType.Chapel, ServiceType.Taxes } },
+        { Resident.Peasant, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Tavern, ServiceType.Chapel, ServiceType.Taxes, ServiceType.Clothes } },
+        { Resident.Citizen, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Tavern, ServiceType.Chapel, ServiceType.Taxes, ServiceType.Clothes } },
         { Resident.Noble, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Taxes } }
     };
     public static readonly Dictionary<ServiceType, float> OTHER_SERVICE_CONSUMPTION = new Dictionary<ServiceType, float>() {
@@ -32,7 +32,8 @@ public class Residence : Building {
         { ServiceType.Salt, 0.1f },
         { ServiceType.Tavern, 0.025f }, //100 people consume 2.5 ale per day
         { ServiceType.Chapel, 0.05f },
-        { ServiceType.Taxes, 2.00f }
+        { ServiceType.Taxes, 2.00f },
+        { ServiceType.Clothes, 0.01f }
     };
     public static readonly float FUEL_CONSUMPTION_PER_TILE = 0.025f;//Per day
     public static readonly float FUEL_CONSUMPTION_PER_RESIDENT = 0.005f;//Per day
@@ -47,7 +48,7 @@ public class Residence : Building {
     public static readonly float MAX_DISREPAIR_PENALTY = 0.75f;
     public static readonly float MAX_TAX_PENALTY = 0.25f;
 
-    public enum ServiceType { Food, Fuel, Herbs, Salt, Tavern, Chapel, Taxes }
+    public enum ServiceType { Food, Fuel, Herbs, Salt, Tavern, Chapel, Taxes, Clothes }
 
     public Dictionary<Resident, int> Resident_Space { get; private set; }
     public Dictionary<Resident, int> Current_Residents { get; private set; }
@@ -256,6 +257,20 @@ public class Residence : Building {
                     Happiness_Info[Resident.Peasant].Add(string.Format("Salt: +{0}", UI_Happiness(salt_bonus)));
                 }
 
+                if (services[ServiceType.Clothes][AMOUNT] != 0.0f) {
+                    //Simple clothes = 0.5f quality, Leather clothes = 1.0f quality
+                    if(services[ServiceType.Clothes][QUALITY] > 0.5f) {
+                        float base_clothing_bonus = 0.05f;
+                        float clothing_bonus = base_clothing_bonus * (2.0f * (services[ServiceType.Clothes][QUALITY] - 0.5f));
+                        Happiness[Resident.Peasant] += clothing_bonus;
+                        Happiness_Info[Resident.Peasant].Add(string.Format("Clothing: +{0}", UI_Happiness(clothing_bonus)));
+                    }
+                } else {
+                    float clothing_penalty = 0.05f;
+                    Happiness[Resident.Peasant] -= clothing_penalty;
+                    Happiness_Info[Resident.Peasant].Add(string.Format("Clothing: -{0}", UI_Happiness(clothing_penalty)));
+                }
+
                 if (services[ServiceType.Tavern][AMOUNT] != 0.0f) {
                     float base_tavern_bonus = 0.10f;
                     float tavern_bonus = base_tavern_bonus * services[ServiceType.Tavern][QUALITY];
@@ -348,6 +363,20 @@ public class Residence : Building {
                 float salt_bonus = base_salt_bonus * Mathf.Clamp(services[ServiceType.Salt][QUALITY], 0.9f, 1.1f);
                 Happiness[Resident.Citizen] += salt_bonus;
                 Happiness_Info[Resident.Citizen].Add(string.Format("Salt: +{0}", UI_Happiness(salt_bonus)));
+            }
+
+            if (services[ServiceType.Clothes][AMOUNT] != 0.0f) {
+                //Simple clothes = 0.5f quality, Leather clothes = 1.0f quality
+                if (services[ServiceType.Clothes][QUALITY] > 0.5f) {
+                    float base_clothing_bonus = 0.05f;
+                    float clothing_bonus = base_clothing_bonus * (2.0f * (services[ServiceType.Clothes][QUALITY] - 0.5f));
+                    Happiness[Resident.Citizen] += clothing_bonus;
+                    Happiness_Info[Resident.Citizen].Add(string.Format("Clothing: +{0}", UI_Happiness(clothing_bonus)));
+                }
+            } else {
+                float clothing_penalty = 0.25f;
+                Happiness[Resident.Citizen] -= clothing_penalty;
+                Happiness_Info[Resident.Citizen].Add(string.Format("Clothing: -{0}", UI_Happiness(clothing_penalty)));
             }
 
             if (services[ServiceType.Tavern][AMOUNT] != 0.0f) {
@@ -478,12 +507,13 @@ public class Residence : Building {
             return;
         }
         if (float.IsNaN(services[service][QUALITY])) {
+            services[service][QUALITY] = 0.0f;
             CustomLogger.Instance.Error(string.Format("{0} service quality is NaN", service.ToString()));
         }
         float served = Math.Min(needed, amount);
-        float remaining_quality_total = float.IsNaN(services[service][QUALITY]) ? 0.0f : services[service][QUALITY] * services[service][AMOUNT];
-        float new_quality_total = served * quality; //TODO: Double check this for any weirdess
-        float total_quality = services[service][AMOUNT] == 0.0f ? new_quality_total : remaining_quality_total + new_quality_total;
+        float old_quality_relative = services[service][AMOUNT] / (services[service][AMOUNT] + served);
+        float new_quality_realtive = served / (services[service][AMOUNT] + served);
+        float total_quality = (old_quality_relative * services[service][QUALITY]) + (new_quality_realtive * quality);
         services[service][AMOUNT] += served;
         services[service][QUALITY] = total_quality;
         if(services[service][AMOUNT] < 0.0f || services[service][AMOUNT] > 1.0f) {

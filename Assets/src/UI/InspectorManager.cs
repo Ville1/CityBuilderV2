@@ -211,7 +211,7 @@ public class InspectorManager : MonoBehaviour {
                 );
                 cash_cost_row.name = "cash_cost_row";
                 cash_cost_row.SetActive(true);
-                cash_cost_row.GetComponentInChildren<Text>().text = string.Format("{0} cash", building.Cash_Cost);
+                cash_cost_row.GetComponentInChildren<Text>().text = string.Format("{0} Cash", building.Cash_Cost);
                 cost_rows.Add(cash_cost_row);
             }
             foreach(KeyValuePair<Resource, int> cost in building.Cost) {
@@ -262,7 +262,7 @@ public class InspectorManager : MonoBehaviour {
                 );
                 cash_upkeep_row.name = "cash_upkeep_row";
                 cash_upkeep_row.SetActive(true);
-                cash_upkeep_row.GetComponentInChildren<Text>().text = string.Format("{0} cash", Helper.Float_To_String(building.Cash_Upkeep, 2));
+                cash_upkeep_row.GetComponentInChildren<Text>().text = string.Format("{0} Cash", Helper.Float_To_String(building.Cash_Upkeep, 2));
                 upkeep_rows.Add(cash_upkeep_row);
             }
             foreach (KeyValuePair<Resource, float> upkeep in building.Upkeep) {
@@ -388,7 +388,7 @@ public class InspectorManager : MonoBehaviour {
                 );
                 delta_row.name = "cash_delta_row";
                 delta_row.SetActive(true);
-                delta_row.GetComponentInChildren<Text>().text = string.Format("{0} cash", Helper.Float_To_String(building.Per_Day_Cash_Delta, 2, true));
+                delta_row.GetComponentInChildren<Text>().text = string.Format("{0} Cash", Helper.Float_To_String(building.Per_Day_Cash_Delta, 2, true));
                 delta_rows.Add(delta_row);
             }
 
@@ -405,7 +405,7 @@ public class InspectorManager : MonoBehaviour {
                 );
                 delta_row.name = string.Format("{0}_delta_row", resource.Key.ToString().ToLower());
                 delta_row.SetActive(true);
-                delta_row.GetComponentInChildren<Text>().text = string.Format("{0} {1}", Helper.Float_To_String(resource.Value, 2, true), resource.Key.ToString().ToLower());
+                delta_row.GetComponentInChildren<Text>().text = string.Format("{0} {1}", Helper.Float_To_String(resource.Value, 2, true), resource.Key.UI_Name);
                 delta_rows.Add(delta_row);
             }
             Delta_Content.GetComponentInChildren<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 15.0f * delta_rows.Count);
@@ -437,7 +437,7 @@ public class InspectorManager : MonoBehaviour {
                     );
                     resource_row.name = string.Format("{0}_resource_row", resource.Key.ToString().ToLower());
                     resource_row.SetActive(true);
-                    resource_row.GetComponentInChildren<Text>().text = string.Format("{0} {1}", Helper.Float_To_String(resource.Value, 1), resource.Key.ToString().ToLower());
+                    resource_row.GetComponentInChildren<Text>().text = string.Format("{0} {1}", Helper.Float_To_String(resource.Value, 1), resource.Key.UI_Name);
                     storage_rows.Add(resource_row);
                 }
                 Storage_Content.GetComponentInChildren<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 15.0f * storage_rows.Count);

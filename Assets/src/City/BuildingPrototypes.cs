@@ -58,7 +58,6 @@ public class BuildingPrototypes {
         }, delegate (Building building) {
             List<Tile> worked_tiles = new List<Tile>();
             foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                Building b = tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name);
                 if (tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building) {
                     worked_tiles.Add(tile);
                 }
@@ -140,7 +139,8 @@ public class BuildingPrototypes {
 
         prototypes.Add(new Building("Storehouse", "storehouse", Building.UI_Category.Infrastructure, "storehouse", Building.BuildingSize.s2x2, 200, new Dictionary<Resource, int>() {
             { Resource.Stone, 30 }, { Resource.Tools, 25 }, { Resource.Lumber, 275 }
-        }, 225, new List<Resource>() { Resource.Lumber, Resource.Stone, Resource.Tools, Resource.Wood, Resource.Firewood, Resource.Hide, Resource.Leather, Resource.Salt, Resource.Coal, Resource.Charcoal, Resource.Iron_Ore, Resource.Iron_Bars, Resource.Wool, Resource.String, Resource.Cloth, Resource.Barrels },
+        }, 225, new List<Resource>() { Resource.Lumber, Resource.Stone, Resource.Tools, Resource.Wood, Resource.Firewood, Resource.Hide, Resource.Leather, Resource.Salt, Resource.Coal, Resource.Charcoal, Resource.Iron_Ore, Resource.Iron_Bars, Resource.Wool, Resource.Thread, Resource.Cloth, Resource.Barrels,
+            Resource.Simple_Clothes, Resource.Leather_Clothes },
         2000, 65.0f, 250, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f } }, 1.0f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 } }, 10, false, false, true, 0.0f, 15, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "storehouse").Sprites.Add(new SpriteData("storehouse_1"));
 
@@ -214,7 +214,6 @@ public class BuildingPrototypes {
         }, delegate (Building building) {
             List<Tile> worked_tiles = new List<Tile>();
             foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                Building b = tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name);
                 if (tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building) {
                     worked_tiles.Add(tile);
                 }
@@ -258,6 +257,7 @@ public class BuildingPrototypes {
             float fuel_needed = 0.0f;
             float herbs_needed = 0.0f;
             float salt_needed = 0.0f;
+            float clothes_needed = 0.0f;
             foreach (Building building in market.Get_Connected_Buildings(market.Road_Range).Select(x => x.Key).ToArray()) {
                 if(!(building is Residence)) {
                     continue;
@@ -267,9 +267,10 @@ public class BuildingPrototypes {
                 fuel_needed += residence.Service_Needed(Residence.ServiceType.Fuel) * resources_for_full_service;
                 herbs_needed += residence.Service_Needed(Residence.ServiceType.Herbs) * resources_for_full_service;
                 salt_needed += residence.Service_Needed(Residence.ServiceType.Salt) * resources_for_full_service;
+                clothes_needed += residence.Service_Needed(Residence.ServiceType.Clothes) * resources_for_full_service;
                 residences.Add(residence);
             }
-            if(residences.Count == 0 || (food_needed == 0.0f && fuel_needed == 0.0f && herbs_needed == 0.0f && salt_needed == 0.0f)) {
+            if(residences.Count == 0 || (food_needed == 0.0f && fuel_needed == 0.0f && herbs_needed == 0.0f && salt_needed == 0.0f && clothes_needed == 0.0f)) {
                 return;
             }
 
@@ -400,11 +401,48 @@ public class BuildingPrototypes {
                 market.Update_Delta(Resource.Salt, (-salt_used / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f));
             }
 
+            float total_clothes = market.Input_Storage[Resource.Simple_Clothes] + market.Input_Storage[Resource.Leather_Clothes];
+            if(clothes_needed != 0.0f && total_clothes != 0.0f) {
+                float clothing_ratio = Math.Min(total_clothes / clothes_needed, 1.0f);
+                float simple_ratio = market.Input_Storage[Resource.Simple_Clothes] / total_clothes;
+                float leather_ratio = market.Input_Storage[Resource.Leather_Clothes] / total_clothes;
+                float clothing_quality = (simple_ratio * 0.5f) + (leather_ratio * 1.0f);
+                float clothing_used = 0.0f;
+                foreach (Residence residence in residences) {
+                    float clothing_for_residence = (residence.Service_Needed(Residence.ServiceType.Clothes) * resources_for_full_service) * clothing_ratio;
+                    clothing_used += clothing_for_residence;
+                    residence.Serve(Residence.ServiceType.Clothes, residence.Service_Needed(Residence.ServiceType.Clothes) * clothing_ratio, clothing_quality);
+                }
+                float simple_sold = simple_ratio * clothing_used;
+                market.Input_Storage[Resource.Simple_Clothes] -= simple_sold;
+                income += simple_sold * Resource.Simple_Clothes.Value;
+                market.Update_Delta(Resource.Simple_Clothes, (-simple_sold / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f));
+                float leather_sold = leather_ratio * clothing_used;
+                market.Input_Storage[Resource.Leather_Clothes] -= leather_sold;
+                income += leather_sold * Resource.Leather_Clothes.Value;
+                market.Update_Delta(Resource.Leather_Clothes, (-leather_sold / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f));
+
+                if (market.Input_Storage[Resource.Simple_Clothes] < 0.0f) {
+                    //Rounding errors?
+                    if (market.Input_Storage[Resource.Simple_Clothes] < -0.00001f) {
+                        CustomLogger.Instance.Error("Negative simple clothes: {0}");
+                    }
+                    market.Input_Storage[Resource.Simple_Clothes] = 0.0f;
+                }
+                if (market.Input_Storage[Resource.Leather_Clothes] < 0.0f) {
+                    //Rounding errors?
+                    if (market.Input_Storage[Resource.Leather_Clothes] < -0.00001f) {
+                        CustomLogger.Instance.Error("Negative leather clothes: {0}");
+                    }
+                    market.Input_Storage[Resource.Leather_Clothes] = 0.0f;
+                }
+            }
+
             if (income != 0.0f) {
                 market.Per_Day_Cash_Delta += (income / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f);
                 City.Instance.Add_Cash(income);
             }//                                  v unnecessary list v special settings adds and removes stuff from consumption list MIGHT ACTUALLY BE NECESSARY, DONT REMOVE
-        }, null, null, new List<Resource>() { Resource.Berries, Resource.Roots, Resource.Mushrooms, Resource.Herbs, Resource.Firewood, Resource.Charcoal, Resource.Coal, Resource.Game, Resource.Bread, Resource.Potatoes, Resource.Salt, Resource.Mutton }, new List<Resource>(), 0.05f, 5.0f));
+        }, null, null, new List<Resource>() { Resource.Berries, Resource.Roots, Resource.Mushrooms, Resource.Herbs, Resource.Firewood, Resource.Charcoal, Resource.Coal, Resource.Game, Resource.Bread, Resource.Potatoes, Resource.Salt, Resource.Mutton, Resource.Simple_Clothes, Resource.Leather_Clothes }, new List<Resource>(), 0.05f, 5.0f));
         Resource prefered_fuel = Resource.All.Where(x => x.Is_Fuel).OrderByDescending(x => x.Value / x.Fuel_Value).FirstOrDefault();
         foreach(Resource resource in Resource.All) {
             if (resource.Is_Food) {
@@ -415,6 +453,8 @@ public class BuildingPrototypes {
         }
         prototypes.First(x => x.Internal_Name == "marketplace").Special_Settings.Add(new SpecialSetting(Resource.Herbs.ToString().ToLower(), Resource.Herbs.UI_Name, SpecialSetting.SettingType.Toggle, 0.0f, true));
         prototypes.First(x => x.Internal_Name == "marketplace").Special_Settings.Add(new SpecialSetting(Resource.Salt.ToString().ToLower(), Resource.Salt.UI_Name, SpecialSetting.SettingType.Toggle, 0.0f, true));
+        prototypes.First(x => x.Internal_Name == "marketplace").Special_Settings.Add(new SpecialSetting(Resource.Simple_Clothes.ToString().ToLower(), Resource.Simple_Clothes.UI_Name, SpecialSetting.SettingType.Toggle, 0.0f, true));
+        prototypes.First(x => x.Internal_Name == "marketplace").Special_Settings.Add(new SpecialSetting(Resource.Leather_Clothes.ToString().ToLower(), Resource.Leather_Clothes.UI_Name, SpecialSetting.SettingType.Toggle, 0.0f, true));
 
         prototypes.Add(new Building("Hunting Lodge", "hunting_lodge", Building.UI_Category.Forestry, "hunting_lodge", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
             { Resource.Wood, 85 }, { Resource.Stone, 10 }, { Resource.Tools, 10 }
@@ -462,7 +502,6 @@ public class BuildingPrototypes {
         }, delegate (Building building) {
             List<Tile> worked_tiles = new List<Tile>();
             foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                Building b = tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name);
                 if (tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building) {
                     worked_tiles.Add(tile);
                 }
@@ -523,7 +562,6 @@ public class BuildingPrototypes {
         }, delegate (Building building) {
             List<Tile> worked_tiles = new List<Tile>();
             foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                Building b = tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name);
                 if (tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building) {
                     worked_tiles.Add(tile);
                 }
@@ -629,7 +667,6 @@ public class BuildingPrototypes {
         }, delegate (Building building) {
             List<Tile> worked_tiles = new List<Tile>();
             foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                Building b = tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name);
                 if (tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building) {
                     worked_tiles.Add(tile);
                 }
@@ -878,7 +915,6 @@ public class BuildingPrototypes {
         }, delegate (Building building) {
             List<Tile> worked_tiles = new List<Tile>();
             foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                Building b = tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name);
                 if (tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building) {
                     worked_tiles.Add(tile);
                 }
@@ -939,21 +975,21 @@ public class BuildingPrototypes {
         prototypes.First(x => x.Internal_Name == "tax_office").Special_Settings.Add(new SpecialSetting("tax_rate", "Tax rate", SpecialSetting.SettingType.Dropdown, 0.0f, false, new List<string>() { "Very low", "Low", "Medium", "High", "Very high" }, 2));
         prototypes.First(x => x.Internal_Name == "tax_office").Sprites.Add(new SpriteData("tax_office_1"));
 
-        prototypes.Add(new Building("Weaver's Workshop", "weavers_workshop", Building.UI_Category.Industry, "weavers_workshop", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
+        prototypes.Add(new Building("Weaver's Workshop", "weavers_workshop", Building.UI_Category.Textile, "weavers_workshop", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
             { Resource.Lumber, 80 }, { Resource.Stone, 10 }, { Resource.Tools, 10 }
         }, 90, new List<Resource>(), 0, 50.0f, 90, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f } }, 1.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() {
         { Building.Resident.Peasant, 5 }, { Building.Resident.Citizen, 5 } }, 5, true, false, true, 0.0f, 5, null, delegate (Building building, float delta_time) {
             if (!building.Is_Operational) {
                 return;
             }
-            Resource output = building.Special_Settings.First(x => x.Name == "output").Dropdown_Selection == 0 ? Resource.Cloth : Resource.String;
+            Resource output = building.Special_Settings.First(x => x.Name == "output").Dropdown_Selection == 0 ? Resource.Cloth : Resource.Thread;
             float output_amount = building.Special_Settings.First(x => x.Name == "output").Dropdown_Selection == 0 ? 2.5f : 5.0f;
             building.Process(Resource.Wool, 5.0f, output, output_amount, delta_time);
-        }, null, null, new List<Resource>() { Resource.Wool }, new List<Resource>() { Resource.Cloth, Resource.String }, 0.0f, 0.0f));
-        prototypes.First(x => x.Internal_Name == "weavers_workshop").Special_Settings.Add(new SpecialSetting("output", "Production", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() { "Cloth (2.5/day)", "Yarn (5/day)" }, 0));
+        }, null, null, new List<Resource>() { Resource.Wool }, new List<Resource>() { Resource.Cloth, Resource.Thread }, 0.0f, 0.0f));
+        prototypes.First(x => x.Internal_Name == "weavers_workshop").Special_Settings.Add(new SpecialSetting("output", "Production", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() { Resource.Cloth.UI_Name + " (2.5/day)", Resource.Thread.UI_Name + " (5/day)" }, 0));
         prototypes.First(x => x.Internal_Name == "weavers_workshop").Sprites.Add(new SpriteData("weavers_workshop_1"));
 
-        prototypes.Add(new Building("Tannery", "tannery", Building.UI_Category.Industry, "tannery", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
+        prototypes.Add(new Building("Tannery", "tannery", Building.UI_Category.Textile, "tannery", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
             { Resource.Lumber, 75 }, { Resource.Stone, 10 }, { Resource.Tools, 10 }
         }, 85, new List<Resource>(), 0, 50.0f, 85, new Dictionary<Resource, float>() { { Resource.Lumber, 0.025f } }, 0.75f, 0.0f, 0, new Dictionary<Building.Resident, int>() {
         { Building.Resident.Peasant, 5 } }, 5, true, false, true, 0.0f, 5, null, delegate (Building building, float delta_time) {
@@ -966,7 +1002,7 @@ public class BuildingPrototypes {
 
         prototypes.Add(new Building("Workshop", "workshop", Building.UI_Category.Industry, "workshop", Building.BuildingSize.s2x2, 185, new Dictionary<Resource, int>() {
             { Resource.Lumber, 200 }, { Resource.Stone, 25 }, { Resource.Tools, 25 }
-        }, 130, new List<Resource>(), 0, 50.0f, 225, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f } }, 1.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() {
+        }, 130, new List<Resource>(), 0, 50.0f, 225, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f } }, 1.00f, 1.0f, 15.0f, new Dictionary<Building.Resident, int>() {
         { Building.Resident.Peasant, 10 }, { Building.Resident.Citizen, 10 } }, 10, true, false, true, 0.0f, 5, null, delegate (Building building, float delta_time) {
             int production_selection = building.Special_Settings.First(x => x.Name == "production").Dropdown_Selection;
             Resource input = null;
@@ -1010,6 +1046,37 @@ public class BuildingPrototypes {
         }, null, null, new List<Resource>() { Resource.Wood, Resource.Lumber }, new List<Resource>() { Resource.Barrels, Resource.Lumber, Resource.Firewood }, -0.10f, 4.0f));
         prototypes.First(x => x.Internal_Name == "workshop").Special_Settings.Add(new SpecialSetting("production", "Production", SpecialSetting.SettingType.Dropdown, 0.0f, false, new List<string>() {
             "Barrels (5/day)", "Firewood (w) (5/day)", "Firewood (l) (5/day)", "Lumber (2.5/day)" }, 0));
+
+        prototypes.Add(new Building("Tailor's Shop", "tailors_shop", Building.UI_Category.Textile, "tailors_shop", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
+            { Resource.Lumber, 75 }, { Resource.Stone, 30 }, { Resource.Tools, 15 }
+        }, 150, new List<Resource>(), 0, 50.0f, 100, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f } }, 1.25f, 0.0f, 0, new Dictionary<Building.Resident, int>() {
+        { Building.Resident.Peasant, 5 }, { Building.Resident.Citizen, 5 } }, 5, true, false, true, 0.0f, 5, null, delegate (Building building, float delta_time) {
+            if (!building.Is_Operational) {
+                return;
+            }
+            int production_selection = building.Special_Settings.First(x => x.Name == "production").Dropdown_Selection;
+            Resource output = null;
+            float output_amount = 0.0f;
+            Dictionary<Resource, float> inputs = new Dictionary<Resource, float>();
+            switch (production_selection) {
+                case 0:
+                    output = Resource.Simple_Clothes;
+                    output_amount = 2.5f;
+                    inputs.Add(Resource.Cloth, 2.5f);
+                    inputs.Add(Resource.Thread, 1.5f);
+                    break;
+                case 1:
+                    output = Resource.Leather_Clothes;
+                    output_amount = 2.5f;
+                    inputs.Add(Resource.Cloth, 2.5f);
+                    inputs.Add(Resource.Thread, 1.5f);
+                    inputs.Add(Resource.Leather, 2.5f);
+                    break;
+            }
+            building.Process(inputs, new Dictionary<Resource, float>() { { output, output_amount } }, delta_time);
+        }, null, null, new List<Resource>() { Resource.Cloth, Resource.Thread, Resource.Leather }, new List<Resource>() { Resource.Simple_Clothes, Resource.Leather_Clothes }, 0.0f, 0.0f));
+        prototypes.First(x => x.Internal_Name == "tailors_shop").Sprites.Add(new SpriteData("tailors_shop_1"));
+        prototypes.First(x => x.Internal_Name == "tailors_shop").Special_Settings.Add(new SpecialSetting("production", "Production", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() { "Simple clothes", "Leather clothes" }, 0));
     }
 
     public static BuildingPrototypes Instance
