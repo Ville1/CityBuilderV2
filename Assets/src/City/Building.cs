@@ -30,7 +30,8 @@ public class Building {
     public string Name { get; private set; }
     public string Internal_Name { get; private set; }
     public UI_Category Category { get; private set; }
-    public SpriteData Sprite { get; private set; }
+    public SpriteData Sprite { get { return Sprites[Selected_Sprite]; } }
+    public List<SpriteData> Sprites { get; private set; }
     public bool Is_Prototype { get { return Id < 0; } }
     public bool Is_Town_Hall { get { return Internal_Name == TOWN_HALL_INTERNAL_NAME; } }
     public BuildingSize Size { get; private set; }
@@ -107,6 +108,7 @@ public class Building {
     private int animation_index;
     private float animation_cooldown;
     private bool animation_initialized;
+    private int selected_sprite;
 
     public Building(Building prototype, Tile tile, List<Tile> tiles, bool is_preview)
     {
@@ -117,7 +119,11 @@ public class Building {
         Name = prototype.Name;
         Internal_Name = prototype.Internal_Name;
         Category = prototype.Category;
-        Sprite = prototype.Sprite.Clone();
+        Sprites = new List<SpriteData>();
+        foreach(SpriteData data in prototype.Sprites) {
+            Sprites.Add(data.Clone());
+        }
+        Selected_Sprite = prototype.Selected_Sprite;
         Size = prototype.Size;
         HP = prototype.HP;
         Max_HP = prototype.Max_HP;
@@ -241,7 +247,9 @@ public class Building {
         Name = name;
         Internal_Name = internal_name;
         Category = category;
-        Sprite = new SpriteData(sprite);
+        Sprites = new List<SpriteData>();
+        Sprites.Add(new SpriteData(sprite));
+        Selected_Sprite = 0;
         Size = size;
         Max_HP = hp;
         HP = Max_HP;
@@ -348,6 +356,7 @@ public class Building {
                 Storage_Settings.Get(Resource.Get((Resource.ResourceType)saved_setting.Resource)).Priority = (StorageSetting.StoragePriority)saved_setting.Priority;
             }
         }
+        Selected_Sprite = data.Selected_Sprite;
         Update_Sprite();
     }
 
@@ -385,6 +394,36 @@ public class Building {
             }
         }
         Update_Sprite();
+    }
+
+
+    public int Selected_Sprite {
+        get {
+            return selected_sprite;
+        }
+        set {
+            selected_sprite = value;
+            if (selected_sprite < 0) {
+                selected_sprite = 0;
+            } else if(selected_sprite >= Sprites.Count) {
+                selected_sprite = Sprites.Count - 1;
+            }
+            if (GameObject != null) {
+                Update_Sprite();
+            }
+        }
+    }
+
+    public void Switch_Selected_Sprite()
+    {
+        if(Sprites.Count == 1) {
+            return;
+        }
+        if(selected_sprite == Sprites.Count - 1) {
+            Selected_Sprite = 0;
+        } else {
+            Selected_Sprite++;
+        }
     }
 
     public float Current_Storage_Amount
@@ -876,7 +915,8 @@ public class Building {
             HP = HP,
             Settings = new List<SpecialSettingSaveData>(),
             Services = new List<ServiceSaveData>(),
-            Storage_Settings = new List<StorageSettingSaveData>()
+            Storage_Settings = new List<StorageSettingSaveData>(),
+            Selected_Sprite = Selected_Sprite
         };
         foreach(KeyValuePair<Resource, float> pair in Storage) {
             data.Storage.Add(new ResourceSaveData() { Resource = pair.Key.Id, Amount = pair.Value });

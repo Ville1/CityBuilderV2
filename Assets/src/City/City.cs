@@ -370,9 +370,13 @@ public class City {
             }
         }
         if(BuildingPrototypes.Instance.Is_Residence(prototype.Internal_Name)) {
-            Buildings.Add(new Residence(BuildingPrototypes.Instance.Get_Residence(prototype.Internal_Name) as Residence, tile, tiles, false));
+            Residence residence = new Residence(BuildingPrototypes.Instance.Get_Residence(prototype.Internal_Name) as Residence, tile, tiles, false);
+            residence.Selected_Sprite = prototype.Selected_Sprite;
+            Buildings.Add(residence);
         } else {
-            Buildings.Add(new Building(prototype, tile, tiles, false));
+            Building building = new Building(prototype, tile, tiles, false);
+            building.Selected_Sprite = prototype.Selected_Sprite;
+            Buildings.Add(building);
         }
     }
 

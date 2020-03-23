@@ -150,6 +150,14 @@ public class BuildMenuManager : MonoBehaviour
         }
     }
 
+    public void Switch_Sprite()
+    {
+        if (!Preview_Active) {
+            return;
+        }
+        preview_building.Switch_Selected_Sprite();
+    }
+
     public void Build()
     {
         if (!Preview_Active && MouseManager.Instance.Tile_Under_Cursor != null) {

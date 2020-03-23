@@ -74,6 +74,9 @@ public class KeyboardManager : MonoBehaviour
             if(Input.GetButtonDown("Deconstruct")) {
                 InspectorManager.Instance.Delete();
             }
+            if(Input.GetButtonDown("Switch building sprite") && BuildMenuManager.Instance.Preview_Active) {
+                BuildMenuManager.Instance.Switch_Sprite();
+            }
         } else {
             MasterUIManager.Instance.Read_Keyboard_Input();
         }

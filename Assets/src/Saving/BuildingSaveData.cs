@@ -22,6 +22,7 @@ public class BuildingSaveData {
     public List<SpecialSettingSaveData> Settings;
     public List<ServiceSaveData> Services;
     public List<StorageSettingSaveData> Storage_Settings;
+    public int Selected_Sprite;
 }
 
 [Serializable]
