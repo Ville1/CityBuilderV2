@@ -30,7 +30,7 @@ public class Residence : Building {
     public static readonly Dictionary<ServiceType, float> OTHER_SERVICE_CONSUMPTION = new Dictionary<ServiceType, float>() {
         { ServiceType.Herbs, 0.0025f },
         { ServiceType.Salt, 0.1f },
-        { ServiceType.Tavern, 0.1f },
+        { ServiceType.Tavern, 0.025f }, //100 people consume 2.5 ale per day
         { ServiceType.Chapel, 0.05f },
         { ServiceType.Taxes, 2.00f }
     };

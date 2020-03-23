@@ -116,6 +116,7 @@ public class Building {
             Id = current_id;
             current_id++;
         }
+
         Name = prototype.Name;
         Internal_Name = prototype.Internal_Name;
         Category = prototype.Category;
