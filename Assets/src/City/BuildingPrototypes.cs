@@ -153,6 +153,7 @@ public class BuildingPrototypes {
             { Resource.Wood, 25 }, { Resource.Stone, 5 }, { Resource.Tools, 5 }
         }, 100, new List<Resource>() { Resource.Wood, Resource.Lumber, Resource.Firewood },
         1000, 45.0f, 50, new Dictionary<Resource, float>() { { Resource.Wood, 0.01f } }, 0.25f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 5 } }, 5, false, false, true, 0.0f, 12, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
+        prototypes.First(x => x.Internal_Name == "wood_stockpile").Sprites.Add(new SpriteData("wood_stockpile_1"));
 
         prototypes.Add(new Building("Gatherers Lodge", "gatherers_lodge", Building.UI_Category.Forestry, "gatherers_lodge", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
             { Resource.Wood, 85 }, { Resource.Stone, 10 }, { Resource.Tools, 10 }
@@ -573,6 +574,7 @@ public class BuildingPrototypes {
             building.Process(new Dictionary<Resource, float>() { { Resource.Iron_Ore, 20.0f }, { selected_fuel, fuel_usage } }, new Dictionary<Resource, float>() { { Resource.Iron_Bars, 10.0f } }, delta_time);
         }, null, null, new List<Resource>() { Resource.Iron_Ore, Resource.Charcoal, Resource.Coal, Resource.Firewood }, new List<Resource>() { Resource.Iron_Bars }, -1.25f, 6.0f));
         prototypes.First(x => x.Internal_Name == "foundry").Special_Settings.Add(new SpecialSetting("fuel", "Fuel", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() { "Firewood (10/day)", "Charcoal (5/day)", "Coal (5/day)" }, 0));
+        prototypes.First(x => x.Internal_Name == "foundry").Sprites.Add(new SpriteData("foundry_1"));
 
         prototypes.Add(new Building("Smithy", "smithy", Building.UI_Category.Industry, "smithy", Building.BuildingSize.s2x2, 225, new Dictionary<Resource, int>() {
             { Resource.Lumber, 65 }, { Resource.Stone, 100 }, { Resource.Tools, 30 }
@@ -947,6 +949,7 @@ public class BuildingPrototypes {
             building.Process(Resource.Wool, 5.0f, output, output_amount, delta_time);
         }, null, null, new List<Resource>() { Resource.Wool }, new List<Resource>() { Resource.Cloth, Resource.Yarn }, 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "weavers_workshop").Special_Settings.Add(new SpecialSetting("output", "Production", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() { "Cloth (2.5/day)", "Yarn (5/day)" }, 0));
+        prototypes.First(x => x.Internal_Name == "weavers_workshop").Sprites.Add(new SpriteData("weavers_workshop_1"));
     }
 
     public static BuildingPrototypes Instance
