@@ -1130,6 +1130,12 @@ public class BuildingPrototypes {
             { Resource.Tools, 1 }
         }, 10, new List<Resource>(), 0, 0.0f, 25, new Dictionary<Resource, float>(), 0.0f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 0, null, null, null, null,
         new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
+
+        prototypes.Add(new Building("Silo", "silo", Building.UI_Category.Infrastructure, "silo", Building.BuildingSize.s2x2, 150, new Dictionary<Resource, int>() {
+            { Resource.Lumber, 75 }, { Resource.Stone, 110 }, { Resource.Tools, 15 }
+        }, 100, new List<Resource>() { Resource.Wheat, Resource.Flour },
+        2500, 75.0f, 190, new Dictionary<Resource, float>() { { Resource.Stone, 0.025f }, { Resource.Lumber, 0.01f } }, 0.5f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 5 } }, 5, false, false, true, 0.0f, 18, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
+        prototypes.First(x => x.Internal_Name == "silo").Sprites.Add(new SpriteData("silo_1"));
     }
 
     public static BuildingPrototypes Instance
