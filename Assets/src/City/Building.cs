@@ -24,7 +24,7 @@ public class Building {
     public enum UI_Category { Admin, Infrastructure, Housing, Services, Forestry, Agriculture, Textile, Industry }
     public enum Resident { Peasant, Citizen, Noble }
     public enum BuildingSize { s1x1, s2x2, s3x3 }
-    public enum Tag { Undeletable }
+    public enum Tag { Undeletable, Does_Not_Block_Wind }
 
     public long Id { get; protected set; }
     public string Name { get; private set; }

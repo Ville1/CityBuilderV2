@@ -95,7 +95,7 @@ public class SpecialSettingsGUIManager : MonoBehaviour {
                 prototype,
                 new Vector3(
                     Input_Field_Row_Prototype.transform.position.x,
-                    Input_Field_Row_Prototype.transform.position.y - (20.0f * rows.Count),
+                    Input_Field_Row_Prototype.transform.position.y - (22.5f * rows.Count),
                     Input_Field_Row_Prototype.transform.position.z
                 ),
                 Quaternion.identity,
