@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 public class Resource {
     public enum ResourceType { Wood, Stone, Lumber, Tools, Roots, Berries, Mushrooms, Herbs, Firewood, Charcoal, Game, Hide, Leather, Potatoes, Bread, Iron_Ore, Coal, Salt, Iron_Bars, Ale, Wool, Cloth, Thread, Mutton,
-        Barrels, Simple_Clothes, Leather_Clothes }
+        Barrels, Simple_Clothes, Leather_Clothes, Wheat }
     public enum FoodType { None, Meat, Vegetable }
 
     public static Resource Wood { get { return Get(ResourceType.Wood); } }
@@ -33,6 +33,7 @@ public class Resource {
     public static Resource Barrels { get { return Get(ResourceType.Barrels); } }
     public static Resource Simple_Clothes { get { return Get(ResourceType.Simple_Clothes); } }
     public static Resource Leather_Clothes { get { return Get(ResourceType.Leather_Clothes); } }
+    public static Resource Wheat { get { return Get(ResourceType.Wheat); } }
     private static Dictionary<ResourceType, Resource> resources;
 
     public int Id { get { return (int)Type; } }
@@ -110,6 +111,7 @@ public class Resource {
             resources.Add(ResourceType.Barrels, new Resource(ResourceType.Barrels, "Barrels", null, SpriteManager.SpriteType.UI, 1.00f));
             resources.Add(ResourceType.Simple_Clothes, new Resource(ResourceType.Simple_Clothes, "Simple Clothes", null, SpriteManager.SpriteType.UI, 5.00f));
             resources.Add(ResourceType.Leather_Clothes, new Resource(ResourceType.Leather_Clothes, "Leather Clothes", null, SpriteManager.SpriteType.UI, 7.50f));
+            resources.Add(ResourceType.Wheat, new Resource(ResourceType.Wheat, "Wheat", null, SpriteManager.SpriteType.UI, 0.50f));
 
             resources.Add(ResourceType.Game, new Resource(ResourceType.Game, "Game", null, SpriteManager.SpriteType.UI, FoodType.Meat, 1.05f, 1.15f));
             resources.Add(ResourceType.Roots, new Resource(ResourceType.Roots, "Roots", null, SpriteManager.SpriteType.UI, FoodType.Vegetable, 0.15f, 0.75f));

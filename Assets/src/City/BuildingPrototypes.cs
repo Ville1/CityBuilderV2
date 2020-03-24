@@ -1077,6 +1077,59 @@ public class BuildingPrototypes {
         }, null, null, new List<Resource>() { Resource.Cloth, Resource.Thread, Resource.Leather }, new List<Resource>() { Resource.Simple_Clothes, Resource.Leather_Clothes }, 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "tailors_shop").Sprites.Add(new SpriteData("tailors_shop_1"));
         prototypes.First(x => x.Internal_Name == "tailors_shop").Special_Settings.Add(new SpecialSetting("production", "Production", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() { "Simple clothes", "Leather clothes" }, 0));
+
+        prototypes.Add(new Building("Farmhouse", "farmhouse", Building.UI_Category.Agriculture, "farmhouse", Building.BuildingSize.s3x3, 200, new Dictionary<Resource, int>() {
+            { Resource.Lumber, 220 }, { Resource.Stone, 20 }, { Resource.Tools, 20 }
+        }, 190, new List<Resource>(), 0, 0.0f, 240, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f } }, 1.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 15 } }, 15, true, false, true, 6.5f, 0, delegate (Building building) {
+            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
+                tile.Worked_By.Add(building);
+            }
+        }, delegate (Building building, float delta_time) {
+            if (!building.Is_Operational) {
+                return;
+            }
+            float potatoes = 0.0f;
+            float wheat = 0.0f;
+            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
+                if (tile.Building != null && tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building) {
+                    if (tile.Building.Internal_Name == "potato_field") {
+                        if (tile.Internal_Name == "grass") {
+                            potatoes += 0.10f;
+                        } else if (tile.Internal_Name == "fertile_ground") {
+                            potatoes += 0.15f;
+                        }
+                    } else if(tile.Building.Internal_Name == "wheat_field") {
+                        if (tile.Internal_Name == "grass") {
+                            wheat += 0.10f;
+                        } else if (tile.Internal_Name == "fertile_ground") {
+                            wheat += 0.15f;
+                        }
+                    }
+                }
+            }
+            float multiplier = 0.813f;
+            building.Produce(Resource.Potatoes, potatoes * multiplier, delta_time);
+            building.Produce(Resource.Wheat, wheat * multiplier, delta_time);
+        }, delegate (Building building) {
+            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
+                if (tile.Worked_By.Contains(building)) {
+                    tile.Worked_By.Remove(building);
+                }
+            }
+        }, delegate (Building building) {
+            List<Tile> worked_tiles = new List<Tile>();
+            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
+                if (tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building) {
+                    worked_tiles.Add(tile);
+                }
+            }
+            return worked_tiles;
+        }, new List<Resource>(), new List<Resource>() { Resource.Potatoes, Resource.Wheat }, 0.0f, 0.0f));
+
+        prototypes.Add(new Building("Wheat Field", "wheat_field", Building.UI_Category.Agriculture, "wheat_field", Building.BuildingSize.s1x1, 50, new Dictionary<Resource, int>() {
+            { Resource.Tools, 1 }
+        }, 10, new List<Resource>(), 0, 0.0f, 25, new Dictionary<Resource, float>(), 0.0f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 0, null, null, null, null,
+        new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
     }
 
     public static BuildingPrototypes Instance
