@@ -201,9 +201,11 @@ public class InspectorManager : MonoBehaviour {
 
             Id_Text.text = string.Empty;
             Size_Text.text = string.Format("Size: {0}x{1}", building.Width, building.Height);
-            
+            Appeal_Text.text = string.Format("Appeal: {0}", Helper.Float_To_String(building.Appeal * (building.Width * building.Height), 2, true));
+            Appeal_Range_Text.text = string.Format("Appeal range: {0}", Helper.Float_To_String(building.Appeal_Range, 1));
+
             //Cost
-            if(building.Cash_Cost != 0) {
+            if (building.Cash_Cost != 0) {
                 GameObject cash_cost_row = GameObject.Instantiate(
                     Cost_Row_Prototype,
                     new Vector3(

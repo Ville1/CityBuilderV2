@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public enum Mineral { Iron, Coal, Salt }
+public enum Mineral { Iron, Coal, Salt, Clay }
 public class Map : MonoBehaviour
 {
     public enum MapState { Inactive, Normal, Generating, Loading, Saving }
@@ -13,17 +13,20 @@ public class Map : MonoBehaviour
     public static Dictionary<Mineral, int> MINERAL_BASE_SPAWN_CHANCE = new Dictionary<Mineral, int>() {
         { Mineral.Iron, 8 },
         { Mineral.Coal, 6 },
-        { Mineral.Salt, 5 }
+        { Mineral.Salt, 5 },
+        { Mineral.Clay, 10 }
     };
     public static Dictionary<Mineral, float> MINERAL_VEIN_SIZE = new Dictionary<Mineral, float>() {
         { Mineral.Iron, 5.0f },
         { Mineral.Coal, 5.0f },
-        { Mineral.Salt, 3.0f }
+        { Mineral.Salt, 3.0f },
+        { Mineral.Clay, 7.0f }
     };
     public static Dictionary<Mineral, float> MINERAL_VEIN_RICHNESS = new Dictionary<Mineral, float>() {
         { Mineral.Iron, 1.0f },
         { Mineral.Coal, 0.75f },
-        { Mineral.Salt, 0.75f }
+        { Mineral.Salt, 0.75f },
+        { Mineral.Clay, 0.35f }
     };
 
     public static Map Instance { get; private set; }

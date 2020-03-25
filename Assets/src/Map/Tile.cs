@@ -210,7 +210,7 @@ public class Tile
         }
         StringBuilder builder = new StringBuilder();
         foreach(KeyValuePair<Mineral, float> mineral_data in Minerals) {
-            builder.Append(mineral_data.Key.ToString().ToUpper()[0]).Append(": ").Append(Helper.Float_To_String(mineral_data.Value, 1)).Append(", ");
+            builder.Append(mineral_data.Key.ToString().ToUpper()[0]).Append(mineral_data.Key.ToString().ToLower()[1]).Append(": ").Append(Helper.Float_To_String(mineral_data.Value, 1)).Append(", ");
         }
         return builder.Remove(builder.Length - 2, 2).ToString();
     }
