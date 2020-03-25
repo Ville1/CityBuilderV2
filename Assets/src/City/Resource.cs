@@ -97,7 +97,7 @@ public class Resource {
             resources.Add(ResourceType.Wood, new Resource(ResourceType.Wood, "Wood", "wood", SpriteManager.SpriteType.UI, 0.5f));
             resources.Add(ResourceType.Stone, new Resource(ResourceType.Stone, "Stone", "stone", SpriteManager.SpriteType.UI, 0.55f));
             resources.Add(ResourceType.Lumber, new Resource(ResourceType.Lumber, "Lumber", "lumber", SpriteManager.SpriteType.UI, 1.0f));
-            resources.Add(ResourceType.Bricks, new Resource(ResourceType.Bricks, "Bricks", null, SpriteManager.SpriteType.UI, 0.75f));
+            resources.Add(ResourceType.Bricks, new Resource(ResourceType.Bricks, "Bricks", "bricks", SpriteManager.SpriteType.UI, 0.75f));
             resources.Add(ResourceType.Tools, new Resource(ResourceType.Tools, "Tools", "tools", SpriteManager.SpriteType.UI, 3.0f));
 
             resources.Add(ResourceType.Firewood, new Resource(ResourceType.Firewood, "Firewood", "firewood", SpriteManager.SpriteType.UI, 0.75f, 1.0f));
@@ -120,7 +120,7 @@ public class Resource {
             resources.Add(ResourceType.Wheat, new Resource(ResourceType.Wheat, "Wheat", null, SpriteManager.SpriteType.UI, 0.50f));
             resources.Add(ResourceType.Flour, new Resource(ResourceType.Flour, "Flour", null, SpriteManager.SpriteType.UI, 0.60f));
             resources.Add(ResourceType.Mechanisms, new Resource(ResourceType.Mechanisms, "Mechanisms", "mechanisms", SpriteManager.SpriteType.UI, 5.00f));
-            resources.Add(ResourceType.Clay, new Resource(ResourceType.Clay, "Clay", null, SpriteManager.SpriteType.UI, 0.10f));
+            resources.Add(ResourceType.Clay, new Resource(ResourceType.Clay, "Clay", "clay", SpriteManager.SpriteType.UI, 0.10f));
 
             resources.Add(ResourceType.Game, new Resource(ResourceType.Game, "Game", null, SpriteManager.SpriteType.UI, FoodType.Meat, 1.05f, 1.15f));
             resources.Add(ResourceType.Roots, new Resource(ResourceType.Roots, "Roots", "roots", SpriteManager.SpriteType.UI, FoodType.Vegetable, 0.15f, 0.75f));

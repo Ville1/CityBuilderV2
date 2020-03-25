@@ -20,13 +20,13 @@ public class Map : MonoBehaviour
         { Mineral.Iron, 5.0f },
         { Mineral.Coal, 5.0f },
         { Mineral.Salt, 3.0f },
-        { Mineral.Clay, 7.0f }
+        { Mineral.Clay, 8.0f }
     };
     public static Dictionary<Mineral, float> MINERAL_VEIN_RICHNESS = new Dictionary<Mineral, float>() {
-        { Mineral.Iron, 1.0f },
+        { Mineral.Iron, 1.00f },
         { Mineral.Coal, 0.75f },
         { Mineral.Salt, 0.75f },
-        { Mineral.Clay, 0.35f }
+        { Mineral.Clay, 0.85f }
     };
 
     public static Map Instance { get; private set; }

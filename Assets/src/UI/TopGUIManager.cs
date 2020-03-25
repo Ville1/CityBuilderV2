@@ -13,6 +13,7 @@ public class TopGUIManager : MonoBehaviour {
     public Text Wood_Text;
     public Text Lumber_Text;
     public Text Stone_Text;
+    public Text Bricks_Text;
     public Text Tools_Text;
     public Text Peasant_Info_Text_1;
     public Text Peasant_Info_Text_2;
@@ -51,7 +52,7 @@ public class TopGUIManager : MonoBehaviour {
         }
     }
 
-    public void Update_City_Info(string name, float cash, float income, int wood, int lumber, int stone, int tools, int peasant_current, int peasant_max, float peasant_happiness, float peasant_employment_relative,
+    public void Update_City_Info(string name, float cash, float income, int wood, int lumber, int stone, int bricks, int tools, int peasant_current, int peasant_max, float peasant_happiness, float peasant_employment_relative,
         int peasant_employment, int citizen_current, int citizen_max, float citizen_happiness, float citizen_employment_relative, int citizen_employment, int noble_current, int noble_max, float noble_happiness,
         float noble_employment_relative, int noble_employment)
     {
@@ -63,6 +64,7 @@ public class TopGUIManager : MonoBehaviour {
         Wood_Text.text = wood.ToString();
         Lumber_Text.text = lumber.ToString();
         Stone_Text.text = stone.ToString();
+        Bricks_Text.text = bricks.ToString();
         Tools_Text.text = tools.ToString();
         Peasant_Info_Text_1.text = string.Format("{0} / {1}{2}{3}", peasant_current, peasant_max, Environment.NewLine, Helper.Float_To_String(peasant_happiness * 100.0f, 0));
         Citizen_Info_Text_1.text = string.Format("{0} / {1}{2}{3}", citizen_current, citizen_max, Environment.NewLine, Helper.Float_To_String(citizen_happiness * 100.0f, 0));

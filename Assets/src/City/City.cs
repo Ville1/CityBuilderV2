@@ -272,7 +272,7 @@ public class City {
         float noble_employment_relative = noble_current == 0 ? 0.0f : noble_employment / (float)noble_current;
         Unemployment[Building.Resident.Citizen] = noble_employment_relative > 0.0f ? noble_employment_relative : 0.0f;
         TopGUIManager.Instance.Update_City_Info(Name, Cash, Cash_Delta, Mathf.RoundToInt(Usable_Resource_Totals[Resource.Wood]), Mathf.RoundToInt(Usable_Resource_Totals[Resource.Lumber]), Mathf.RoundToInt(Usable_Resource_Totals[Resource.Stone]),
-            Mathf.RoundToInt(Usable_Resource_Totals[Resource.Tools]), peasant_current, peasant_max, peasant_happiness, peasant_employment_relative, peasant_employment, citizen_current, citizen_max, citizen_happiness,
+            Mathf.RoundToInt(Usable_Resource_Totals[Resource.Bricks]), Mathf.RoundToInt(Usable_Resource_Totals[Resource.Tools]), peasant_current, peasant_max, peasant_happiness, peasant_employment_relative, peasant_employment, citizen_current, citizen_max, citizen_happiness,
             citizen_employment_relative, citizen_employment, noble_current, noble_max, noble_happiness, noble_employment_relative, noble_employment);
     }
 
