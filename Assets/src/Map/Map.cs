@@ -120,6 +120,12 @@ public class Map : MonoBehaviour
                         tiles[x][y].Show_Text(Helper.Float_To_String(tiles[x][y].Appeal, 1));
                     }
                 }
+            } else if(View == MapView.Minerals) {
+                for (int x = 0; x < Width; x++) {
+                    for (int y = 0; y < Height; y++) {
+                        tiles[x][y].Show_Text(tiles[x][y].Mineral_String());
+                    }
+                }
             }
             foreach(Entity entity in entities_to_be_deleted) {
                 entity.Delete();
