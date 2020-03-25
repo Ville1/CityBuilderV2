@@ -20,10 +20,10 @@ MonoBehaviour:
     y: 30
     width: 1920
     height: 947
-  m_MinSize: {x: 683, y: 492}
-  m_MaxSize: {x: 14004, y: 14042}
+  m_MinSize: {x: 679, y: 492}
+  m_MaxSize: {x: 14002, y: 14042}
   vertical: 0
-  controlID: 4149
+  controlID: 1230
 --- !u!114 &2
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -120,10 +120,10 @@ MonoBehaviour:
     y: 0
     width: 1547
     height: 947
-  m_MinSize: {x: 406, y: 492}
+  m_MinSize: {x: 404, y: 492}
   m_MaxSize: {x: 10002, y: 14042}
   vertical: 1
-  controlID: 4150
+  controlID: 1183
 --- !u!114 &4
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -144,10 +144,10 @@ MonoBehaviour:
     y: 0
     width: 1547
     height: 669
-  m_MinSize: {x: 406, y: 221}
-  m_MaxSize: {x: 8006, y: 4021}
+  m_MinSize: {x: 404, y: 221}
+  m_MaxSize: {x: 8004, y: 4021}
   vertical: 0
-  controlID: 4009
+  controlID: 1135
 --- !u!114 &5
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -166,8 +166,8 @@ MonoBehaviour:
     y: 0
     width: 309
     height: 669
-  m_MinSize: {x: 202, y: 221}
-  m_MaxSize: {x: 4002, y: 4021}
+  m_MinSize: {x: 200, y: 200}
+  m_MaxSize: {x: 4000, y: 4000}
   m_ActualView: {fileID: 6}
   m_Panes:
   - {fileID: 6}
@@ -200,10 +200,10 @@ MonoBehaviour:
     width: 307
     height: 648
   m_TreeViewState:
-    scrollPos: {x: 0, y: 60}
-    m_SelectedIDs: 0e2d0000
-    m_LastClickedID: 11534
-    m_ExpandedIDs: cafbffff00000000542900009a290000422a0000822b0000a22b00007a2c0000ea3000003a320000d433000054340000043500007e350000
+    scrollPos: {x: 0, y: 0}
+    m_SelectedIDs: 98eaffff
+    m_LastClickedID: -5480
+    m_ExpandedIDs: e4fbffff000000007c290000a2290000b42900001a2e0000ec2e0000a6320000ea330000a8350000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -285,9 +285,9 @@ MonoBehaviour:
   m_isRotationLocked: 0
   m_AudioPlay: 0
   m_Position:
-    m_Target: {x: 617, y: 315.5, z: 0}
+    m_Target: {x: 645.28125, y: 352.52148, z: 17.625}
     speed: 2
-    m_Value: {x: 617, y: 315.5, z: 0}
+    m_Value: {x: 645.28125, y: 352.52148, z: 17.625}
   m_RenderMode: 0
   m_ValidateTrueMetals: 0
   m_SceneViewState:
@@ -314,9 +314,9 @@ MonoBehaviour:
     speed: 2
     m_Value: {x: -0.006600329, y: -0.023998138, z: 0.00015859057, w: -0.9997055}
   m_Size:
-    m_Target: 760.6176
+    m_Target: 827.41254
     speed: 2
-    m_Value: 760.6176
+    m_Value: 827.41254
   m_Ortho:
     m_Target: 1
     speed: 2
@@ -416,19 +416,19 @@ MonoBehaviour:
     m_ShowAllHits: 0
     m_SearchArea: 0
     m_Folders:
-    - Assets/Resources/images/buildings
+    - Assets/Resources/images/ui
   m_ViewMode: 1
   m_StartGridSize: 43
   m_LastFolders:
-  - Assets/Resources/images/buildings
+  - Assets/Resources/images/ui
   m_LastFoldersGridSize: 43
   m_LastProjectPath: C:\Users\Ville\Documents\UnityProjects\CityBuilderV2
   m_IsLocked: 0
   m_FolderTreeState:
     scrollPos: {x: 0, y: 36}
-    m_SelectedIDs: 04280000
-    m_LastClickedID: 10244
-    m_ExpandedIDs: 00000000342500008e250000a226000002280000ffffff7f
+    m_SelectedIDs: 22280000
+    m_LastClickedID: 10274
+    m_ExpandedIDs: 00000000202500007a2500009826000006280000ffffff7f
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -456,7 +456,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 00000000342500008e250000a226000002280000ffffff7f
+    m_ExpandedIDs: 00000000202500007a2500009826000006280000ffffff7f
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -481,8 +481,8 @@ MonoBehaviour:
       m_Icon: {fileID: 0}
       m_ResourceFile: 
   m_ListAreaState:
-    m_SelectedInstanceIDs: 0e2d0000
-    m_LastClickedInstanceID: 11534
+    m_SelectedInstanceIDs: 98eaffff
+    m_LastClickedInstanceID: -5480
     m_HadKeyboardFocusLastEvent: 0
     m_ExpandedInstanceIDs: 4e24000000000000082600009c27feff30260000f8f5f9ff
     m_RenameOverlay:
@@ -508,7 +508,7 @@ MonoBehaviour:
       m_Icon: {fileID: 0}
       m_ResourceFile: 
     m_NewAssetIndexInList: -1
-    m_ScrollPosition: {x: 0, y: 233}
+    m_ScrollPosition: {x: 0, y: 0}
     m_GridSize: 43
   m_DirectoriesAreaWidth: 147
 --- !u!114 &12
@@ -555,8 +555,8 @@ MonoBehaviour:
     y: 0
     width: 373
     height: 947
-  m_MinSize: {x: 277, y: 71}
-  m_MaxSize: {x: 4002, y: 4021}
+  m_MinSize: {x: 275, y: 50}
+  m_MaxSize: {x: 4000, y: 4000}
   m_ActualView: {fileID: 14}
   m_Panes:
   - {fileID: 14}

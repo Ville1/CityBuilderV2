@@ -96,15 +96,15 @@ public class Resource {
             resources.Add(ResourceType.Lumber, new Resource(ResourceType.Lumber, "Lumber", "lumber", SpriteManager.SpriteType.UI, 1.0f));
             resources.Add(ResourceType.Tools, new Resource(ResourceType.Tools, "Tools", "tools", SpriteManager.SpriteType.UI, 3.0f));
 
-            resources.Add(ResourceType.Firewood, new Resource(ResourceType.Firewood, "Firewood", null, SpriteManager.SpriteType.UI, 0.75f, 1.0f));
+            resources.Add(ResourceType.Firewood, new Resource(ResourceType.Firewood, "Firewood", "firewood", SpriteManager.SpriteType.UI, 0.75f, 1.0f));
             resources.Add(ResourceType.Charcoal, new Resource(ResourceType.Charcoal, "Charcoal", null, SpriteManager.SpriteType.UI, 1.0f, 10.0f));
             resources.Add(ResourceType.Coal, new Resource(ResourceType.Coal, "Coal", null, SpriteManager.SpriteType.UI, 1.0f, 10.0f));
 
             resources.Add(ResourceType.Hide, new Resource(ResourceType.Hide, "Hide", null, SpriteManager.SpriteType.UI, 0.25f));
             resources.Add(ResourceType.Leather, new Resource(ResourceType.Leather, "Leather", null, SpriteManager.SpriteType.UI, 1.00f));
             resources.Add(ResourceType.Herbs, new Resource(ResourceType.Herbs, "Herbs", null, SpriteManager.SpriteType.UI, 5.0f));
-            resources.Add(ResourceType.Iron_Ore, new Resource(ResourceType.Iron_Ore, "Iron Ore", null, SpriteManager.SpriteType.UI, 1.0f));
-            resources.Add(ResourceType.Iron_Bars, new Resource(ResourceType.Iron_Bars, "Iron Bars", null, SpriteManager.SpriteType.UI, 2.5f));
+            resources.Add(ResourceType.Iron_Ore, new Resource(ResourceType.Iron_Ore, "Iron Ore", "iron_ore", SpriteManager.SpriteType.UI, 1.0f));
+            resources.Add(ResourceType.Iron_Bars, new Resource(ResourceType.Iron_Bars, "Iron Bars", "iron_bars", SpriteManager.SpriteType.UI, 2.5f));
             resources.Add(ResourceType.Salt, new Resource(ResourceType.Salt, "Salt", null, SpriteManager.SpriteType.UI, 1.05f));
             resources.Add(ResourceType.Ale, new Resource(ResourceType.Ale, "Ale", null, SpriteManager.SpriteType.UI, 1.25f));
             resources.Add(ResourceType.Wool, new Resource(ResourceType.Wool, "Wool", null, SpriteManager.SpriteType.UI, 0.50f));
@@ -115,7 +115,7 @@ public class Resource {
             resources.Add(ResourceType.Leather_Clothes, new Resource(ResourceType.Leather_Clothes, "Leather Clothes", null, SpriteManager.SpriteType.UI, 7.50f));
             resources.Add(ResourceType.Wheat, new Resource(ResourceType.Wheat, "Wheat", null, SpriteManager.SpriteType.UI, 0.50f));
             resources.Add(ResourceType.Flour, new Resource(ResourceType.Flour, "Flour", null, SpriteManager.SpriteType.UI, 0.60f));
-            resources.Add(ResourceType.Mechanisms, new Resource(ResourceType.Mechanisms, "Mechanisms", null, SpriteManager.SpriteType.UI, 5.00f));
+            resources.Add(ResourceType.Mechanisms, new Resource(ResourceType.Mechanisms, "Mechanisms", "mechanisms", SpriteManager.SpriteType.UI, 5.00f));
 
             resources.Add(ResourceType.Game, new Resource(ResourceType.Game, "Game", null, SpriteManager.SpriteType.UI, FoodType.Meat, 1.05f, 1.15f));
             resources.Add(ResourceType.Roots, new Resource(ResourceType.Roots, "Roots", null, SpriteManager.SpriteType.UI, FoodType.Vegetable, 0.15f, 0.75f));

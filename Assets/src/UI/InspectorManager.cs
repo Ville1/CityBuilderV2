@@ -75,6 +75,7 @@ public class InspectorManager : MonoBehaviour {
     private List<GameObject> storage_rows;
     private List<GameObject> service_rows;
     private List<Tile> highlighted_tiles;
+    private long current_row_id;
 
     /// <summary>
     /// Initializiation
@@ -98,6 +99,7 @@ public class InspectorManager : MonoBehaviour {
         storage_rows = new List<GameObject>();
         service_rows = new List<GameObject>();
         highlighted_tiles = new List<Tile>();
+        current_row_id = 0;
 
         Button.ButtonClickedEvent click = new Button.ButtonClickedEvent();
         click.AddListener(new UnityAction(Pause));
@@ -184,6 +186,9 @@ public class InspectorManager : MonoBehaviour {
         Instance_Container.SetActive(!building.Is_Prototype);
         Name_Text.text = building.Name;
         Image.sprite = SpriteManager.Instance.Get(building.Sprite.Name, building.Sprite.Type);
+        if(current_row_id > 99999) {
+            current_row_id = 0;
+        }
         if (building.Is_Prototype) {
             foreach(GameObject row in cost_rows) {
                 GameObject.Destroy(row);
@@ -209,9 +214,10 @@ public class InspectorManager : MonoBehaviour {
                     Quaternion.identity,
                     Cost_Content.transform
                 );
-                cash_cost_row.name = "cash_cost_row";
+                cash_cost_row.name = "cash_cost_row_#" + current_row_id;
+                current_row_id++;
                 cash_cost_row.SetActive(true);
-                cash_cost_row.GetComponentInChildren<Text>().text = string.Format("{0} Cash", building.Cash_Cost);
+                Update_Cash_Row(cash_cost_row, building.Cash_Cost, 0, false, false);
                 cost_rows.Add(cash_cost_row);
             }
             foreach(KeyValuePair<Resource, int> cost in building.Cost) {
@@ -225,9 +231,10 @@ public class InspectorManager : MonoBehaviour {
                     Quaternion.identity,
                     Cost_Content.transform
                 );
-                cost_row.name = string.Format("{0}_cost_row", cost.Key.ToString().ToLower());
+                cost_row.name = string.Format("{0}_cost_row_#{1}", cost.Key.ToString().ToLower(), current_row_id);
+                current_row_id++;
                 cost_row.SetActive(true);
-                cost_row.GetComponentInChildren<Text>().text = string.Format("{0}x {1}", cost.Value, cost.Key.ToString().ToLower());
+                Update_Resource_Row(cost_row, cost.Key, cost.Value, 0, false, false);
                 cost_rows.Add(cost_row);
             }
             if(cost_rows.Count == 0) {
@@ -241,12 +248,15 @@ public class InspectorManager : MonoBehaviour {
                     Quaternion.identity,
                     Cost_Content.transform
                 );
-                free_cost_row.name = "free_cost_row";
+                free_cost_row.name = "free_cost_row_#" + current_row_id;
+                current_row_id++;
                 free_cost_row.SetActive(true);
-                free_cost_row.GetComponentInChildren<Text>().text = "none";
+                GameObject.Find(string.Format("{0}/AmountText", free_cost_row.name)).GetComponent<Text>().text = "none";
+                GameObject.Find(string.Format("{0}/ResourceText", free_cost_row.name)).GetComponent<Text>().text = string.Empty;
+                GameObject.Find(string.Format("{0}/IconImage", free_cost_row.name)).GetComponent<Image>().gameObject.SetActive(false);
                 cost_rows.Add(free_cost_row);
             }
-            Cost_Content.GetComponentInChildren<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 15.0f * cost_rows.Count);
+            Cost_Content.GetComponentInChildren<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, (15.0f * cost_rows.Count) + 5.0f);
 
             //Upkeep
             if (building.Cash_Upkeep != 0.0f) {
@@ -260,9 +270,10 @@ public class InspectorManager : MonoBehaviour {
                     Quaternion.identity,
                     Upkeep_Content.transform
                 );
-                cash_upkeep_row.name = "cash_upkeep_row";
+                cash_upkeep_row.name = "cash_upkeep_row_#" + current_row_id;
+                current_row_id++;
                 cash_upkeep_row.SetActive(true);
-                cash_upkeep_row.GetComponentInChildren<Text>().text = string.Format("{0} Cash", Helper.Float_To_String(building.Cash_Upkeep, 2));
+                Update_Cash_Row(cash_upkeep_row, building.Cash_Upkeep, 2, true, true);
                 upkeep_rows.Add(cash_upkeep_row);
             }
             foreach (KeyValuePair<Resource, float> upkeep in building.Upkeep) {
@@ -276,9 +287,10 @@ public class InspectorManager : MonoBehaviour {
                     Quaternion.identity,
                     Upkeep_Content.transform
                 );
-                upkeep_row.name = string.Format("{0}_upkeep_row", upkeep.Key.ToString().ToLower());
+                upkeep_row.name = string.Format("{0}_upkeep_row_#{1}", upkeep.Key.ToString().ToLower(), current_row_id);
+                current_row_id++;
                 upkeep_row.SetActive(true);
-                upkeep_row.GetComponentInChildren<Text>().text = string.Format("{0} {1}", Helper.Float_To_String(upkeep.Value, 2), upkeep.Key.ToString().ToLower());
+                Update_Resource_Row(upkeep_row, upkeep.Key, upkeep.Value, 2, true, true);
                 upkeep_rows.Add(upkeep_row);
             }
             if (upkeep_rows.Count == 0) {
@@ -292,12 +304,15 @@ public class InspectorManager : MonoBehaviour {
                     Quaternion.identity,
                     Upkeep_Content.transform
                 );
-                free_upkeep_row.name = "free_cost_row";
+                free_upkeep_row.name = "free_cost_row_#" + current_row_id;
+                current_row_id++;
                 free_upkeep_row.SetActive(true);
-                free_upkeep_row.GetComponentInChildren<Text>().text = "none";
+                GameObject.Find(string.Format("{0}/AmountText", free_upkeep_row.name)).GetComponent<Text>().text = "none";
+                GameObject.Find(string.Format("{0}/ResourceText", free_upkeep_row.name)).GetComponent<Text>().text = string.Empty;
+                GameObject.Find(string.Format("{0}/IconImage", free_upkeep_row.name)).GetComponent<Image>().gameObject.SetActive(false);
                 upkeep_rows.Add(free_upkeep_row);
             }
-            Upkeep_Content.GetComponentInChildren<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 15.0f * upkeep_rows.Count);
+            Upkeep_Content.GetComponentInChildren<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, (15.0f * upkeep_rows.Count) + 5.0f);
 
         } else {
             Id_Text.text = string.Format("#{0}", building.Id);
@@ -386,9 +401,10 @@ public class InspectorManager : MonoBehaviour {
                     Quaternion.identity,
                     Delta_Content.transform
                 );
-                delta_row.name = "cash_delta_row";
+                delta_row.name = "cash_delta_row_#" + current_row_id;
+                current_row_id++;
                 delta_row.SetActive(true);
-                delta_row.GetComponentInChildren<Text>().text = string.Format("{0} Cash", Helper.Float_To_String(building.Per_Day_Cash_Delta, 2, true));
+                Update_Cash_Row(delta_row, building.Per_Day_Cash_Delta, 2, true, false);
                 delta_rows.Add(delta_row);
             }
 
@@ -403,12 +419,13 @@ public class InspectorManager : MonoBehaviour {
                     Quaternion.identity,
                     Delta_Content.transform
                 );
-                delta_row.name = string.Format("{0}_delta_row", resource.Key.ToString().ToLower());
+                delta_row.name = string.Format("{0}_delta_row_#{1}", resource.Key.ToString().ToLower(), current_row_id);
+                current_row_id++;
                 delta_row.SetActive(true);
-                delta_row.GetComponentInChildren<Text>().text = string.Format("{0} {1}", Helper.Float_To_String(resource.Value, 2, true), resource.Key.UI_Name);
+                Update_Resource_Row(delta_row, resource.Key, resource.Value, 2, true, false);
                 delta_rows.Add(delta_row);
             }
-            Delta_Content.GetComponentInChildren<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 15.0f * delta_rows.Count);
+            Delta_Content.GetComponentInChildren<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, (15.0f * delta_rows.Count) + 5.0f);
 
             Storage_Container.SetActive(!(Building is Residence));
             Services_Container.SetActive(Building is Residence);
@@ -435,12 +452,13 @@ public class InspectorManager : MonoBehaviour {
                         Quaternion.identity,
                         Storage_Content.transform
                     );
-                    resource_row.name = string.Format("{0}_resource_row", resource.Key.ToString().ToLower());
+                    resource_row.name = string.Format("{0}_resource_row_#{1}", resource.Key.ToString().ToLower(), current_row_id);
+                    current_row_id++;
                     resource_row.SetActive(true);
-                    resource_row.GetComponentInChildren<Text>().text = string.Format("{0} {1}", Helper.Float_To_String(resource.Value, 1), resource.Key.UI_Name);
+                    Update_Resource_Row(resource_row, resource.Key, resource.Value, 1, false, false);
                     storage_rows.Add(resource_row);
                 }
-                Storage_Content.GetComponentInChildren<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 15.0f * storage_rows.Count);
+                Storage_Content.GetComponentInChildren<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, (15.0f * storage_rows.Count) + 5.0f);
             } else {
                 Residence residence = building as Residence;
                 //Services
@@ -465,7 +483,7 @@ public class InspectorManager : MonoBehaviour {
                     service_row.GetComponentInChildren<Text>().text = string.Format("{0} {1} / 100 {2}%", service.ToString(), Helper.Float_To_String(100.0f * residence.Service_Level(service), 0), Helper.Float_To_String(100.0f * residence.Service_Quality(service), 0));
                     service_rows.Add(service_row);
                 }
-                Services_Content.GetComponentInChildren<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 15.0f * service_rows.Count);
+                Services_Content.GetComponentInChildren<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, (15.0f * service_rows.Count) + 5.0f);
             }
 
             Pause_Button.interactable = building.Can_Be_Paused;
@@ -582,5 +600,29 @@ public class InspectorManager : MonoBehaviour {
             }
         }
         return builder.ToString();
+    }
+
+    private void Update_Cash_Row(GameObject row, float amount, int decimals, bool plus_sign, bool negative)
+    {
+        if (negative) {
+            amount *= -1.0f;
+        }
+        GameObject.Find(string.Format("{0}/AmountText", row.name)).GetComponent<Text>().text = Helper.Float_To_String(amount, decimals, plus_sign);
+        GameObject.Find(string.Format("{0}/ResourceText", row.name)).GetComponent<Text>().text = "Cash";
+        GameObject.Find(string.Format("{0}/IconImage", row.name)).GetComponent<Image>().sprite = SpriteManager.Instance.Get("gold", SpriteManager.SpriteType.UI);
+    }
+
+    private void Update_Resource_Row(GameObject row, Resource resource, float amount, int decimals, bool plus_sign, bool negative)
+    {
+        if (negative) {
+            amount *= -1.0f;
+        }
+        GameObject.Find(string.Format("{0}/AmountText", row.name)).GetComponent<Text>().text = Helper.Float_To_String(amount, decimals, plus_sign);
+        GameObject.Find(string.Format("{0}/ResourceText", row.name)).GetComponent<Text>().text = resource.UI_Name;
+        if (resource.Has_Sprite) {
+            GameObject.Find(string.Format("{0}/IconImage", row.name)).GetComponent<Image>().sprite = SpriteManager.Instance.Get(resource.Sprite_Name, resource.Sprite_Type);
+        } else {
+            GameObject.Find(string.Format("{0}/IconImage", row.name)).GetComponent<Image>().gameObject.SetActive(false);
+        }
     }
 }
