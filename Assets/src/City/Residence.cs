@@ -37,7 +37,7 @@ public class Residence : Building {
     };
     public static readonly float FUEL_CONSUMPTION_PER_TILE = 0.025f;//Per day
     public static readonly float FUEL_CONSUMPTION_PER_RESIDENT = 0.005f;//Per day
-    public static readonly float FOOD_CONSUMPTION = 0.10f;//Per day, per resident
+    public static readonly float FOOD_CONSUMPTION = 0.20f;//Per day, per resident
     public static readonly float UNEMPLOYMENT_PENALTY_THRESHOLD = 0.1f;
     public static readonly float MAX_UNEMPLOYMENT_PENALTY = 0.5f;
     public static readonly float STARVATION_PENALTY = 1.0f;

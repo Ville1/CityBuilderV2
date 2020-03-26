@@ -221,6 +221,8 @@ public class Map : MonoBehaviour
         int spread_range = 2 + Mathf.RoundToInt(forest_size_setting * 2.0f);
         int water_range = 2 + Mathf.RoundToInt(lake_size_setting * 2.0f);
         int spread_chance_base = 50 + Mathf.RoundToInt(forest_density_setting * 35.0f);
+        float fertility = (forest_count_setting + forest_density_setting + forest_size_setting + lake_count_setting + lake_size_setting + river_setting + 6.0f) / 12.0f;
+        int spread_range_fertility = 2 + Mathf.RoundToInt(fertility * 2.0f);
         if (tile.Internal_Name == "hill_7") {
             List<Tile> tiles = Get_Tiles(tile.Coordinates, 3, 3);
             bool blocked = false;
@@ -307,6 +309,36 @@ public class Map : MonoBehaviour
                     t.Change_To(TilePrototypes.Instance.Get("water_nesw"));
                     foreach(KeyValuePair<Coordinates.Direction, Tile> pair in Get_Adjanced_Tiles(t, true)) {
                         pair.Value.Adjacent_To_Water = true;
+                    }
+                }
+            }
+        } else if (tile.Internal_Name.StartsWith("fertile_ground")) {
+            foreach (Tile t in Get_Tiles(tile.Coordinates.Shift(new Coordinates(-spread_range_fertility, -spread_range_fertility)), spread_range_fertility * 2 + 1, spread_range_fertility * 2 + 1)) {
+                if (t.Internal_Name != "grass") {
+                    continue;
+                }
+                float distance = tile.Coordinates.Distance(t.Coordinates);
+                float distance_multiplier = Mathf.Pow(0.40f, distance) + ((0.60f * fertility) / distance + 0.1f);
+                int chance = Mathf.RoundToInt(15.0f * distance_multiplier);
+                if (RNG.Instance.Next(0, 1000) <= chance) {
+                    t.Change_To(TilePrototypes.Instance.Get("fertile_ground"));
+                }
+            }
+        } else if (tile.Internal_Name.StartsWith("water")) {
+            foreach (Tile t in Get_Tiles(tile.Coordinates.Shift(new Coordinates(-spread_range_fertility, -spread_range_fertility)), spread_range_fertility * 2 + 1, spread_range_fertility * 2 + 1)) {
+                if (t.Internal_Name != "grass") {
+                    continue;
+                }
+                float distance = tile.Coordinates.Distance(t.Coordinates);
+                float distance_multiplier = Mathf.Pow(0.40f, distance) + ((0.60f * fertility) / distance + 0.1f);
+                int chance = Mathf.RoundToInt((fertility * 15.0f) * distance_multiplier);
+                if (RNG.Instance.Next(0, 1000) <= chance) {
+                    t.Change_To(TilePrototypes.Instance.Get("fertile_ground"));
+                } else {
+                    distance_multiplier = Mathf.Pow(0.40f, distance) + ((0.60f * forest_size_setting) / distance + 0.1f);
+                    chance = Mathf.RoundToInt((spread_chance_base / 30.0f) * distance_multiplier);
+                    if (RNG.Instance.Next(0, 100) <= chance) {
+                        t.Change_To(TilePrototypes.Instance.Get("sparse_forest"));
                     }
                 }
             }
