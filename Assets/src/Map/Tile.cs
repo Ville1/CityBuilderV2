@@ -14,6 +14,10 @@ public class Tile
     public string Internal_Name { get; private set; }
     public string Terrain { get; private set; }
     public string Sprite { get; private set; }
+    public List<string> Animation_Sprites { get; private set; }
+    public bool Sync_Animation { get; private set; }
+    public float Animation_Framerate { get; private set; }
+    public bool Is_Animated { get { return Animation_Sprites != null && Animation_Sprites.Count > 1 && Animation_Framerate > 0.0f; } }
 
     public int X { get; private set; }
     public int Y { get; private set; }
@@ -25,10 +29,12 @@ public class Tile
     public Building Building { get; set; }
     public float Base_Appeal { get; private set; }
     public float Base_Appeal_Range { get; private set; }
+    public bool Can_Have_Minerals { get; private set; }
     public float Appeal { get; set; }
     public List<Building> Worked_By { get; private set; }
     public Dictionary<Mineral, float> Minerals { get; private set; }
     public List<Entity> Entities { get; private set; }
+    public bool Adjacent_To_Water { get; set; }
 
     protected Color highlight_color;
     protected bool show_coordinates;
@@ -36,6 +42,9 @@ public class Tile
     protected TextMesh TextMesh { get { return text_game_object.GetComponent<TextMesh>(); } }
     protected Color? border_color;
     protected GameObject border_game_object;
+
+    private float animation_cooldown;
+    private int animation_index;
 
     public Tile(int x, int y, Tile prototype)
     {
@@ -65,7 +74,7 @@ public class Tile
         Change_To(prototype);
     }
     
-    public Tile(string internal_name, string terrain, string sprite, bool buildable, float appeal, float appeal_range)
+    public Tile(string internal_name, string terrain, string sprite, bool buildable, float appeal, float appeal_range, bool can_have_minerals)
     {
         Id = -1;
         Internal_Name = internal_name;
@@ -74,9 +83,27 @@ public class Tile
         Buildable = buildable;
         Base_Appeal = appeal;
         Base_Appeal_Range = appeal_range;
+        Can_Have_Minerals = can_have_minerals;
         Minerals = new Dictionary<Mineral, float>();
+        Animation_Sprites = new List<string>();
     }
-    
+
+    public Tile(string internal_name, string terrain, bool buildable, float appeal, float appeal_range, bool can_have_minerals, List<string> animation_sprites, bool sync_animation, float animation_framerate)
+    {
+        Id = -1;
+        Internal_Name = internal_name;
+        Terrain = terrain;
+        Sprite = animation_sprites[0];
+        Buildable = buildable;
+        Base_Appeal = appeal;
+        Base_Appeal_Range = appeal_range;
+        Can_Have_Minerals = can_have_minerals;
+        Minerals = new Dictionary<Mineral, float>();
+        Animation_Sprites = Helper.Clone_List(animation_sprites);
+        Sync_Animation = sync_animation;
+        Animation_Framerate = animation_framerate;
+    }
+
     public void Change_To(Tile prototype)
     {
         Internal_Name = prototype.Internal_Name;
@@ -87,7 +114,19 @@ public class Tile
         float old_base_appeal_range = Base_Appeal_Range;
         Base_Appeal = prototype.Base_Appeal;
         Base_Appeal_Range = prototype.Base_Appeal_Range;
+        Can_Have_Minerals = prototype.Can_Have_Minerals;
+        if (!Can_Have_Minerals) {
+            Minerals.Clear();
+        }
+        Animation_Sprites = Helper.Clone_List(prototype.Animation_Sprites);
+        Sync_Animation = prototype.Sync_Animation;
+        Animation_Framerate = prototype.Animation_Framerate;
         SpriteRenderer.sprite = SpriteManager.Instance.Get(Sprite, SpriteManager.SpriteType.Terrain);
+        animation_index = 0;
+        if (Is_Animated && !Sync_Animation) {
+            animation_cooldown = (1.0f / Animation_Framerate) * RNG.Instance.Next_F();
+            animation_index = RNG.Instance.Next(0, Animation_Sprites.Count - 1);
+        }
         if(Map.Instance.State == Map.MapState.Normal && Building == null) {
             if (old_base_appeal != 0.0f) {
                 Appeal -= old_base_appeal;
@@ -112,6 +151,27 @@ public class Tile
                 }
             }
         }
+    }
+
+    public void Update(float delta_time)
+    {
+        if(!Is_Animated) {
+            return;
+        }
+        if (Sync_Animation) {
+            SpriteRenderer.sprite = SpriteManager.Instance.Get(Animation_Sprites[TilePrototypes.Instance.Animation_Index(Internal_Name)], SpriteManager.SpriteType.Terrain);
+            return;
+        }
+        animation_cooldown -= delta_time;
+        if(animation_cooldown > 0.0f) {
+            return;
+        }
+        animation_cooldown += (1.0f / Animation_Framerate);
+        animation_index++;
+        if(animation_index == Animation_Sprites.Count) {
+            animation_index = 0;
+        }
+        SpriteRenderer.sprite = SpriteManager.Instance.Get(Animation_Sprites[animation_index], SpriteManager.SpriteType.Terrain);
     }
 
     public Coordinates Coordinates
@@ -199,7 +259,8 @@ public class Tile
             Y = Y,
             Internal_Name = Internal_Name,
             Worked_By = Worked_By.Select(x => x.Id).ToList(),
-            Minerals = Minerals.Select(x => new MineralSaveData() { Mineral = (int)x.Key, Amount = x.Value }).ToList()
+            Minerals = Minerals.Select(x => new MineralSaveData() { Mineral = (int)x.Key, Amount = x.Value }).ToList(),
+            Adjacent_To_Water = Adjacent_To_Water
         };
     }
 

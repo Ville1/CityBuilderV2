@@ -8,6 +8,7 @@ public class TileSaveData {
     public string Internal_Name;
     public List<long> Worked_By;
     public List<MineralSaveData> Minerals;
+    public bool Adjacent_To_Water;
 }
 
 [Serializable]

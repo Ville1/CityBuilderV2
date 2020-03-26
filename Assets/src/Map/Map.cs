@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using UnityEngine;
 
 public enum Mineral { Iron, Coal, Salt, Clay }
@@ -14,19 +15,19 @@ public class Map : MonoBehaviour
         { Mineral.Iron, 8 },
         { Mineral.Coal, 6 },
         { Mineral.Salt, 5 },
-        { Mineral.Clay, 10 }
+        { Mineral.Clay, 8 }
     };
     public static Dictionary<Mineral, float> MINERAL_VEIN_SIZE = new Dictionary<Mineral, float>() {
-        { Mineral.Iron, 5.0f },
-        { Mineral.Coal, 5.0f },
-        { Mineral.Salt, 3.0f },
-        { Mineral.Clay, 8.0f }
+        { Mineral.Iron, 3.0f },
+        { Mineral.Coal, 3.0f },
+        { Mineral.Salt, 2.0f },
+        { Mineral.Clay, 4.0f }
     };
     public static Dictionary<Mineral, float> MINERAL_VEIN_RICHNESS = new Dictionary<Mineral, float>() {
-        { Mineral.Iron, 1.00f },
-        { Mineral.Coal, 0.75f },
-        { Mineral.Salt, 0.75f },
-        { Mineral.Clay, 0.85f }
+        { Mineral.Iron, 0.90f },
+        { Mineral.Coal, 0.65f },
+        { Mineral.Salt, 0.65f },
+        { Mineral.Clay, 0.75f }
     };
 
     public static Map Instance { get; private set; }
@@ -45,6 +46,9 @@ public class Map : MonoBehaviour
     private float forest_size_setting;
     private float forest_density_setting;
     private float hills_setting;
+    private float lake_count_setting;
+    private float lake_size_setting;
+    private float river_setting;
 
     private List<List<Tile>> tiles;
     private int generation_loop;
@@ -55,6 +59,7 @@ public class Map : MonoBehaviour
     private int save_index_y;
     private int loop_progress;
     private List<Tile> fine_tuned_tiles;
+    private List<Tile> lake_spawns;
     private bool city_loaded;
     private List<Mineral> minerals_spawned;
     private bool mineral_safety_spawn;
@@ -90,6 +95,9 @@ public class Map : MonoBehaviour
                 case 3:
                     Generation_Loop_3();
                     break;
+                case 4:
+                    Generation_Loop_4();
+                    break;
             }
             return;
         } else if (State == MapState.Saving) {
@@ -114,15 +122,13 @@ public class Map : MonoBehaviour
             return;
         } else if (State == MapState.Normal) {
             City.Instance.Update(Time.deltaTime);
-            if(View == MapView.Appeal) {
-                for(int x = 0; x < Width; x++) {
-                    for(int y = 0; y < Height; y++) {
+            TilePrototypes.Instance.Update(Time.deltaTime);
+            for (int x = 0; x < Width; x++) {
+                for (int y = 0; y < Height; y++) {
+                    tiles[x][y].Update(Time.deltaTime);
+                    if (View == MapView.Appeal) {
                         tiles[x][y].Show_Text(Helper.Float_To_String(tiles[x][y].Appeal, 1));
-                    }
-                }
-            } else if(View == MapView.Minerals) {
-                for (int x = 0; x < Width; x++) {
-                    for (int y = 0; y < Height; y++) {
+                    } else if(View == MapView.Minerals) {
                         tiles[x][y].Show_Text(tiles[x][y].Mineral_String());
                     }
                 }
@@ -137,7 +143,7 @@ public class Map : MonoBehaviour
         }
     }
     
-    public void Start_Generation(int width, int height, float forest_count, float forest_size, float forest_density, float hills)
+    public void Start_Generation(int width, int height, float forest_count, float forest_size, float forest_density, float hills, float lake_count, float lake_size, float rivers)
     {
         Delete();
         City.Instance.Delete();
@@ -154,12 +160,16 @@ public class Map : MonoBehaviour
         forest_size_setting = Mathf.Clamp01(forest_size);
         forest_density_setting = Mathf.Clamp01(forest_density);
         hills_setting = Mathf.Clamp01(hills);
+        lake_count_setting = Mathf.Clamp01(lake_count);
+        lake_size_setting = Mathf.Clamp01(lake_size);
+        river_setting = Mathf.Clamp01(rivers);
 
         generation_loop = 1;
         generation_index_x = 0;
         generation_index_y = 0;
         loop_progress = 0;
         fine_tuned_tiles = new List<Tile>();
+        lake_spawns = new List<Tile>();
         minerals_spawned = new List<Mineral>();
         mineral_safety_spawn = false;
 
@@ -178,6 +188,10 @@ public class Map : MonoBehaviour
     private void Generation_Loop_1()
     {
         Tile tile = new Tile(generation_index_x, generation_index_y, TilePrototypes.Instance.Get(RNG.Instance.Next(0, 100) < (100 - Mathf.RoundToInt(2.0f * forest_count_setting)) ? "grass" : "forest"));
+        if(lake_count_setting > 0.0f && RNG.Instance.Next(0, 1000) < Mathf.RoundToInt(lake_count_setting * 6.0f)) {
+            tile.Change_To(TilePrototypes.Instance.Get("water_nesw"));
+            lake_spawns.Add(tile);
+        }
         tiles[generation_index_x][generation_index_y] = tile;
 
         int hill_chance = (int)(hills_setting * 2.0f);
@@ -205,32 +219,47 @@ public class Map : MonoBehaviour
         Tile tile = tiles[generation_index_x][generation_index_y];
         
         int spread_range = 2 + Mathf.RoundToInt(forest_size_setting * 2.0f);
+        int water_range = 2 + Mathf.RoundToInt(lake_size_setting * 2.0f);
         int spread_chance_base = 50 + Mathf.RoundToInt(forest_density_setting * 35.0f);
         if (tile.Internal_Name == "hill_7") {
             List<Tile> tiles = Get_Tiles(tile.Coordinates, 3, 3);
-            foreach(Tile hill_tile in tiles) {
-                if(hill_tile == tile) {
+            bool blocked = false;
+            foreach (Tile hill_tile in tiles) {
+                if (hill_tile == tile) {
                     continue;
                 }
-                if(hill_tile.X == tile.X + 1 && hill_tile.Y == tile.Y) {
-                    hill_tile.Change_To(TilePrototypes.Instance.Get("hill_8"));
-                } else if(hill_tile.X == tile.X + 2 && hill_tile.Y == tile.Y) {
-                    hill_tile.Change_To(TilePrototypes.Instance.Get("hill_9"));
-                } else if(hill_tile.X == tile.X && hill_tile.Y == tile.Y + 1) {
-                    hill_tile.Change_To(TilePrototypes.Instance.Get("hill_4"));
-                } else if (hill_tile.X == tile.X + 1 && hill_tile.Y == tile.Y + 1) {
-                    hill_tile.Change_To(TilePrototypes.Instance.Get("hill_5"));
-                } else if (hill_tile.X == tile.X + 2 && hill_tile.Y == tile.Y + 1) {
-                    hill_tile.Change_To(TilePrototypes.Instance.Get("hill_6"));
-                } else if (hill_tile.X == tile.X && hill_tile.Y == tile.Y + 2) {
-                    hill_tile.Change_To(TilePrototypes.Instance.Get("hill_1"));
-                } else if (hill_tile.X == tile.X + 1 && hill_tile.Y == tile.Y + 2) {
-                    hill_tile.Change_To(TilePrototypes.Instance.Get("hill_2"));
-                } else if (hill_tile.X == tile.X + 2 && hill_tile.Y == tile.Y + 2) {
-                    hill_tile.Change_To(TilePrototypes.Instance.Get("hill_3"));
-                } else {
-                    hill_tile.Change_To(TilePrototypes.Instance.Get("placeholder"));
+                if(hill_tile.Internal_Name.StartsWith("hill") || hill_tile.Internal_Name.StartsWith("water")) {
+                    blocked = true;
+                    break;
                 }
+            }
+            if (!blocked) {
+                foreach (Tile hill_tile in tiles) {
+                    if (hill_tile == tile) {
+                        continue;
+                    }
+                    if (hill_tile.X == tile.X + 1 && hill_tile.Y == tile.Y) {
+                        hill_tile.Change_To(TilePrototypes.Instance.Get("hill_8"));
+                    } else if (hill_tile.X == tile.X + 2 && hill_tile.Y == tile.Y) {
+                        hill_tile.Change_To(TilePrototypes.Instance.Get("hill_9"));
+                    } else if (hill_tile.X == tile.X && hill_tile.Y == tile.Y + 1) {
+                        hill_tile.Change_To(TilePrototypes.Instance.Get("hill_4"));
+                    } else if (hill_tile.X == tile.X + 1 && hill_tile.Y == tile.Y + 1) {
+                        hill_tile.Change_To(TilePrototypes.Instance.Get("hill_5"));
+                    } else if (hill_tile.X == tile.X + 2 && hill_tile.Y == tile.Y + 1) {
+                        hill_tile.Change_To(TilePrototypes.Instance.Get("hill_6"));
+                    } else if (hill_tile.X == tile.X && hill_tile.Y == tile.Y + 2) {
+                        hill_tile.Change_To(TilePrototypes.Instance.Get("hill_1"));
+                    } else if (hill_tile.X == tile.X + 1 && hill_tile.Y == tile.Y + 2) {
+                        hill_tile.Change_To(TilePrototypes.Instance.Get("hill_2"));
+                    } else if (hill_tile.X == tile.X + 2 && hill_tile.Y == tile.Y + 2) {
+                        hill_tile.Change_To(TilePrototypes.Instance.Get("hill_3"));
+                    } else {
+                        hill_tile.Change_To(TilePrototypes.Instance.Get("placeholder"));
+                    }
+                }
+            } else {
+                tile.Change_To(TilePrototypes.Instance.Get(RNG.Instance.Next(0, 100) < Mathf.RoundToInt((forest_size_setting * 50.0f) + (forest_count_setting * 50.0f)) ? "sparse_forest" : "grass"));
             }
         } else if (tile.Internal_Name == "forest") {
             foreach (Tile t in Get_Tiles(tile.Coordinates.Shift(new Coordinates(-spread_range, -spread_range)), spread_range * 2 + 1, spread_range * 2 + 1)) {
@@ -268,12 +297,30 @@ public class Map : MonoBehaviour
                     t.Change_To(TilePrototypes.Instance.Get("sparse_forest"));
                 }
             }
+        } else if (lake_spawns.Contains(tile)) {
+            foreach (Tile t in Get_Tiles(tile.Coordinates.Shift(new Coordinates(-water_range, -water_range)), water_range * 2 + 1, water_range * 2 + 1)) {
+                if (t.Internal_Name.StartsWith("hill_")) {
+                    continue;
+                }
+                float distance = tile.Coordinates.Distance(t.Coordinates);
+                if (distance < water_range * 0.75f || RNG.Instance.Next(0, 100) < 25) {
+                    t.Change_To(TilePrototypes.Instance.Get("water_nesw"));
+                    foreach(KeyValuePair<Coordinates.Direction, Tile> pair in Get_Adjanced_Tiles(t, true)) {
+                        pair.Value.Adjacent_To_Water = true;
+                    }
+                }
+            }
         }
 
-        if (tile.Minerals.Count == 0) {
+        if (tile.Minerals.Count == 0 && tile.Can_Have_Minerals) {
             List<Mineral> spawn = new List<Mineral>();
             foreach (Mineral mineral in Enum.GetValues(typeof(Mineral))) {
-                int chance = tile.Internal_Name.StartsWith("hill_") ? Mathf.RoundToInt(MINERAL_BASE_SPAWN_CHANCE[mineral] * 1.25f) : MINERAL_BASE_SPAWN_CHANCE[mineral];
+                int chance = MINERAL_BASE_SPAWN_CHANCE[mineral];
+                if(mineral != Mineral.Clay && tile.Internal_Name.StartsWith("hill_")) {
+                    chance = Mathf.RoundToInt(1.25f * chance);
+                } else if(mineral == Mineral.Clay && tile.Adjacent_To_Water) {
+                    chance = Mathf.RoundToInt(1.35f * chance);
+                }
                 if (RNG.Instance.Next(0, 10000) < chance) {
                     spawn.Add(mineral);
                 }
@@ -286,6 +333,9 @@ public class Map : MonoBehaviour
                 float amount = 3.0f * (MINERAL_VEIN_RICHNESS[mineral] * (0.25f + (1.50f * RNG.Instance.Next_F())));
                 tile.Minerals.Add(mineral, amount);
                 foreach (Tile t in Get_Tiles_In_Circle(tile.Coordinates, MINERAL_VEIN_SIZE[mineral])) {
+                    if (!t.Can_Have_Minerals) {
+                        continue;
+                    }
                     float distance = t.Coordinates.Distance(tile.Coordinates);
                     int chance = Mathf.RoundToInt(((MINERAL_VEIN_RICHNESS[mineral] * 35.0f) + (MINERAL_BASE_SPAWN_CHANCE[mineral] * 0.5f)) * (((MINERAL_VEIN_SIZE[mineral] - distance) + 1) / (MINERAL_VEIN_SIZE[mineral]) + 1));
                     if (RNG.Instance.Next(0, 100) < chance) {
@@ -367,13 +417,16 @@ public class Map : MonoBehaviour
                 if (!minerals_spawned.Contains(mineral) && MINERAL_BASE_SPAWN_CHANCE[mineral] > 5) {
                     int spawn_chance = MINERAL_BASE_SPAWN_CHANCE[mineral] * 10;
                     if(RNG.Instance.Next(0, 100) < spawn_chance) {
-                        Tile random_tile = Get_Tile_At(RNG.Instance.Next(0, Width), RNG.Instance.Next(0, Height));
+                        Tile random_tile = Get_Tile_At(RNG.Instance.Next(0, Width - 1), RNG.Instance.Next(0, Height - 1));
+                        while (!random_tile.Can_Have_Minerals) {
+                            random_tile = Get_Tile_At(RNG.Instance.Next(0, Width - 1), RNG.Instance.Next(0, Height - 1));
+                        }
                         float amount = 1.5f * (MINERAL_VEIN_RICHNESS[mineral] * (0.25f + (1.50f * RNG.Instance.Next_F())));
                         random_tile.Minerals.Add(mineral, amount);
                         foreach (Tile t in Get_Tiles_In_Circle(random_tile.Coordinates, MINERAL_VEIN_SIZE[mineral] * 0.5f)) {
                             float distance = t.Coordinates.Distance(random_tile.Coordinates);
                             int chance = Mathf.RoundToInt(((MINERAL_VEIN_RICHNESS[mineral] * 35.0f) + (MINERAL_BASE_SPAWN_CHANCE[mineral] * 0.5f)) * (((MINERAL_VEIN_SIZE[mineral] - distance) + 1) / (MINERAL_VEIN_SIZE[mineral]) + 1));
-                            if (RNG.Instance.Next(0, 100) < chance) {
+                            if (t.Can_Have_Minerals && RNG.Instance.Next(0, 100) < chance) {
                                 amount = 1.5f * (MINERAL_VEIN_RICHNESS[mineral] * (0.25f + (1.50f * RNG.Instance.Next_F())));
                                 if (t.Minerals.ContainsKey(mineral)) {
                                     t.Minerals[mineral] = amount;
@@ -394,6 +447,39 @@ public class Map : MonoBehaviour
             generation_index_y++;
         }
         if (generation_index_y == Height) {
+            generation_index_x = 0;
+            generation_index_y = 0;
+            loop_progress = 0;
+            generation_loop++;
+        }
+        Update_Progress();
+    }
+
+    private void Generation_Loop_4()
+    {
+        Tile tile = tiles[generation_index_x][generation_index_y];
+
+        if(tile.Internal_Name == "water_nesw") {
+            Dictionary<Coordinates.Direction, Tile> adjanced_tiles = Get_Adjanced_Tiles(tile);
+            StringBuilder name_builder = new StringBuilder("water_");
+            foreach(Coordinates.Direction direction in Coordinates.Directly_Adjacent_Directions) {
+                if(!adjanced_tiles.ContainsKey(direction) || adjanced_tiles[direction].Internal_Name.StartsWith("water_")) {
+                    name_builder.Append(direction.ToString().ToLower()[0]);
+                }
+            }
+            string internal_name = name_builder.ToString();
+            if (internal_name != tile.Internal_Name && TilePrototypes.Instance.Exists(internal_name)) {
+                tile.Change_To(TilePrototypes.Instance.Get(internal_name));
+            }
+        }
+
+        loop_progress++;
+        generation_index_x++;
+        if (generation_index_x == Width) {
+            generation_index_x = 0;
+            generation_index_y++;
+        }
+        if (generation_index_y == Height) {
             Finish_Generation();
         } else {
             Update_Progress();
@@ -403,6 +489,7 @@ public class Map : MonoBehaviour
     public void Finish_Generation()
     {
         fine_tuned_tiles.Clear();
+        lake_spawns.Clear();
         Update_Appeal();
         State = MapState.Normal;
         ProgressBarManager.Instance.Active = false;
@@ -416,7 +503,7 @@ public class Map : MonoBehaviour
     private void Update_Progress()
     {
         if(State == MapState.Generating) {
-            float max = Width * Height * 3;
+            float max = Width * Height * 4;
             float current = ((generation_loop - 1) * (Width * Height)) + loop_progress;
             float progress = current / max;
             ProgressBarManager.Instance.Show("Generating map...", progress);
@@ -583,6 +670,7 @@ public class Map : MonoBehaviour
                 foreach(MineralSaveData mineral_data in SaveManager.Instance.Get_Tile(x, y).Minerals) {
                     tiles[x][y].Minerals.Add((Mineral)mineral_data.Mineral, mineral_data.Amount);
                 }
+                tiles[x][y].Adjacent_To_Water = SaveManager.Instance.Get_Tile(x, y).Adjacent_To_Water;
             }
         }
         Update_Appeal();

@@ -26,6 +26,13 @@ public class NewGameGUIManager : MonoBehaviour
     
     public InputField Hills_Input;
     public Slider Hills_Slider;
+    
+    public Slider Lake_Count_Slider;
+    public InputField Lake_Count_Input;
+    public Slider Lake_Size_Slider;
+    public InputField Lake_Size_Input;
+    public Slider River_Slider;
+    public InputField River_Input;
 
     /// <summary>
     /// Initializiation
@@ -79,6 +86,12 @@ public class NewGameGUIManager : MonoBehaviour
         Forest_Density_Input.text = "50%";
         Hills_Slider.value = 0.5f;
         Hills_Input.text = "50%";
+        Lake_Count_Slider.value = 0.5f;
+        Lake_Count_Input.text = "50%";
+        Lake_Size_Slider.value = 0.5f;
+        Lake_Size_Input.text = "50%";
+        River_Slider.value = 0.5f;
+        River_Input.text = "50%";
     }
     
     public void Update_Sliders()
@@ -89,6 +102,9 @@ public class NewGameGUIManager : MonoBehaviour
         Update_Terrain_Slider(Forest_Size_Input, Forest_Size_Slider);
         Update_Terrain_Slider(Forest_Density_Input, Forest_Density_Slider);
         Update_Terrain_Slider(Hills_Input, Hills_Slider);
+        Update_Terrain_Slider(Lake_Count_Input, Lake_Count_Slider);
+        Update_Terrain_Slider(Lake_Size_Input, Lake_Size_Slider);
+        Update_Terrain_Slider(River_Input, River_Slider);
     }
 
     private void Update_Size_Slider(InputField input, Slider slider)
@@ -136,6 +152,9 @@ public class NewGameGUIManager : MonoBehaviour
         Update_Terrain_Input(Forest_Size_Input, Forest_Size_Slider);
         Update_Terrain_Input(Forest_Density_Input, Forest_Density_Slider);
         Update_Terrain_Input(Hills_Input, Hills_Slider);
+        Update_Terrain_Input(Lake_Count_Input, Lake_Count_Slider);
+        Update_Terrain_Input(Lake_Size_Input, Lake_Size_Slider);
+        Update_Terrain_Input(River_Input, River_Slider);
     }
 
     private void Update_Size_Input(InputField input, Slider slider)
@@ -160,7 +179,7 @@ public class NewGameGUIManager : MonoBehaviour
             CustomLogger.Instance.Warning(string.Format("Invalid height: {0}", Height_Input.text));
             return;
         }
-        Map.Instance.Start_Generation(width, height, Forest_Count_Slider.value, Forest_Size_Slider.value, Forest_Density_Slider.value, Hills_Slider.value);
+        Map.Instance.Start_Generation(width, height, Forest_Count_Slider.value, Forest_Size_Slider.value, Forest_Density_Slider.value, Hills_Slider.value, Lake_Count_Slider.value, Lake_Size_Slider.value, River_Slider.value);
         Active = false;
     }
 
