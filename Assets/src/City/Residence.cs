@@ -37,7 +37,7 @@ public class Residence : Building {
     };
     public static readonly float FUEL_CONSUMPTION_PER_TILE = 0.025f;//Per day
     public static readonly float FUEL_CONSUMPTION_PER_RESIDENT = 0.005f;//Per day
-    public static readonly float FOOD_CONSUMPTION = 0.20f;//Per day, per resident
+    public static readonly float FOOD_CONSUMPTION = 0.15f;//Per day, per resident
     public static readonly float UNEMPLOYMENT_PENALTY_THRESHOLD = 0.1f;
     public static readonly float MAX_UNEMPLOYMENT_PENALTY = 0.5f;
     public static readonly float STARVATION_PENALTY = 1.0f;
@@ -190,295 +190,298 @@ public class Residence : Building {
             } else {
                 Happiness[Resident.Peasant] = BASE_HAPPINESS[Resident.Peasant];
                 Happiness_Info[Resident.Peasant].Add(string.Format("Base: {0}", UI_Happiness(BASE_HAPPINESS[Resident.Peasant])));
-
-                float unemployment = City.Instance.Unemployment[Resident.Peasant] - UNEMPLOYMENT_PENALTY_THRESHOLD;
-                if (unemployment > 0.0f) {
-                    Happiness[Resident.Peasant] -= MAX_UNEMPLOYMENT_PENALTY * unemployment;
-                    Happiness_Info[Resident.Peasant].Add(string.Format("Unemployment: -{0}", UI_Happiness(MAX_UNEMPLOYMENT_PENALTY * unemployment)));
-                }
-
-                if(HP < Max_HP) {
-                    float disrepair = (MAX_DISREPAIR_PENALTY * (1.0f - (HP / Max_HP))) * 0.75f;
-                    Happiness[Resident.Peasant] -= disrepair;
-                    Happiness_Info[Resident.Peasant].Add(string.Format("Disrepair: -{0}", UI_Happiness(disrepair)));
-                }
-
-                if (services[ServiceType.Fuel][AMOUNT] == 0.0f) {
-                    Happiness[Resident.Peasant] -= NO_FUEL_PENALTY;
-                    Happiness_Info[Resident.Peasant].Add(string.Format("No fuel: -{0}", UI_Happiness(NO_FUEL_PENALTY)));
-                } else if(services[ServiceType.Fuel][QUALITY] < BAD_FUEL_SERVICE_PENALTY_THRESHOLD) {
-                    float fuel_penalty = 0.1f * ((BAD_FUEL_SERVICE_PENALTY_THRESHOLD - services[ServiceType.Fuel][QUALITY]) / BAD_FUEL_SERVICE_PENALTY_THRESHOLD);
-                    Happiness[Resident.Peasant] -= fuel_penalty;
-                    Happiness_Info[Resident.Peasant].Add(string.Format("Bad fuel service: -{0}", UI_Happiness(fuel_penalty)));
-                }
-
-                if (services[ServiceType.Food][AMOUNT] == 0.0f) {
-                    Happiness[Resident.Peasant] -= STARVATION_PENALTY;
-                    Happiness_Info[Resident.Peasant].Add(string.Format("Starvation: -{0}", UI_Happiness(STARVATION_PENALTY)));
-                } else {
-                    if(services[ServiceType.Food][QUALITY] < FOOD_QUALITY_THRESHOLDS[Resident.Peasant][0]) {
-                        float missing_quality = FOOD_QUALITY_THRESHOLDS[Resident.Peasant][0] - services[ServiceType.Food][QUALITY];
-                        float penalty = missing_quality * 0.5f;
-                        Happiness[Resident.Peasant] -= penalty;
-                        Happiness_Info[Resident.Peasant].Add(string.Format("Food quality: -{0}", UI_Happiness(penalty)));
-                    } else if (services[ServiceType.Food][QUALITY] > FOOD_QUALITY_THRESHOLDS[Resident.Peasant][1]) {
-                        float extra_quality = services[ServiceType.Food][QUALITY] - FOOD_QUALITY_THRESHOLDS[Resident.Peasant][1];
-                        extra_quality = Math.Min(extra_quality, FOOD_QUALITY_THRESHOLDS[Resident.Peasant][2] - FOOD_QUALITY_THRESHOLDS[Resident.Peasant][1]);
-                        float bonus = extra_quality * 0.5f;
-                        Happiness[Resident.Peasant] += bonus;
-                        Happiness_Info[Resident.Peasant].Add(string.Format("Food quality: +{0}", UI_Happiness(bonus)));
+                if (Current_Residents[Resident.Peasant] != 0) {
+                    float unemployment = City.Instance.Unemployment[Resident.Peasant] - UNEMPLOYMENT_PENALTY_THRESHOLD;
+                    if (unemployment > 0.0f) {
+                        Happiness[Resident.Peasant] -= MAX_UNEMPLOYMENT_PENALTY * unemployment;
+                        Happiness_Info[Resident.Peasant].Add(string.Format("Unemployment: -{0}", UI_Happiness(MAX_UNEMPLOYMENT_PENALTY * unemployment)));
                     }
-                }
 
-                float appeal = Current_Appeal;
-                if(appeal < APPEAL_THRESHOLDS[Resident.Peasant][1]) {
-                    float missing_appeal = Mathf.Min(APPEAL_THRESHOLDS[Resident.Peasant][1] - appeal, APPEAL_THRESHOLDS[Resident.Peasant][1] - APPEAL_THRESHOLDS[Resident.Peasant][0]);
-                    float appeal_penalty = missing_appeal * 0.10f;
-                    Happiness[Resident.Peasant] -= appeal_penalty;
-                    Happiness_Info[Resident.Peasant].Add(string.Format("Appeal: -{0}", UI_Happiness(appeal_penalty)));
-                } else if(appeal > APPEAL_THRESHOLDS[Resident.Peasant][2]) {
-                    float bonus_appeal = Mathf.Min(appeal - APPEAL_THRESHOLDS[Resident.Peasant][2], APPEAL_THRESHOLDS[Resident.Peasant][3] - APPEAL_THRESHOLDS[Resident.Peasant][2]);
-                    float appeal_bonus = bonus_appeal * 0.10f;
-                    Happiness[Resident.Peasant] += appeal_bonus;
-                    Happiness_Info[Resident.Peasant].Add(string.Format("Appeal: +{0}", UI_Happiness(appeal_bonus)));
-                }
-
-                if(services[ServiceType.Herbs][AMOUNT] != 0.0f) {
-                    float base_herb_bonus = 0.05f;
-                    float herb_bonus = base_herb_bonus * Mathf.Clamp(services[ServiceType.Herbs][QUALITY], 0.9f, 1.1f);
-                    Happiness[Resident.Peasant] += herb_bonus;
-                    Happiness_Info[Resident.Peasant].Add(string.Format("Herbs: +{0}", UI_Happiness(herb_bonus)));
-                }
-
-                if (services[ServiceType.Salt][AMOUNT] != 0.0f) {
-                    float base_salt_bonus = 0.05f;
-                    float salt_bonus = base_salt_bonus * Mathf.Clamp(services[ServiceType.Salt][QUALITY], 0.9f, 1.1f);
-                    Happiness[Resident.Peasant] += salt_bonus;
-                    Happiness_Info[Resident.Peasant].Add(string.Format("Salt: +{0}", UI_Happiness(salt_bonus)));
-                }
-
-                if (services[ServiceType.Clothes][AMOUNT] != 0.0f) {
-                    //Simple clothes = 0.5f quality, Leather clothes = 1.0f quality
-                    if(services[ServiceType.Clothes][QUALITY] > 0.5f) {
-                        float base_clothing_bonus = 0.05f;
-                        float clothing_bonus = base_clothing_bonus * (2.0f * (services[ServiceType.Clothes][QUALITY] - 0.5f));
-                        Happiness[Resident.Peasant] += clothing_bonus;
-                        Happiness_Info[Resident.Peasant].Add(string.Format("Clothing: +{0}", UI_Happiness(clothing_bonus)));
+                    if (HP < Max_HP) {
+                        float disrepair = (MAX_DISREPAIR_PENALTY * (1.0f - (HP / Max_HP))) * 0.75f;
+                        Happiness[Resident.Peasant] -= disrepair;
+                        Happiness_Info[Resident.Peasant].Add(string.Format("Disrepair: -{0}", UI_Happiness(disrepair)));
                     }
-                } else {
-                    float clothing_penalty = 0.05f;
-                    Happiness[Resident.Peasant] -= clothing_penalty;
-                    Happiness_Info[Resident.Peasant].Add(string.Format("Clothing: -{0}", UI_Happiness(clothing_penalty)));
-                }
 
-                if (services[ServiceType.Tavern][AMOUNT] != 0.0f) {
-                    float base_tavern_bonus = 0.10f;
-                    float tavern_bonus = base_tavern_bonus * services[ServiceType.Tavern][QUALITY];
-                    Happiness[Resident.Peasant] += tavern_bonus;
-                    Happiness_Info[Resident.Peasant].Add(string.Format("Tavern: +{0}", UI_Happiness(tavern_bonus)));
-                }
+                    if (services[ServiceType.Fuel][AMOUNT] == 0.0f) {
+                        Happiness[Resident.Peasant] -= NO_FUEL_PENALTY;
+                        Happiness_Info[Resident.Peasant].Add(string.Format("No fuel: -{0}", UI_Happiness(NO_FUEL_PENALTY)));
+                    } else if (services[ServiceType.Fuel][QUALITY] < BAD_FUEL_SERVICE_PENALTY_THRESHOLD) {
+                        float fuel_penalty = 0.1f * ((BAD_FUEL_SERVICE_PENALTY_THRESHOLD - services[ServiceType.Fuel][QUALITY]) / BAD_FUEL_SERVICE_PENALTY_THRESHOLD);
+                        Happiness[Resident.Peasant] -= fuel_penalty;
+                        Happiness_Info[Resident.Peasant].Add(string.Format("Bad fuel service: -{0}", UI_Happiness(fuel_penalty)));
+                    }
 
-                if (services[ServiceType.Chapel][AMOUNT] != 0.0f) {
-                    float base_chapel_bonus = 0.05f;
-                    float chapel_bonus = base_chapel_bonus * services[ServiceType.Chapel][QUALITY];
-                    Happiness[Resident.Peasant] += chapel_bonus;
-                    Happiness_Info[Resident.Peasant].Add(string.Format("Chapel: +{0}", UI_Happiness(chapel_bonus)));
-                }
+                    if (services[ServiceType.Food][AMOUNT] == 0.0f) {
+                        Happiness[Resident.Peasant] -= STARVATION_PENALTY;
+                        Happiness_Info[Resident.Peasant].Add(string.Format("Starvation: -{0}", UI_Happiness(STARVATION_PENALTY)));
+                    } else {
+                        if (services[ServiceType.Food][QUALITY] < FOOD_QUALITY_THRESHOLDS[Resident.Peasant][0]) {
+                            float missing_quality = FOOD_QUALITY_THRESHOLDS[Resident.Peasant][0] - services[ServiceType.Food][QUALITY];
+                            float penalty = missing_quality * 0.5f;
+                            Happiness[Resident.Peasant] -= penalty;
+                            Happiness_Info[Resident.Peasant].Add(string.Format("Food quality: -{0}", UI_Happiness(penalty)));
+                        } else if (services[ServiceType.Food][QUALITY] > FOOD_QUALITY_THRESHOLDS[Resident.Peasant][1]) {
+                            float extra_quality = services[ServiceType.Food][QUALITY] - FOOD_QUALITY_THRESHOLDS[Resident.Peasant][1];
+                            extra_quality = Math.Min(extra_quality, FOOD_QUALITY_THRESHOLDS[Resident.Peasant][2] - FOOD_QUALITY_THRESHOLDS[Resident.Peasant][1]);
+                            float bonus = extra_quality * 0.5f;
+                            Happiness[Resident.Peasant] += bonus;
+                            Happiness_Info[Resident.Peasant].Add(string.Format("Food quality: +{0}", UI_Happiness(bonus)));
+                        }
+                    }
 
-                if (services[ServiceType.Taxes][AMOUNT] != 0.0f) {
-                    float tax_penalty = MAX_TAX_PENALTY * services[ServiceType.Taxes][QUALITY];
-                    Happiness[Resident.Peasant] -= tax_penalty;
-                    Happiness_Info[Resident.Peasant].Add(string.Format("Taxes: -{0}", UI_Happiness(tax_penalty)));
-                }
+                    float appeal = Current_Appeal;
+                    if (appeal < APPEAL_THRESHOLDS[Resident.Peasant][1]) {
+                        float missing_appeal = Mathf.Min(APPEAL_THRESHOLDS[Resident.Peasant][1] - appeal, APPEAL_THRESHOLDS[Resident.Peasant][1] - APPEAL_THRESHOLDS[Resident.Peasant][0]);
+                        float appeal_penalty = missing_appeal * 0.10f;
+                        Happiness[Resident.Peasant] -= appeal_penalty;
+                        Happiness_Info[Resident.Peasant].Add(string.Format("Appeal: -{0}", UI_Happiness(appeal_penalty)));
+                    } else if (appeal > APPEAL_THRESHOLDS[Resident.Peasant][2]) {
+                        float bonus_appeal = Mathf.Min(appeal - APPEAL_THRESHOLDS[Resident.Peasant][2], APPEAL_THRESHOLDS[Resident.Peasant][3] - APPEAL_THRESHOLDS[Resident.Peasant][2]);
+                        float appeal_bonus = bonus_appeal * 0.10f;
+                        Happiness[Resident.Peasant] += appeal_bonus;
+                        Happiness_Info[Resident.Peasant].Add(string.Format("Appeal: +{0}", UI_Happiness(appeal_bonus)));
+                    }
 
-                Happiness[Resident.Peasant] = Math.Max(0.0f, Happiness[Resident.Peasant]);
+                    if (services[ServiceType.Herbs][AMOUNT] != 0.0f) {
+                        float base_herb_bonus = 0.05f;
+                        float herb_bonus = base_herb_bonus * Mathf.Clamp(services[ServiceType.Herbs][QUALITY], 0.9f, 1.1f);
+                        Happiness[Resident.Peasant] += herb_bonus;
+                        Happiness_Info[Resident.Peasant].Add(string.Format("Herbs: +{0}", UI_Happiness(herb_bonus)));
+                    }
+
+                    if (services[ServiceType.Salt][AMOUNT] != 0.0f) {
+                        float base_salt_bonus = 0.05f;
+                        float salt_bonus = base_salt_bonus * Mathf.Clamp(services[ServiceType.Salt][QUALITY], 0.9f, 1.1f);
+                        Happiness[Resident.Peasant] += salt_bonus;
+                        Happiness_Info[Resident.Peasant].Add(string.Format("Salt: +{0}", UI_Happiness(salt_bonus)));
+                    }
+
+                    if (services[ServiceType.Clothes][AMOUNT] != 0.0f) {
+                        //Simple clothes = 0.5f quality, Leather clothes = 1.0f quality
+                        if (services[ServiceType.Clothes][QUALITY] > 0.5f) {
+                            float base_clothing_bonus = 0.05f;
+                            float clothing_bonus = base_clothing_bonus * (2.0f * (services[ServiceType.Clothes][QUALITY] - 0.5f));
+                            Happiness[Resident.Peasant] += clothing_bonus;
+                            Happiness_Info[Resident.Peasant].Add(string.Format("Clothing: +{0}", UI_Happiness(clothing_bonus)));
+                        }
+                    } else {
+                        float clothing_penalty = 0.05f;
+                        Happiness[Resident.Peasant] -= clothing_penalty;
+                        Happiness_Info[Resident.Peasant].Add(string.Format("Clothing: -{0}", UI_Happiness(clothing_penalty)));
+                    }
+
+                    if (services[ServiceType.Tavern][AMOUNT] != 0.0f) {
+                        float base_tavern_bonus = 0.10f;
+                        float tavern_bonus = base_tavern_bonus * services[ServiceType.Tavern][QUALITY];
+                        Happiness[Resident.Peasant] += tavern_bonus;
+                        Happiness_Info[Resident.Peasant].Add(string.Format("Tavern: +{0}", UI_Happiness(tavern_bonus)));
+                    }
+
+                    if (services[ServiceType.Chapel][AMOUNT] != 0.0f) {
+                        float base_chapel_bonus = 0.05f;
+                        float chapel_bonus = base_chapel_bonus * services[ServiceType.Chapel][QUALITY];
+                        Happiness[Resident.Peasant] += chapel_bonus;
+                        Happiness_Info[Resident.Peasant].Add(string.Format("Chapel: +{0}", UI_Happiness(chapel_bonus)));
+                    }
+
+                    if (services[ServiceType.Taxes][AMOUNT] != 0.0f) {
+                        float tax_penalty = MAX_TAX_PENALTY * services[ServiceType.Taxes][QUALITY];
+                        Happiness[Resident.Peasant] -= tax_penalty;
+                        Happiness_Info[Resident.Peasant].Add(string.Format("Taxes: -{0}", UI_Happiness(tax_penalty)));
+                    }
+
+                    Happiness[Resident.Peasant] = Math.Max(0.0f, Happiness[Resident.Peasant]);
+                }
             }
         }
 
         if (Resident_Space[Resident.Citizen] != 0) {
             Happiness[Resident.Citizen] = BASE_HAPPINESS[Resident.Citizen];
             Happiness_Info[Resident.Citizen].Add(string.Format("Base: {0}", UI_Happiness(BASE_HAPPINESS[Resident.Citizen])));
-
-            float unemployment = City.Instance.Unemployment[Resident.Citizen] - UNEMPLOYMENT_PENALTY_THRESHOLD;
-            if (unemployment > 0.0f) {
-                Happiness[Resident.Citizen] -= MAX_UNEMPLOYMENT_PENALTY * unemployment;
-                Happiness_Info[Resident.Citizen].Add(string.Format("Unemployment: -{0}", UI_Happiness(MAX_UNEMPLOYMENT_PENALTY * unemployment)));
-            }
-
-            if (HP < Max_HP) {
-                float disrepair = MAX_DISREPAIR_PENALTY * (1.0f - (HP / Max_HP));
-                Happiness[Resident.Citizen] -= disrepair;
-                Happiness_Info[Resident.Citizen].Add(string.Format("Disrepair: -{0}", UI_Happiness(disrepair)));
-            }
-
-            if (services[ServiceType.Fuel][AMOUNT] == 0.0f) {
-                Happiness[Resident.Citizen] -= NO_FUEL_PENALTY;
-                Happiness_Info[Resident.Citizen].Add(string.Format("No fuel: -{0}", UI_Happiness(NO_FUEL_PENALTY)));
-            } else if (services[ServiceType.Fuel][QUALITY] < BAD_FUEL_SERVICE_PENALTY_THRESHOLD) {
-                float fuel_penalty = 0.15f * ((BAD_FUEL_SERVICE_PENALTY_THRESHOLD - services[ServiceType.Fuel][QUALITY]) / BAD_FUEL_SERVICE_PENALTY_THRESHOLD);
-                Happiness[Resident.Citizen] -= fuel_penalty;
-                Happiness_Info[Resident.Citizen].Add(string.Format("Bad fuel service: -{0}", UI_Happiness(fuel_penalty)));
-            }
-
-            if (services[ServiceType.Food][AMOUNT] == 0.0f) {
-                Happiness[Resident.Citizen] -= STARVATION_PENALTY;
-                Happiness_Info[Resident.Citizen].Add(string.Format("Starvation: -{0}", UI_Happiness(STARVATION_PENALTY)));
-            } else {
-                if (services[ServiceType.Food][QUALITY] < FOOD_QUALITY_THRESHOLDS[Resident.Citizen][0]) {
-                    float missing_quality = FOOD_QUALITY_THRESHOLDS[Resident.Citizen][0] - services[ServiceType.Food][QUALITY];
-                    float penalty = missing_quality * 0.5f;
-                    Happiness[Resident.Citizen] -= penalty;
-                    Happiness_Info[Resident.Citizen].Add(string.Format("Food quality: -{0}", UI_Happiness(penalty)));
-                } else if (services[ServiceType.Food][QUALITY] > FOOD_QUALITY_THRESHOLDS[Resident.Citizen][1]) {
-                    float extra_quality = services[ServiceType.Food][QUALITY] - FOOD_QUALITY_THRESHOLDS[Resident.Citizen][1];
-                    extra_quality = Math.Min(extra_quality, FOOD_QUALITY_THRESHOLDS[Resident.Citizen][2] - FOOD_QUALITY_THRESHOLDS[Resident.Citizen][1]);
-                    float bonus = extra_quality * 0.5f;
-                    Happiness[Resident.Citizen] += bonus;
-                    Happiness_Info[Resident.Citizen].Add(string.Format("Food quality: +{0}", UI_Happiness(bonus)));
+            if (Current_Residents[Resident.Citizen] != 0) {
+                float unemployment = City.Instance.Unemployment[Resident.Citizen] - UNEMPLOYMENT_PENALTY_THRESHOLD;
+                if (unemployment > 0.0f) {
+                    Happiness[Resident.Citizen] -= MAX_UNEMPLOYMENT_PENALTY * unemployment;
+                    Happiness_Info[Resident.Citizen].Add(string.Format("Unemployment: -{0}", UI_Happiness(MAX_UNEMPLOYMENT_PENALTY * unemployment)));
                 }
-            }
 
-            float appeal = Current_Appeal;
-            if (appeal < APPEAL_THRESHOLDS[Resident.Citizen][1]) {
-                float missing_appeal = Mathf.Min(APPEAL_THRESHOLDS[Resident.Citizen][1] - appeal, APPEAL_THRESHOLDS[Resident.Citizen][1] - APPEAL_THRESHOLDS[Resident.Citizen][0]);
-                float appeal_penalty = missing_appeal * 0.10f;
-                Happiness[Resident.Citizen] -= appeal_penalty;
-                Happiness_Info[Resident.Citizen].Add(string.Format("Appeal: -{0}", UI_Happiness(appeal_penalty)));
-            } else if (appeal > APPEAL_THRESHOLDS[Resident.Citizen][2]) {
-                float bonus_appeal = Mathf.Min(appeal - APPEAL_THRESHOLDS[Resident.Citizen][2], APPEAL_THRESHOLDS[Resident.Citizen][3] - APPEAL_THRESHOLDS[Resident.Citizen][2]);
-                float appeal_bonus = bonus_appeal * 0.025f;
-                Happiness[Resident.Citizen] += appeal_bonus;
-                Happiness_Info[Resident.Citizen].Add(string.Format("Appeal: +{0}", UI_Happiness(appeal_bonus)));
-            }
-
-            if (services[ServiceType.Herbs][AMOUNT] != 0.0f) {
-                float base_herb_bonus = 0.05f;
-                float herb_bonus = base_herb_bonus * Mathf.Clamp(services[ServiceType.Herbs][QUALITY], 0.75f, 1.1f);
-                Happiness[Resident.Citizen] += herb_bonus;
-                Happiness_Info[Resident.Citizen].Add(string.Format("Herbs: +{0}", UI_Happiness(herb_bonus)));
-            }
-
-            if (services[ServiceType.Salt][AMOUNT] != 0.0f) {
-                float base_salt_bonus = 0.05f;
-                float salt_bonus = base_salt_bonus * Mathf.Clamp(services[ServiceType.Salt][QUALITY], 0.9f, 1.1f);
-                Happiness[Resident.Citizen] += salt_bonus;
-                Happiness_Info[Resident.Citizen].Add(string.Format("Salt: +{0}", UI_Happiness(salt_bonus)));
-            }
-
-            if (services[ServiceType.Clothes][AMOUNT] != 0.0f) {
-                //Simple clothes = 0.5f quality, Leather clothes = 1.0f quality
-                if (services[ServiceType.Clothes][QUALITY] > 0.5f) {
-                    float base_clothing_bonus = 0.05f;
-                    float clothing_bonus = base_clothing_bonus * (2.0f * (services[ServiceType.Clothes][QUALITY] - 0.5f));
-                    Happiness[Resident.Citizen] += clothing_bonus;
-                    Happiness_Info[Resident.Citizen].Add(string.Format("Clothing: +{0}", UI_Happiness(clothing_bonus)));
+                if (HP < Max_HP) {
+                    float disrepair = MAX_DISREPAIR_PENALTY * (1.0f - (HP / Max_HP));
+                    Happiness[Resident.Citizen] -= disrepair;
+                    Happiness_Info[Resident.Citizen].Add(string.Format("Disrepair: -{0}", UI_Happiness(disrepair)));
                 }
-            } else {
-                float clothing_penalty = 0.25f;
-                Happiness[Resident.Citizen] -= clothing_penalty;
-                Happiness_Info[Resident.Citizen].Add(string.Format("Clothing: -{0}", UI_Happiness(clothing_penalty)));
-            }
 
-            if (services[ServiceType.Tavern][AMOUNT] != 0.0f) {
-                float base_tavern_bonus = 0.10f;
-                float tavern_bonus = base_tavern_bonus * services[ServiceType.Tavern][QUALITY];
-                Happiness[Resident.Citizen] += tavern_bonus;
-                Happiness_Info[Resident.Citizen].Add(string.Format("Tavern: +{0}", UI_Happiness(tavern_bonus)));
-            }
+                if (services[ServiceType.Fuel][AMOUNT] == 0.0f) {
+                    Happiness[Resident.Citizen] -= NO_FUEL_PENALTY;
+                    Happiness_Info[Resident.Citizen].Add(string.Format("No fuel: -{0}", UI_Happiness(NO_FUEL_PENALTY)));
+                } else if (services[ServiceType.Fuel][QUALITY] < BAD_FUEL_SERVICE_PENALTY_THRESHOLD) {
+                    float fuel_penalty = 0.15f * ((BAD_FUEL_SERVICE_PENALTY_THRESHOLD - services[ServiceType.Fuel][QUALITY]) / BAD_FUEL_SERVICE_PENALTY_THRESHOLD);
+                    Happiness[Resident.Citizen] -= fuel_penalty;
+                    Happiness_Info[Resident.Citizen].Add(string.Format("Bad fuel service: -{0}", UI_Happiness(fuel_penalty)));
+                }
 
-            if (services[ServiceType.Chapel][AMOUNT] != 0.0f) {
-                float base_chapel_bonus = 0.05f;
-                float chapel_bonus = base_chapel_bonus * services[ServiceType.Chapel][QUALITY];
-                Happiness[Resident.Citizen] += chapel_bonus;
-                Happiness_Info[Resident.Citizen].Add(string.Format("Chapel: +{0}", UI_Happiness(chapel_bonus)));
-            }
+                if (services[ServiceType.Food][AMOUNT] == 0.0f) {
+                    Happiness[Resident.Citizen] -= STARVATION_PENALTY;
+                    Happiness_Info[Resident.Citizen].Add(string.Format("Starvation: -{0}", UI_Happiness(STARVATION_PENALTY)));
+                } else {
+                    if (services[ServiceType.Food][QUALITY] < FOOD_QUALITY_THRESHOLDS[Resident.Citizen][0]) {
+                        float missing_quality = FOOD_QUALITY_THRESHOLDS[Resident.Citizen][0] - services[ServiceType.Food][QUALITY];
+                        float penalty = missing_quality * 0.5f;
+                        Happiness[Resident.Citizen] -= penalty;
+                        Happiness_Info[Resident.Citizen].Add(string.Format("Food quality: -{0}", UI_Happiness(penalty)));
+                    } else if (services[ServiceType.Food][QUALITY] > FOOD_QUALITY_THRESHOLDS[Resident.Citizen][1]) {
+                        float extra_quality = services[ServiceType.Food][QUALITY] - FOOD_QUALITY_THRESHOLDS[Resident.Citizen][1];
+                        extra_quality = Math.Min(extra_quality, FOOD_QUALITY_THRESHOLDS[Resident.Citizen][2] - FOOD_QUALITY_THRESHOLDS[Resident.Citizen][1]);
+                        float bonus = extra_quality * 0.5f;
+                        Happiness[Resident.Citizen] += bonus;
+                        Happiness_Info[Resident.Citizen].Add(string.Format("Food quality: +{0}", UI_Happiness(bonus)));
+                    }
+                }
 
-            if (services[ServiceType.Taxes][AMOUNT] != 0.0f) {
-                float tax_penalty = MAX_TAX_PENALTY * services[ServiceType.Taxes][QUALITY];
-                Happiness[Resident.Citizen] -= tax_penalty;
-                Happiness_Info[Resident.Citizen].Add(string.Format("Taxes: -{0}", UI_Happiness(tax_penalty)));
-            }
+                float appeal = Current_Appeal;
+                if (appeal < APPEAL_THRESHOLDS[Resident.Citizen][1]) {
+                    float missing_appeal = Mathf.Min(APPEAL_THRESHOLDS[Resident.Citizen][1] - appeal, APPEAL_THRESHOLDS[Resident.Citizen][1] - APPEAL_THRESHOLDS[Resident.Citizen][0]);
+                    float appeal_penalty = missing_appeal * 0.10f;
+                    Happiness[Resident.Citizen] -= appeal_penalty;
+                    Happiness_Info[Resident.Citizen].Add(string.Format("Appeal: -{0}", UI_Happiness(appeal_penalty)));
+                } else if (appeal > APPEAL_THRESHOLDS[Resident.Citizen][2]) {
+                    float bonus_appeal = Mathf.Min(appeal - APPEAL_THRESHOLDS[Resident.Citizen][2], APPEAL_THRESHOLDS[Resident.Citizen][3] - APPEAL_THRESHOLDS[Resident.Citizen][2]);
+                    float appeal_bonus = bonus_appeal * 0.025f;
+                    Happiness[Resident.Citizen] += appeal_bonus;
+                    Happiness_Info[Resident.Citizen].Add(string.Format("Appeal: +{0}", UI_Happiness(appeal_bonus)));
+                }
 
-            Happiness[Resident.Citizen] = Math.Max(0.0f, Happiness[Resident.Citizen]);
+                if (services[ServiceType.Herbs][AMOUNT] != 0.0f) {
+                    float base_herb_bonus = 0.05f;
+                    float herb_bonus = base_herb_bonus * Mathf.Clamp(services[ServiceType.Herbs][QUALITY], 0.75f, 1.1f);
+                    Happiness[Resident.Citizen] += herb_bonus;
+                    Happiness_Info[Resident.Citizen].Add(string.Format("Herbs: +{0}", UI_Happiness(herb_bonus)));
+                }
+
+                if (services[ServiceType.Salt][AMOUNT] != 0.0f) {
+                    float base_salt_bonus = 0.05f;
+                    float salt_bonus = base_salt_bonus * Mathf.Clamp(services[ServiceType.Salt][QUALITY], 0.9f, 1.1f);
+                    Happiness[Resident.Citizen] += salt_bonus;
+                    Happiness_Info[Resident.Citizen].Add(string.Format("Salt: +{0}", UI_Happiness(salt_bonus)));
+                }
+
+                if (services[ServiceType.Clothes][AMOUNT] != 0.0f) {
+                    //Simple clothes = 0.5f quality, Leather clothes = 1.0f quality
+                    if (services[ServiceType.Clothes][QUALITY] > 0.5f) {
+                        float base_clothing_bonus = 0.05f;
+                        float clothing_bonus = base_clothing_bonus * (2.0f * (services[ServiceType.Clothes][QUALITY] - 0.5f));
+                        Happiness[Resident.Citizen] += clothing_bonus;
+                        Happiness_Info[Resident.Citizen].Add(string.Format("Clothing: +{0}", UI_Happiness(clothing_bonus)));
+                    }
+                } else {
+                    float clothing_penalty = 0.25f;
+                    Happiness[Resident.Citizen] -= clothing_penalty;
+                    Happiness_Info[Resident.Citizen].Add(string.Format("Clothing: -{0}", UI_Happiness(clothing_penalty)));
+                }
+
+                if (services[ServiceType.Tavern][AMOUNT] != 0.0f) {
+                    float base_tavern_bonus = 0.10f;
+                    float tavern_bonus = base_tavern_bonus * services[ServiceType.Tavern][QUALITY];
+                    Happiness[Resident.Citizen] += tavern_bonus;
+                    Happiness_Info[Resident.Citizen].Add(string.Format("Tavern: +{0}", UI_Happiness(tavern_bonus)));
+                }
+
+                if (services[ServiceType.Chapel][AMOUNT] != 0.0f) {
+                    float base_chapel_bonus = 0.05f;
+                    float chapel_bonus = base_chapel_bonus * services[ServiceType.Chapel][QUALITY];
+                    Happiness[Resident.Citizen] += chapel_bonus;
+                    Happiness_Info[Resident.Citizen].Add(string.Format("Chapel: +{0}", UI_Happiness(chapel_bonus)));
+                }
+
+                if (services[ServiceType.Taxes][AMOUNT] != 0.0f) {
+                    float tax_penalty = MAX_TAX_PENALTY * services[ServiceType.Taxes][QUALITY];
+                    Happiness[Resident.Citizen] -= tax_penalty;
+                    Happiness_Info[Resident.Citizen].Add(string.Format("Taxes: -{0}", UI_Happiness(tax_penalty)));
+                }
+
+                Happiness[Resident.Citizen] = Math.Max(0.0f, Happiness[Resident.Citizen]);
+            }
         }
 
         if (Resident_Space[Resident.Noble] != 0) {
             Happiness[Resident.Noble] = BASE_HAPPINESS[Resident.Noble];
             Happiness_Info[Resident.Noble].Add(string.Format("Base: {0}", UI_Happiness(BASE_HAPPINESS[Resident.Noble])));
-
-            float unemployment = City.Instance.Unemployment[Resident.Noble] - UNEMPLOYMENT_PENALTY_THRESHOLD;
-            if (unemployment > 0.0f) {
-                Happiness[Resident.Noble] -= (MAX_UNEMPLOYMENT_PENALTY * unemployment) * 0.5f;
-                Happiness_Info[Resident.Noble].Add(string.Format("Unemployment: -{0}", UI_Happiness((MAX_UNEMPLOYMENT_PENALTY * unemployment) * 0.5f)));
-            }
-
-            if (HP < Max_HP) {
-                float disrepair = (MAX_DISREPAIR_PENALTY * (1.0f - (HP / Max_HP))) * 1.25f;
-                Happiness[Resident.Noble] -= disrepair;
-                Happiness_Info[Resident.Noble].Add(string.Format("Disrepair: -{0}", UI_Happiness(disrepair)));
-            }
-
-            if (services[ServiceType.Fuel][AMOUNT] == 0.0f) {
-                Happiness[Resident.Noble] -= NO_FUEL_PENALTY;
-                Happiness_Info[Resident.Noble].Add(string.Format("No fuel: -{0}", UI_Happiness(NO_FUEL_PENALTY)));
-            } else if (services[ServiceType.Fuel][QUALITY] < BAD_FUEL_SERVICE_PENALTY_THRESHOLD) {
-                float fuel_penalty = 0.25f * ((BAD_FUEL_SERVICE_PENALTY_THRESHOLD - services[ServiceType.Fuel][QUALITY]) / BAD_FUEL_SERVICE_PENALTY_THRESHOLD);
-                Happiness[Resident.Noble] -= fuel_penalty;
-                Happiness_Info[Resident.Noble].Add(string.Format("Bad fuel service: -{0}", UI_Happiness(fuel_penalty)));
-            }
-
-            if (services[ServiceType.Food][AMOUNT] == 0.0f) {
-                Happiness[Resident.Noble] -= STARVATION_PENALTY;
-                Happiness_Info[Resident.Noble].Add(string.Format("Starvation: -{0}", UI_Happiness(STARVATION_PENALTY)));
-            } else {
-                if (services[ServiceType.Food][QUALITY] < FOOD_QUALITY_THRESHOLDS[Resident.Noble][0]) {
-                    float missing_quality = FOOD_QUALITY_THRESHOLDS[Resident.Noble][0] - services[ServiceType.Food][QUALITY];
-                    float penalty = missing_quality * 1.25f;
-                    Happiness[Resident.Noble] -= penalty;
-                    Happiness_Info[Resident.Noble].Add(string.Format("Food quality: -{0}", UI_Happiness(penalty)));
-                } else if (services[ServiceType.Food][QUALITY] > FOOD_QUALITY_THRESHOLDS[Resident.Noble][1]) {
-                    float extra_quality = services[ServiceType.Food][QUALITY] - FOOD_QUALITY_THRESHOLDS[Resident.Noble][1];
-                    extra_quality = Math.Min(extra_quality, FOOD_QUALITY_THRESHOLDS[Resident.Noble][2] - FOOD_QUALITY_THRESHOLDS[Resident.Noble][1]);
-                    float bonus = extra_quality * 1.10f;
-                    Happiness[Resident.Noble] += bonus;
-                    Happiness_Info[Resident.Noble].Add(string.Format("Food quality: +{0}", UI_Happiness(bonus)));
+            if (Current_Residents[Resident.Noble] != 0) {
+                float unemployment = City.Instance.Unemployment[Resident.Noble] - UNEMPLOYMENT_PENALTY_THRESHOLD;
+                if (unemployment > 0.0f) {
+                    Happiness[Resident.Noble] -= (MAX_UNEMPLOYMENT_PENALTY * unemployment) * 0.5f;
+                    Happiness_Info[Resident.Noble].Add(string.Format("Unemployment: -{0}", UI_Happiness((MAX_UNEMPLOYMENT_PENALTY * unemployment) * 0.5f)));
                 }
-            }
 
-            float appeal = Current_Appeal;
-            if (appeal < APPEAL_THRESHOLDS[Resident.Noble][1]) {
-                float missing_appeal = Mathf.Min(APPEAL_THRESHOLDS[Resident.Noble][1] - appeal, APPEAL_THRESHOLDS[Resident.Noble][1] - APPEAL_THRESHOLDS[Resident.Noble][0]);
-                float appeal_penalty = missing_appeal * 0.10f;
-                Happiness[Resident.Noble] -= appeal_penalty;
-                Happiness_Info[Resident.Noble].Add(string.Format("Appeal: -{0}", UI_Happiness(appeal_penalty)));
-            } else if (appeal > APPEAL_THRESHOLDS[Resident.Noble][2]) {
-                float bonus_appeal = Mathf.Min(appeal - APPEAL_THRESHOLDS[Resident.Noble][2], APPEAL_THRESHOLDS[Resident.Noble][3] - APPEAL_THRESHOLDS[Resident.Noble][2]);
-                float appeal_bonus = bonus_appeal * 0.10f;
-                Happiness[Resident.Noble] += appeal_bonus;
-                Happiness_Info[Resident.Noble].Add(string.Format("Appeal: +{0}", UI_Happiness(appeal_bonus)));
-            }
+                if (HP < Max_HP) {
+                    float disrepair = (MAX_DISREPAIR_PENALTY * (1.0f - (HP / Max_HP))) * 1.25f;
+                    Happiness[Resident.Noble] -= disrepair;
+                    Happiness_Info[Resident.Noble].Add(string.Format("Disrepair: -{0}", UI_Happiness(disrepair)));
+                }
 
-            if (services[ServiceType.Herbs][AMOUNT] != 0.0f) {
-                float base_herb_bonus = 0.025f;
-                float herb_bonus = base_herb_bonus * Mathf.Clamp(services[ServiceType.Herbs][QUALITY], 0.75f, 1.1f);
-                Happiness[Resident.Noble] += herb_bonus;
-                Happiness_Info[Resident.Noble].Add(string.Format("Herbs: +{0}", UI_Happiness(herb_bonus)));
-            }
+                if (services[ServiceType.Fuel][AMOUNT] == 0.0f) {
+                    Happiness[Resident.Noble] -= NO_FUEL_PENALTY;
+                    Happiness_Info[Resident.Noble].Add(string.Format("No fuel: -{0}", UI_Happiness(NO_FUEL_PENALTY)));
+                } else if (services[ServiceType.Fuel][QUALITY] < BAD_FUEL_SERVICE_PENALTY_THRESHOLD) {
+                    float fuel_penalty = 0.25f * ((BAD_FUEL_SERVICE_PENALTY_THRESHOLD - services[ServiceType.Fuel][QUALITY]) / BAD_FUEL_SERVICE_PENALTY_THRESHOLD);
+                    Happiness[Resident.Noble] -= fuel_penalty;
+                    Happiness_Info[Resident.Noble].Add(string.Format("Bad fuel service: -{0}", UI_Happiness(fuel_penalty)));
+                }
 
-            if (services[ServiceType.Salt][AMOUNT] != 0.0f) {
-                float base_salt_bonus = 0.05f;
-                float salt_bonus = base_salt_bonus * Mathf.Clamp(services[ServiceType.Salt][QUALITY], 0.9f, 1.1f);
-                Happiness[Resident.Noble] += salt_bonus;
-                Happiness_Info[Resident.Noble].Add(string.Format("Salt: +{0}", UI_Happiness(salt_bonus)));
-            }
+                if (services[ServiceType.Food][AMOUNT] == 0.0f) {
+                    Happiness[Resident.Noble] -= STARVATION_PENALTY;
+                    Happiness_Info[Resident.Noble].Add(string.Format("Starvation: -{0}", UI_Happiness(STARVATION_PENALTY)));
+                } else {
+                    if (services[ServiceType.Food][QUALITY] < FOOD_QUALITY_THRESHOLDS[Resident.Noble][0]) {
+                        float missing_quality = FOOD_QUALITY_THRESHOLDS[Resident.Noble][0] - services[ServiceType.Food][QUALITY];
+                        float penalty = missing_quality * 1.25f;
+                        Happiness[Resident.Noble] -= penalty;
+                        Happiness_Info[Resident.Noble].Add(string.Format("Food quality: -{0}", UI_Happiness(penalty)));
+                    } else if (services[ServiceType.Food][QUALITY] > FOOD_QUALITY_THRESHOLDS[Resident.Noble][1]) {
+                        float extra_quality = services[ServiceType.Food][QUALITY] - FOOD_QUALITY_THRESHOLDS[Resident.Noble][1];
+                        extra_quality = Math.Min(extra_quality, FOOD_QUALITY_THRESHOLDS[Resident.Noble][2] - FOOD_QUALITY_THRESHOLDS[Resident.Noble][1]);
+                        float bonus = extra_quality * 1.10f;
+                        Happiness[Resident.Noble] += bonus;
+                        Happiness_Info[Resident.Noble].Add(string.Format("Food quality: +{0}", UI_Happiness(bonus)));
+                    }
+                }
 
-            if (services[ServiceType.Taxes][AMOUNT] != 0.0f) {
-                float tax_penalty = MAX_TAX_PENALTY * services[ServiceType.Taxes][QUALITY];
-                Happiness[Resident.Noble] -= tax_penalty;
-                Happiness_Info[Resident.Noble].Add(string.Format("Taxes: -{0}", UI_Happiness(tax_penalty)));
-            }
+                float appeal = Current_Appeal;
+                if (appeal < APPEAL_THRESHOLDS[Resident.Noble][1]) {
+                    float missing_appeal = Mathf.Min(APPEAL_THRESHOLDS[Resident.Noble][1] - appeal, APPEAL_THRESHOLDS[Resident.Noble][1] - APPEAL_THRESHOLDS[Resident.Noble][0]);
+                    float appeal_penalty = missing_appeal * 0.10f;
+                    Happiness[Resident.Noble] -= appeal_penalty;
+                    Happiness_Info[Resident.Noble].Add(string.Format("Appeal: -{0}", UI_Happiness(appeal_penalty)));
+                } else if (appeal > APPEAL_THRESHOLDS[Resident.Noble][2]) {
+                    float bonus_appeal = Mathf.Min(appeal - APPEAL_THRESHOLDS[Resident.Noble][2], APPEAL_THRESHOLDS[Resident.Noble][3] - APPEAL_THRESHOLDS[Resident.Noble][2]);
+                    float appeal_bonus = bonus_appeal * 0.10f;
+                    Happiness[Resident.Noble] += appeal_bonus;
+                    Happiness_Info[Resident.Noble].Add(string.Format("Appeal: +{0}", UI_Happiness(appeal_bonus)));
+                }
 
-            Happiness[Resident.Noble] = Math.Max(0.0f, Happiness[Resident.Noble]);
+                if (services[ServiceType.Herbs][AMOUNT] != 0.0f) {
+                    float base_herb_bonus = 0.025f;
+                    float herb_bonus = base_herb_bonus * Mathf.Clamp(services[ServiceType.Herbs][QUALITY], 0.75f, 1.1f);
+                    Happiness[Resident.Noble] += herb_bonus;
+                    Happiness_Info[Resident.Noble].Add(string.Format("Herbs: +{0}", UI_Happiness(herb_bonus)));
+                }
+
+                if (services[ServiceType.Salt][AMOUNT] != 0.0f) {
+                    float base_salt_bonus = 0.05f;
+                    float salt_bonus = base_salt_bonus * Mathf.Clamp(services[ServiceType.Salt][QUALITY], 0.9f, 1.1f);
+                    Happiness[Resident.Noble] += salt_bonus;
+                    Happiness_Info[Resident.Noble].Add(string.Format("Salt: +{0}", UI_Happiness(salt_bonus)));
+                }
+
+                if (services[ServiceType.Taxes][AMOUNT] != 0.0f) {
+                    float tax_penalty = MAX_TAX_PENALTY * services[ServiceType.Taxes][QUALITY];
+                    Happiness[Resident.Noble] -= tax_penalty;
+                    Happiness_Info[Resident.Noble].Add(string.Format("Taxes: -{0}", UI_Happiness(tax_penalty)));
+                }
+
+                Happiness[Resident.Noble] = Math.Max(0.0f, Happiness[Resident.Noble]);
+            }
         }
 
         float migration_threshold = 0.35f;

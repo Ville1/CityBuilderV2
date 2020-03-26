@@ -202,7 +202,7 @@ public class BuildingPrototypes {
                     }
                 }
             }
-            float food_multiplier = 0.35f;
+            float food_multiplier = 0.55f;
             float herb_multiplier = 1.00f;
             building.Produce(Resource.Roots, roots * food_multiplier, delta_time);
             building.Produce(Resource.Berries, berries * food_multiplier, delta_time);
@@ -261,11 +261,11 @@ public class BuildingPrototypes {
                 return;
             }
             
-            float prefered_water_count = 35.0f;
+            float prefered_water_count = 25.0f;
             float overlap_multiplier = own_water_tiles / total_water_tiles;
             float water_multiplier = own_water_tiles >= prefered_water_count ? 1.0f : own_water_tiles / prefered_water_count;
 
-            float base_fish = 3.50f;
+            float base_fish = 5.00f;
 
             float fish = (base_fish * overlap_multiplier) * water_multiplier;
 
@@ -553,7 +553,7 @@ public class BuildingPrototypes {
                     }
                 }
             }
-            float multiplier = 0.45f;
+            float multiplier = 0.60f;
             game = Mathf.Max((game * 0.1f) * multiplier, 0.0f);
             float hide = game * 0.50f;
             building.Produce(Resource.Game, game, delta_time);
