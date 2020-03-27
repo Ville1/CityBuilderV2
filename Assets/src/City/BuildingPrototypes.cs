@@ -14,7 +14,7 @@ public class BuildingPrototypes {
         prototypes = new List<Building>();
 
         prototypes.Add(new Building("Townhall", Building.TOWN_HALL_INTERNAL_NAME, Building.UI_Category.Admin, "town_hall", Building.BuildingSize.s2x2, 1000, new Dictionary<Resource, int>(), 0, new List<Resource>() { Resource.Lumber, Resource.Stone, Resource.Tools, Resource.Wood },
-            3000, 40.0f, 0, new Dictionary<Resource, float>(), 0.0f, 3.0f, 30.0f, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 25, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.05f, 7.0f));
+            2500, 40.0f, 0, new Dictionary<Resource, float>(), 0.0f, 3.0f, 30.0f, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 25, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.05f, 7.0f));
         prototypes.First(x => x.Internal_Name == Building.TOWN_HALL_INTERNAL_NAME).Sprites.Add(new SpriteData("town_hall_1"));
 
         prototypes.Add(new Residence("Cabin", "hut", Building.UI_Category.Housing, "hut", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
@@ -66,8 +66,65 @@ public class BuildingPrototypes {
         }, new List<Resource>(), new List<Resource>() { Resource.Wood, Resource.Firewood }, 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "wood_cutters_lodge").Special_Settings.Add(new SpecialSetting("firewood_ratio", "Firewood production", SpecialSetting.SettingType.Slider, 0.0f));
 
+        prototypes.Add(new Building("Dirt Road", "dirt_road", Building.UI_Category.Infrastructure, "dirt_road_nesw", Building.BuildingSize.s1x1, 5, new Dictionary<Resource, int>() { { Resource.Tools, 1 } }, 10,
+            new List<Resource>(), 0, 0.0f, 5, new Dictionary<Resource, float>(), 0.01f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, true, true, 0.0f, 0, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
+        prototypes.First(x => x.Internal_Name == "dirt_road").Sprite.Add_Logic(delegate (Building building) {
+            Tile tile = building.Tile;
+            if (tile == null) {
+                tile = Map.Instance.Get_Tile_At(new Coordinates((int)building.GameObject.transform.position.x, (int)building.GameObject.transform.position.y));
+                if (tile == null) {
+                    return "dirt_road_nesw";
+                }
+            }
+            Tile north_tile = Map.Instance.Get_Tile_At(tile.Coordinates, Coordinates.Direction.North);
+            bool north = north_tile == null || (north_tile.Building != null && north_tile.Building.Is_Road);
+            bool north_stone = north_tile != null && north_tile.Building != null && north_tile.Building.Internal_Name == "cobblestone_road";
+            Tile east_tile = Map.Instance.Get_Tile_At(tile.Coordinates, Coordinates.Direction.East);
+            bool east = east_tile == null || (east_tile.Building != null && east_tile.Building.Is_Road);
+            bool east_stone = east_tile != null && east_tile.Building != null && east_tile.Building.Internal_Name == "cobblestone_road";
+            Tile south_tile = Map.Instance.Get_Tile_At(tile.Coordinates, Coordinates.Direction.South);
+            bool south = south_tile == null || (south_tile.Building != null && south_tile.Building.Is_Road);
+            bool south_stone = south_tile != null && south_tile.Building != null && south_tile.Building.Internal_Name == "cobblestone_road";
+            Tile west_tile = Map.Instance.Get_Tile_At(tile.Coordinates, Coordinates.Direction.West);
+            bool west = west_tile == null || (west_tile.Building != null && west_tile.Building.Is_Road);
+            bool west_stone = west_tile != null && west_tile.Building != null && west_tile.Building.Internal_Name == "cobblestone_road";
+            if (!north && !east && !south && !west) {
+                return "dirt_road_nesw";
+            }
+            
+            if (north && south && !east && !west && !south_stone && north_stone) {
+                return "dirt_road_s_sto_n";
+            }
+            if (north && south && !east && !west && south_stone && !north_stone) {
+                return "dirt_road_n_sto_s";
+            }
+            if (!north && !south && east && west && !east_stone && west_stone) {
+                return "dirt_road_e_sto_w";
+            }
+            if (!north && !south && east && west && east_stone && !west_stone) {
+                return "dirt_road_w_sto_e";
+            }
+
+            StringBuilder builder = new StringBuilder("dirt_road_");
+            if (north) {
+                builder.Append("n");
+            }
+            if (east) {
+                builder.Append("e");
+            }
+            if (south) {
+                builder.Append("s");
+            }
+            if (west) {
+                builder.Append("w");
+            }
+
+            return builder.ToString();
+        });
+        prototypes.First(x => x.Internal_Name == "dirt_road").Tags.Add(Building.Tag.Does_Not_Block_Wind);
+
         prototypes.Add(new Building("Cobblestone Road", "cobblestone_road", Building.UI_Category.Infrastructure, "road_nesw", Building.BuildingSize.s1x1, 10, new Dictionary<Resource, int>() { { Resource.Stone, 10 }, { Resource.Tools, 1 } }, 10,
-            new List<Resource>(), 0, 0.0f, 10, new Dictionary<Resource, float>() { { Resource.Stone, 0.01f } }, 0.0f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, true, true, 0.0f, 0, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
+            new List<Resource>(), 0, 0.0f, 10, new Dictionary<Resource, float>() { { Resource.Stone, 0.01f } }, 0.01f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, true, true, 0.0f, 0, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "cobblestone_road").Sprite.Add_Logic(delegate (Building building) {
             Tile tile = building.Tile;
             if (tile == null) {
@@ -585,7 +642,7 @@ public class BuildingPrototypes {
 
         prototypes.Add(new Building("Decorative Tree", "decorative_tree", Building.UI_Category.Services, "decorative_tree", Building.BuildingSize.s1x1, 50, new Dictionary<Resource, int>() {
             { Resource.Stone, 5 }, { Resource.Tools, 1 }
-        }, 25, new List<Resource>(), 0, 0.0f, 50, new Dictionary<Resource, float>(), 0.0f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 0, null, null, null, null,
+        }, 25, new List<Resource>(), 0, 0.0f, 50, new Dictionary<Resource, float>(), 0.02f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 0, null, null, null, null,
         new List<Resource>(), new List<Resource>(), 0.5f, 3.0f));
 
         prototypes.Add(new Building("Mine", "mine", Building.UI_Category.Industry, "mine", Building.BuildingSize.s2x2, 200, new Dictionary<Resource, int>() {

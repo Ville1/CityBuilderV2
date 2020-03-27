@@ -47,6 +47,8 @@ public class Residence : Building {
     public static readonly float RESOURCES_FOR_FULL_SERVICE = 10.0f;
     public static readonly float MAX_DISREPAIR_PENALTY = 0.75f;
     public static readonly float MAX_TAX_PENALTY = 0.25f;
+    public static readonly float DIRT_ROAD_RANGE = 3.0f;
+    public static readonly float DIRT_ROAD_PENALTY = 0.2f;
 
     public enum ServiceType { Food, Fuel, Herbs, Salt, Tavern, Chapel, Taxes, Clothes }
 
@@ -183,6 +185,14 @@ public class Residence : Building {
             services[ServiceType.Taxes][AMOUNT] = 0.0f;
         }
 
+        bool dirt_roads = false;
+        foreach(Tile tile in Get_Tiles_In_Circle(DIRT_ROAD_RANGE)) {
+            if(tile.Building != null && tile.Building.Internal_Name == "dirt_road") {
+                dirt_roads = true;
+                break;
+            }
+        }
+
         if (Resident_Space[Resident.Peasant] != 0) {
             if (City.Instance.Grace_Time) {
                 Happiness[Resident.Peasant] = 0.5f;
@@ -241,6 +251,12 @@ public class Residence : Building {
                         float appeal_bonus = bonus_appeal * 0.10f;
                         Happiness[Resident.Peasant] += appeal_bonus;
                         Happiness_Info[Resident.Peasant].Add(string.Format("Appeal: +{0}", UI_Happiness(appeal_bonus)));
+                    }
+
+                    if (dirt_roads) {
+                        float dirt_roads_penalty = DIRT_ROAD_PENALTY * 0.25f;
+                        Happiness[Resident.Peasant] -= dirt_roads_penalty;
+                        Happiness_Info[Resident.Peasant].Add(string.Format("Dirt roads: -{0}", UI_Happiness(dirt_roads_penalty)));
                     }
 
                     if (services[ServiceType.Herbs][AMOUNT] != 0.0f) {
@@ -352,6 +368,12 @@ public class Residence : Building {
                     Happiness_Info[Resident.Citizen].Add(string.Format("Appeal: +{0}", UI_Happiness(appeal_bonus)));
                 }
 
+                if (dirt_roads) {
+                    float dirt_roads_penalty = DIRT_ROAD_PENALTY;
+                    Happiness[Resident.Citizen] -= dirt_roads_penalty;
+                    Happiness_Info[Resident.Citizen].Add(string.Format("Dirt roads: -{0}", UI_Happiness(dirt_roads_penalty)));
+                }
+
                 if (services[ServiceType.Herbs][AMOUNT] != 0.0f) {
                     float base_herb_bonus = 0.05f;
                     float herb_bonus = base_herb_bonus * Mathf.Clamp(services[ServiceType.Herbs][QUALITY], 0.75f, 1.1f);
@@ -458,6 +480,12 @@ public class Residence : Building {
                     float appeal_bonus = bonus_appeal * 0.10f;
                     Happiness[Resident.Noble] += appeal_bonus;
                     Happiness_Info[Resident.Noble].Add(string.Format("Appeal: +{0}", UI_Happiness(appeal_bonus)));
+                }
+
+                if (dirt_roads) {
+                    float dirt_roads_penalty = DIRT_ROAD_PENALTY * 2.0f;
+                    Happiness[Resident.Noble] -= dirt_roads_penalty;
+                    Happiness_Info[Resident.Noble].Add(string.Format("Dirt roads: -{0}", UI_Happiness(dirt_roads_penalty)));
                 }
 
                 if (services[ServiceType.Herbs][AMOUNT] != 0.0f) {

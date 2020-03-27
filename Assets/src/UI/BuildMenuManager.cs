@@ -68,8 +68,8 @@ public class BuildMenuManager : MonoBehaviour
                     t.Highlight = t.Buildable && t.Building == null ? new Color(0.0f, 0.5f, 0.0f, 1.0f) : new Color(0.5f, 0.0f, 0.0f, 1.0f);
                     highlighted_tiles.Add(t);
                 }
-                if(preview_building.Range > 0.0f || preview_building.Construction_Range > 0.0f) {
-                    float range = Math.Max(preview_building.Range, preview_building.Construction_Range);
+                float range = Mathf.Max(new float[3] { preview_building.Range, preview_building.Construction_Range, (BuildingPrototypes.Instance.Is_Residence(preview_building.Internal_Name) ? Residence.DIRT_ROAD_RANGE : 0.0f) });
+                if(range > 0.0f) {
                     List<Tile> tiles_in_range = preview_building.Get_Tiles_In_Circle(range);
                     foreach (Tile t in tiles_in_range) {
                         if (!tiles_under.Contains(t)) {

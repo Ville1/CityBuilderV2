@@ -357,7 +357,7 @@ public class City {
             Building town_hall = new Building(prototype, tile, tiles, false);
             Cash = 12000.0f;
             town_hall.Store_Resources(Resource.Wood, 750.0f);
-            town_hall.Store_Resources(Resource.Stone, 1250.0f);
+            town_hall.Store_Resources(Resource.Stone, 500.0f);
             town_hall.Store_Resources(Resource.Tools, 1250.0f);
             Buildings.Add(town_hall);
             return;
