@@ -56,4 +56,16 @@ public class Helper {
         }
         return clone;
     }
+
+    public static string Snake_Case_To_UI(string snake_case, bool capitalize)
+    {
+        if (string.IsNullOrEmpty(snake_case)) {
+            return string.Empty;
+        }
+        snake_case = snake_case.ToLower().Replace('_', ' ');
+        if (capitalize) {
+            snake_case = snake_case[0].ToString().ToUpper() + snake_case.Substring(1);
+        }
+        return snake_case;
+    }
 }

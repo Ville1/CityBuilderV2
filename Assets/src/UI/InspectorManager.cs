@@ -494,7 +494,7 @@ public class InspectorManager : MonoBehaviour {
             Settings_Button.interactable = building.Is_Complete && (building.Is_Storehouse || building.Special_Settings.Count > 0);
 
             //Highlights
-            float range = Mathf.Max(new float[3] { building.Range, building.Construction_Range, (building is Residence) ? Residence.DIRT_ROAD_RANGE : 0.0f });
+            float range = Mathf.Max(new float[3] { building.Range, building.Construction_Range, (building is Residence) ? ((building as Residence).Peasants_Only ? 0.0f : Residence.DIRT_ROAD_RANGE) : 0.0f });
             if (range > 0.0f) {
                 List<Tile> tiles_in_range = building.Get_Tiles_In_Circle(range);
                 List<Tile> special_highlight_tiles = building.On_Highlight != null ? building.On_Highlight(building) : new List<Tile>();

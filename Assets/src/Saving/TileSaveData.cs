@@ -6,9 +6,15 @@ public class TileSaveData {
     public int X;
     public int Y;
     public string Internal_Name;
-    public List<long> Worked_By;
+    public List<WorkSaveData> Worked_By;
     public List<MineralSaveData> Minerals;
     public bool Adjacent_To_Water;
+}
+
+[Serializable]
+public class WorkSaveData {
+    public long Id;
+    public int Type;
 }
 
 [Serializable]

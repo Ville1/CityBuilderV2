@@ -101,7 +101,7 @@ public class StorageSettingsGUIManager : MonoBehaviour {
             dropdown.ClearOptions();
             List<Dropdown.OptionData> option_data = new List<Dropdown.OptionData>();
             foreach(StorageSetting.StoragePriority priority in Enum.GetValues(typeof(StorageSetting.StoragePriority))) {
-                option_data.Add(new Dropdown.OptionData(priority.ToString()));
+                option_data.Add(new Dropdown.OptionData(Helper.Snake_Case_To_UI(priority.ToString(), true)));
             }
             dropdown.AddOptions(option_data);
             dropdown.value = (int)setting.Priority;

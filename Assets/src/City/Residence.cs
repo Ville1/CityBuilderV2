@@ -52,17 +52,20 @@ public class Residence : Building {
 
     public enum ServiceType { Food, Fuel, Herbs, Salt, Tavern, Chapel, Taxes, Clothes }
 
+    public float Residence_Quality { get; private set; }
     public Dictionary<Resident, int> Resident_Space { get; private set; }
     public Dictionary<Resident, int> Current_Residents { get; private set; }
     public Dictionary<Resident, float> Happiness { get; private set; }
     public Dictionary<Resident, List<string>> Happiness_Info { get; private set; }
     public float Food_Consumed { get; private set; }
+    public bool Peasants_Only { get { return (!Resident_Space.ContainsKey(Resident.Citizen) || Resident_Space[Resident.Citizen] == 0) && (!Resident_Space.ContainsKey(Resident.Noble) || Resident_Space[Resident.Noble] == 0); } }
 
     private Dictionary<Resident, float> migration_progress;
     private Dictionary<ServiceType, float[]> services;
-
+    
     public Residence(Residence prototype, Tile tile, List<Tile> tiles, bool is_preview) : base(prototype, tile, tiles, is_preview)
     {
+        Residence_Quality = prototype.Residence_Quality;
         Resident_Space = Helper.Clone_Dictionary(prototype.Resident_Space);
         Current_Residents = new Dictionary<Resident, int>();
         foreach (Resident resident in Enum.GetValues(typeof(Resident))) {
@@ -85,11 +88,12 @@ public class Residence : Building {
     }
 
     public Residence(string name, string internal_name, UI_Category category, string sprite, BuildingSize size, int hp, Dictionary<Resource, int> cost, int cash_cost, List<Resource> allowed_resources, int storage_limit, int construction_time,
-        Dictionary<Resource, float> upkeep, float cash_upkeep, float construction_speed, float construction_range, Dictionary<Resident, int> resident_space, OnBuiltDelegate on_built, OnUpdateDelegate on_update, OnDeconstructDelegate on_deconstruct,
+        Dictionary<Resource, float> upkeep, float cash_upkeep, float construction_speed, float construction_range, float residence_quality, Dictionary<Resident, int> resident_space, float range, OnBuiltDelegate on_built, OnUpdateDelegate on_update, OnDeconstructDelegate on_deconstruct,
         OnHighlightDelegate on_highlight, List<Resource> consumes, List<Resource> produces, float appeal, float appeal_range) :
         base(name, internal_name, category, sprite, size, hp, cost, cash_cost, allowed_resources, storage_limit, 0.0f, construction_time, upkeep, cash_upkeep, construction_speed, construction_range, new Dictionary<Resident, int>(), 0, false, false,
-            true, 0.0f, 0, on_built, on_update, on_deconstruct, on_highlight, consumes, produces, appeal, appeal_range)
+            true, range, 0, on_built, on_update, on_deconstruct, on_highlight, consumes, produces, appeal, appeal_range)
     {
+        Residence_Quality = residence_quality;
         Resident_Space = Helper.Clone_Dictionary(resident_space);
         foreach (Resident resident in Enum.GetValues(typeof(Resident))) {
             if (!Resident_Space.ContainsKey(resident)) {
@@ -103,7 +107,9 @@ public class Residence : Building {
 
     public Residence(BuildingSaveData data) : base(data)
     {
-        Resident_Space = Helper.Clone_Dictionary(BuildingPrototypes.Instance.Get_Residence(data.Internal_Name).Resident_Space);
+        Residence prototype = BuildingPrototypes.Instance.Get_Residence(data.Internal_Name);
+        Residence_Quality = prototype.Residence_Quality;
+        Resident_Space = Helper.Clone_Dictionary(prototype.Resident_Space);
         Current_Residents = new Dictionary<Resident, int>();
         foreach (Resident resident in Enum.GetValues(typeof(Resident))) {
             Current_Residents.Add(resident, 0);
@@ -212,6 +218,11 @@ public class Residence : Building {
                         Happiness[Resident.Peasant] -= disrepair;
                         Happiness_Info[Resident.Peasant].Add(string.Format("Disrepair: -{0}", UI_Happiness(disrepair)));
                     }
+                    
+                    if (Residence_Quality != 0.0f) {
+                        Happiness[Resident.Peasant] += Residence_Quality;
+                        Happiness_Info[Resident.Peasant].Add(string.Format("Residence quality: {0}{1}", Residence_Quality < 0.0f ? "" : "+", UI_Happiness(Residence_Quality)));
+                    }
 
                     if (services[ServiceType.Fuel][AMOUNT] == 0.0f) {
                         Happiness[Resident.Peasant] -= NO_FUEL_PENALTY;
@@ -252,13 +263,7 @@ public class Residence : Building {
                         Happiness[Resident.Peasant] += appeal_bonus;
                         Happiness_Info[Resident.Peasant].Add(string.Format("Appeal: +{0}", UI_Happiness(appeal_bonus)));
                     }
-
-                    if (dirt_roads) {
-                        float dirt_roads_penalty = DIRT_ROAD_PENALTY * 0.25f;
-                        Happiness[Resident.Peasant] -= dirt_roads_penalty;
-                        Happiness_Info[Resident.Peasant].Add(string.Format("Dirt roads: -{0}", UI_Happiness(dirt_roads_penalty)));
-                    }
-
+                    
                     if (services[ServiceType.Herbs][AMOUNT] != 0.0f) {
                         float base_herb_bonus = 0.05f;
                         float herb_bonus = base_herb_bonus * Mathf.Clamp(services[ServiceType.Herbs][QUALITY], 0.9f, 1.1f);
@@ -326,6 +331,11 @@ public class Residence : Building {
                     float disrepair = MAX_DISREPAIR_PENALTY * (1.0f - (HP / Max_HP));
                     Happiness[Resident.Citizen] -= disrepair;
                     Happiness_Info[Resident.Citizen].Add(string.Format("Disrepair: -{0}", UI_Happiness(disrepair)));
+                }
+
+                if (Residence_Quality != 0.0f) {
+                    Happiness[Resident.Citizen] += Residence_Quality;
+                    Happiness_Info[Resident.Citizen].Add(string.Format("Residence quality: {0}{1}", Residence_Quality < 0.0f ? "" : "+", UI_Happiness(Residence_Quality)));
                 }
 
                 if (services[ServiceType.Fuel][AMOUNT] == 0.0f) {
@@ -440,6 +450,11 @@ public class Residence : Building {
                     float disrepair = (MAX_DISREPAIR_PENALTY * (1.0f - (HP / Max_HP))) * 1.25f;
                     Happiness[Resident.Noble] -= disrepair;
                     Happiness_Info[Resident.Noble].Add(string.Format("Disrepair: -{0}", UI_Happiness(disrepair)));
+                }
+                
+                if (Residence_Quality != 0.0f) {
+                    Happiness[Resident.Noble] += Residence_Quality;
+                    Happiness_Info[Resident.Noble].Add(string.Format("Residence quality: {0}{1}", Residence_Quality < 0.0f ? "" : "+", UI_Happiness(Residence_Quality)));
                 }
 
                 if (services[ServiceType.Fuel][AMOUNT] == 0.0f) {

@@ -691,12 +691,12 @@ public class Map : MonoBehaviour
     {
         for (int x = 0; x < Width; x++) {
             for (int y = 0; y < Height; y++) {
-                foreach (long id in SaveManager.Instance.Get_Tile(x, y).Worked_By) {
-                    Building building = City.Instance.Buildings.FirstOrDefault(b => b.Id == id);
+                foreach (WorkSaveData data in SaveManager.Instance.Get_Tile(x, y).Worked_By) {
+                    Building building = City.Instance.Buildings.FirstOrDefault(b => b.Id == data.Id);
                     if (building == null) {
-                        CustomLogger.Instance.Error(string.Format("Building not found #{0}", id));
+                        CustomLogger.Instance.Error(string.Format("Building not found #{0}", data.Id));
                     } else {
-                        tiles[x][y].Worked_By.Add(building);
+                        tiles[x][y].Worked_By.Add(new Tile.WorkData() { Building = building, Type = (Tile.Work_Type)data.Type });
                     }
                 }
                 foreach(MineralSaveData mineral_data in SaveManager.Instance.Get_Tile(x, y).Minerals) {

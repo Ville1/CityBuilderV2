@@ -9,8 +9,36 @@ public class BuildingPrototypes {
 
     private List<Building> prototypes;
 
+    private Building.OnBuiltDelegate Reserve_Tiles(Tile.Work_Type type)
+    {
+        return delegate (Building building) {
+            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
+                tile.Add_Workers(building, type);
+            }
+        };
+    }
+
+    private Building.OnHighlightDelegate Highlight_Tiles(Tile.Work_Type type)
+    {
+        return delegate (Building building) {
+            List<Tile> worked_tiles = new List<Tile>();
+            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
+                if (tile.Can_Work(building, type)) {
+                    worked_tiles.Add(tile);
+                }
+            }
+            return worked_tiles;
+        };
+    }
+
     private BuildingPrototypes()
     {
+        Building.OnDeconstructDelegate unreserve_tiles = delegate (Building building) {
+            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
+                tile.Remove_Workers(building);
+            }
+        };
+
         prototypes = new List<Building>();
 
         prototypes.Add(new Building("Townhall", Building.TOWN_HALL_INTERNAL_NAME, Building.UI_Category.Admin, "town_hall", Building.BuildingSize.s2x2, 1000, new Dictionary<Resource, int>(), 0, new List<Resource>() { Resource.Lumber, Resource.Stone, Resource.Tools, Resource.Wood },
@@ -19,22 +47,19 @@ public class BuildingPrototypes {
 
         prototypes.Add(new Residence("Cabin", "hut", Building.UI_Category.Housing, "hut", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
             { Resource.Wood, 100 }, { Resource.Stone, 15 }, { Resource.Tools, 10 }
-        }, 100, new List<Resource>(), 0, 115, new Dictionary<Resource, float>() { { Resource.Wood, 0.05f } }, 0.0f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 } }, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
+        }, 100, new List<Resource>(), 0, 115, new Dictionary<Resource, float>() { { Resource.Wood, 0.05f } }, 0.0f, 0.0f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 } }, 0.0f, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "hut").Sprites.Add(new SpriteData("hut_1"));
 
         prototypes.Add(new Building("Wood Cutters Lodge", "wood_cutters_lodge", Building.UI_Category.Forestry, "wood_cutters_lodge", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
             { Resource.Wood, 75 }, { Resource.Stone, 5 }, { Resource.Tools, 15 }
-        }, 90, new List<Resource>(), 0, 0.0f, 85, new Dictionary<Resource, float>(), 0.75f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 } }, 10, true, false, true, 4.0f, 0, delegate(Building building) {
-            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                tile.Worked_By.Add(building);
-            }
-        }, delegate (Building building, float delta_time) {
+        }, 90, new List<Resource>(), 0, 0.0f, 85, new Dictionary<Resource, float>(), 0.75f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 } }, 10, true, false, true, 4.0f, 0, Reserve_Tiles(Tile.Work_Type.Cut_Wood),
+        delegate (Building building, float delta_time) {
             if (!building.Is_Operational) {
                 return;
             }
             float wood = 0.0f;
             foreach(Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                if (tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building && tile.Building == null) {
+                if (tile.Can_Work(building, Tile.Work_Type.Cut_Wood) && tile.Building == null) {
                     if(tile.Internal_Name == "forest") {
                         wood += 1.75f;
                     } else if(tile.Internal_Name == "sparse_forest") {
@@ -49,21 +74,7 @@ public class BuildingPrototypes {
             wood -= firewood;
             building.Produce(Resource.Wood, wood, delta_time);
             building.Produce(Resource.Firewood, firewood, delta_time);
-        }, delegate(Building building) {
-            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                if (tile.Worked_By.Contains(building)) {
-                    tile.Worked_By.Remove(building);
-                }
-            }
-        }, delegate (Building building) {
-            List<Tile> worked_tiles = new List<Tile>();
-            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                if (tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building) {
-                    worked_tiles.Add(tile);
-                }
-            }
-            return worked_tiles;
-        }, new List<Resource>(), new List<Resource>() { Resource.Wood, Resource.Firewood }, 0.0f, 0.0f));
+        }, unreserve_tiles, Highlight_Tiles(Tile.Work_Type.Cut_Wood), new List<Resource>(), new List<Resource>() { Resource.Wood, Resource.Firewood }, 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "wood_cutters_lodge").Special_Settings.Add(new SpecialSetting("firewood_ratio", "Firewood production", SpecialSetting.SettingType.Slider, 0.0f));
 
         prototypes.Add(new Building("Dirt Road", "dirt_road", Building.UI_Category.Infrastructure, "dirt_road_nesw", Building.BuildingSize.s1x1, 5, new Dictionary<Resource, int>() { { Resource.Tools, 1 } }, 10,
@@ -217,11 +228,8 @@ public class BuildingPrototypes {
 
         prototypes.Add(new Building("Gatherers Lodge", "gatherers_lodge", Building.UI_Category.Forestry, "gatherers_lodge", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
             { Resource.Wood, 85 }, { Resource.Stone, 10 }, { Resource.Tools, 10 }
-        }, 100, new List<Resource>(), 0, 0.0f, 95, new Dictionary<Resource, float>() { { Resource.Wood, 0.05f } }, 0.75f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 5 } }, 5, true, false, true, 5.0f, 0, delegate (Building building) {
-            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                tile.Worked_By.Add(building);
-            }
-        }, delegate (Building building, float delta_time) {
+        }, 100, new List<Resource>(), 0, 0.0f, 95, new Dictionary<Resource, float>() { { Resource.Wood, 0.05f } }, 0.75f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 5 } }, 5, true, false, true, 5.0f, 0, Reserve_Tiles(Tile.Work_Type.Forage),
+        delegate (Building building, float delta_time) {
             if (!building.Is_Operational) {
                 return;
             }
@@ -230,7 +238,7 @@ public class BuildingPrototypes {
             float mushrooms = 0.0f;
             float herbs = 0.0f;
             foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                if (tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building && tile.Building == null) {
+                if (tile.Can_Work(building, Tile.Work_Type.Forage) && tile.Building == null) {
                     if (tile.Internal_Name == "grass") {
                         roots     += 0.010f;
                         berries   += 0.025f;
@@ -265,29 +273,12 @@ public class BuildingPrototypes {
             building.Produce(Resource.Berries, berries * food_multiplier, delta_time);
             building.Produce(Resource.Mushrooms, mushrooms * food_multiplier, delta_time);
             building.Produce(Resource.Herbs, herbs * herb_multiplier, delta_time);
-        }, delegate (Building building) {
-            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                if (tile.Worked_By.Contains(building)) {
-                    tile.Worked_By.Remove(building);
-                }
-            }
-        }, delegate (Building building) {
-            List<Tile> worked_tiles = new List<Tile>();
-            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                if (tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building) {
-                    worked_tiles.Add(tile);
-                }
-            }
-            return worked_tiles;
-        }, new List<Resource>(), new List<Resource>() { Resource.Roots, Resource.Berries, Resource.Mushrooms, Resource.Herbs }, 0.0f, 0.0f));
+        }, unreserve_tiles, Highlight_Tiles(Tile.Work_Type.Forage), new List<Resource>(), new List<Resource>() { Resource.Roots, Resource.Berries, Resource.Mushrooms, Resource.Herbs }, 0.0f, 0.0f));
 
         prototypes.Add(new Building("Fisher's Hut", "fishers_hut", Building.UI_Category.Agriculture, "fishers_hut", Building.BuildingSize.s2x2, 90, new Dictionary<Resource, int>() {
             { Resource.Wood, 25 }, { Resource.Lumber, 60 }, { Resource.Stone, 10 }, { Resource.Tools, 10 }
-        }, 115, new List<Resource>(), 0, 0.0f, 95, new Dictionary<Resource, float>() { { Resource.Lumber, 0.01f }, { Resource.Wood, 0.01f } }, 1.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 5 }, { Building.Resident.Citizen, 5 } }, 5, true, false, true, 7.0f, 0, delegate (Building building) {
-            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                tile.Worked_By.Add(building);
-            }
-        }, delegate (Building building, float delta_time) {
+        }, 115, new List<Resource>(), 0, 0.0f, 95, new Dictionary<Resource, float>() { { Resource.Lumber, 0.01f }, { Resource.Wood, 0.01f } }, 1.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 5 }, { Building.Resident.Citizen, 5 } }, 5, true, false, true, 7.0f, 0, Reserve_Tiles(Tile.Work_Type.Fish),
+        delegate (Building building, float delta_time) {
             if (!building.Is_Operational) {
                 return;
             }
@@ -308,7 +299,7 @@ public class BuildingPrototypes {
             foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
                 if (tile.Internal_Name.StartsWith("water")) {
                     total_water_tiles += 1.0f;
-                    if (tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building) {
+                    if (tile.Can_Work(building, Tile.Work_Type.Fish)) {
                         own_water_tiles += 1.0f;
                     }
                 }
@@ -327,21 +318,7 @@ public class BuildingPrototypes {
             float fish = (base_fish * overlap_multiplier) * water_multiplier;
 
             building.Produce(Resource.Fish, fish, delta_time);
-        }, delegate (Building building) {
-            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                if (tile.Worked_By.Contains(building)) {
-                    tile.Worked_By.Remove(building);
-                }
-            }
-        }, delegate (Building building) {
-            List<Tile> worked_tiles = new List<Tile>();
-            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                if (tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building) {
-                    worked_tiles.Add(tile);
-                }
-            }
-            return worked_tiles;
-        }, new List<Resource>(), new List<Resource>() { Resource.Fish }, 0.0f, 0.0f));
+        }, unreserve_tiles, Highlight_Tiles(Tile.Work_Type.Fish), new List<Resource>(), new List<Resource>() { Resource.Fish }, 0.0f, 0.0f));
 
         prototypes.Add(new Building("Marketplace", "marketplace", Building.UI_Category.Services, "marketplace", Building.BuildingSize.s3x3, 150, new Dictionary<Resource, int>() {
             { Resource.Lumber, 20 },
@@ -580,11 +557,8 @@ public class BuildingPrototypes {
 
         prototypes.Add(new Building("Hunting Lodge", "hunting_lodge", Building.UI_Category.Forestry, "hunting_lodge", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
             { Resource.Wood, 85 }, { Resource.Stone, 10 }, { Resource.Tools, 10 }
-        }, 110, new List<Resource>(), 0, 0.0f, 95, new Dictionary<Resource, float>() { { Resource.Wood, 0.05f } }, 0.75f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 5 } }, 5, true, false, true, 9.0f, 0, delegate (Building building) {
-            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                tile.Worked_By.Add(building);
-            }
-        }, delegate (Building building, float delta_time) {
+        }, 110, new List<Resource>(), 0, 0.0f, 95, new Dictionary<Resource, float>() { { Resource.Wood, 0.05f } }, 0.75f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 5 } }, 5, true, false, true, 9.0f, 0, Reserve_Tiles(Tile.Work_Type.Hunt),
+        delegate (Building building, float delta_time) {
             if (!building.Is_Operational) {
                 return;
             }
@@ -596,7 +570,7 @@ public class BuildingPrototypes {
                     } else {
                         game -= 1.0f;
                     }
-                } else if (tile.Building == null && tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building) {
+                } else if (tile.Building == null && tile.Can_Work(building, Tile.Work_Type.Hunt)) {
                     if (tile.Internal_Name == "forest") {
                         game += 1.00f;
                     } else if (tile.Internal_Name == "sparse_forest") {
@@ -615,21 +589,7 @@ public class BuildingPrototypes {
             float hide = game * 0.50f;
             building.Produce(Resource.Game, game, delta_time);
             building.Produce(Resource.Hide, hide, delta_time);
-        }, delegate (Building building) {
-            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                if (tile.Worked_By.Contains(building)) {
-                    tile.Worked_By.Remove(building);
-                }
-            }
-        }, delegate (Building building) {
-            List<Tile> worked_tiles = new List<Tile>();
-            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                if (tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building) {
-                    worked_tiles.Add(tile);
-                }
-            }
-            return worked_tiles;
-        }, new List<Resource>(), new List<Resource>() { Resource.Game, Resource.Hide }, 0.0f, 0.0f));
+        }, unreserve_tiles, Highlight_Tiles(Tile.Work_Type.Hunt), new List<Resource>(), new List<Resource>() { Resource.Game, Resource.Hide }, 0.0f, 0.0f));
 
         prototypes.Add(new Building("Quarry", "quarry", Building.UI_Category.Industry, "quarry", Building.BuildingSize.s3x3, 350, new Dictionary<Resource, int>() {
             { Resource.Wood, 65 }, { Resource.Lumber, 80 }, { Resource.Tools, 45 }
@@ -647,11 +607,7 @@ public class BuildingPrototypes {
 
         prototypes.Add(new Building("Mine", "mine", Building.UI_Category.Industry, "mine", Building.BuildingSize.s2x2, 200, new Dictionary<Resource, int>() {
             { Resource.Wood, 90 }, { Resource.Lumber, 90 }, { Resource.Stone, 15 }, { Resource.Tools, 40 }
-        }, 250, new List<Resource>(), 0, 0.0f, 250, new Dictionary<Resource, float>() { { Resource.Wood, 0.10f } }, 2.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 15 } }, 15, true, false, true, 5.0f, 0, delegate (Building building) {
-            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                tile.Worked_By.Add(building);
-            }
-        }, delegate (Building building, float delta_time) {
+        }, 250, new List<Resource>(), 0, 0.0f, 250, new Dictionary<Resource, float>() { { Resource.Wood, 0.10f } }, 2.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 15 } }, 15, true, false, true, 5.0f, 0, Reserve_Tiles(Tile.Work_Type.Mine), delegate (Building building, float delta_time) {
             if (!building.Is_Operational) {
                 return;
             }
@@ -659,7 +615,7 @@ public class BuildingPrototypes {
             float coal = 0.0f;
             float salt = 0.0f;
             foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                if (tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building) {
+                if (tile.Can_Work(building, Tile.Work_Type.Mine)) {
                     if (tile.Minerals.ContainsKey(Mineral.Iron)) {
                         iron_ore += tile.Minerals[Mineral.Iron];
                     }
@@ -675,21 +631,7 @@ public class BuildingPrototypes {
             building.Produce(Resource.Iron_Ore, iron_ore * multiplier, delta_time);
             building.Produce(Resource.Coal, coal * multiplier, delta_time);
             building.Produce(Resource.Salt, salt * multiplier, delta_time);
-        }, delegate (Building building) {
-            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                if (tile.Worked_By.Contains(building)) {
-                    tile.Worked_By.Remove(building);
-                }
-            }
-        }, delegate (Building building) {
-            List<Tile> worked_tiles = new List<Tile>();
-            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                if (tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building) {
-                    worked_tiles.Add(tile);
-                }
-            }
-            return worked_tiles;
-        }, new List<Resource>(), new List<Resource>() { Resource.Iron_Ore, Resource.Coal, Resource.Salt }, -0.5f, 5.0f));
+        }, unreserve_tiles, Highlight_Tiles(Tile.Work_Type.Mine), new List<Resource>(), new List<Resource>() { Resource.Iron_Ore, Resource.Coal, Resource.Salt }, -0.5f, 5.0f));
 
         prototypes.Add(new Building("Clay Pit", "clay_pit", Building.UI_Category.Industry, "clay_pit", Building.BuildingSize.s3x3, 100, new Dictionary<Resource, int>() {
             { Resource.Wood, 15 }, { Resource.Lumber, 50 }, { Resource.Stone, 5 }, { Resource.Tools, 10 }
@@ -810,17 +752,14 @@ public class BuildingPrototypes {
 
         prototypes.Add(new Building("Small Farm", "small_farm", Building.UI_Category.Agriculture, "small_farm", Building.BuildingSize.s2x2, 125, new Dictionary<Resource, int>() {
             { Resource.Lumber, 110 }, { Resource.Stone, 15 }, { Resource.Tools, 10 }
-        }, 100, new List<Resource>(), 0, 0.0f, 135, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f } }, 1.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 } }, 10, true, false, true, 5.0f, 0, delegate (Building building) {
-            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                tile.Worked_By.Add(building);
-            }
-        }, delegate (Building building, float delta_time) {
+        }, 100, new List<Resource>(), 0, 0.0f, 135, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f } }, 1.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 } }, 10, true, false, true, 5.0f, 0, Reserve_Tiles(Tile.Work_Type.Farm),
+        delegate (Building building, float delta_time) {
             if (!building.Is_Operational) {
                 return;
             }
             float potatoes = 0.0f;
             foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                if (tile.Building != null && tile.Building.Internal_Name == "potato_field" && tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building) {
+                if (tile.Building != null && tile.Building.Internal_Name == "potato_field" && tile.Can_Work(building, Tile.Work_Type.Farm)) {
                     if (tile.Internal_Name == "grass") {
                         potatoes += 0.10f;
                     } else if (tile.Internal_Name == "fertile_ground") {
@@ -830,21 +769,7 @@ public class BuildingPrototypes {
             }
             float multiplier = 1.045f;
             building.Produce(Resource.Potatoes, potatoes * multiplier, delta_time);
-        }, delegate (Building building) {
-            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                if (tile.Worked_By.Contains(building)) {
-                    tile.Worked_By.Remove(building);
-                }
-            }
-        }, delegate (Building building) {
-            List<Tile> worked_tiles = new List<Tile>();
-            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                if (tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building) {
-                    worked_tiles.Add(tile);
-                }
-            }
-            return worked_tiles;
-        }, new List<Resource>(), new List<Resource>() { Resource.Potatoes }, 0.0f, 0.0f));
+        }, unreserve_tiles, Highlight_Tiles(Tile.Work_Type.Farm), new List<Resource>(), new List<Resource>() { Resource.Potatoes }, 0.0f, 0.0f));
 
         prototypes.Add(new Building("Potato Field", "potato_field", Building.UI_Category.Agriculture, "potato_field", Building.BuildingSize.s1x1, 50, new Dictionary<Resource, int>() {
             { Resource.Tools, 1 }
@@ -1032,11 +957,8 @@ public class BuildingPrototypes {
 
         prototypes.Add(new Building("Shepherd's Hut", "shepherds_hut", Building.UI_Category.Agriculture, "shepherds_hut", Building.BuildingSize.s2x2, 85, new Dictionary<Resource, int>() {
             { Resource.Wood, 25 }, { Resource.Lumber, 20 }, { Resource.Stone, 10 }, { Resource.Tools, 10 }
-        }, 85, new List<Resource>(), 0, 0.0f, 75, new Dictionary<Resource, float>() { { Resource.Wood, 0.01f }, { Resource.Lumber, 0.01f } }, 0.75f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 5 } }, 5, true, false, true, 4.0f, 0, delegate (Building building) {
-            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                tile.Worked_By.Add(building);
-            }
-        }, delegate (Building building, float delta_time) {
+        }, 85, new List<Resource>(), 0, 0.0f, 75, new Dictionary<Resource, float>() { { Resource.Wood, 0.01f }, { Resource.Lumber, 0.01f } }, 0.75f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 5 } }, 5, true, false, true, 4.0f, 0, Reserve_Tiles(Tile.Work_Type.Forage),
+        delegate (Building building, float delta_time) {
             if (!building.Is_Operational) {
                 return;
             }
@@ -1044,7 +966,7 @@ public class BuildingPrototypes {
             int max_sheep = Mathf.RoundToInt(5.0f * building.Efficency);
             List<Tile> sheep_spawns = new List<Tile>();
             foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                if (tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building && tile.Building == null) {
+                if (tile.Can_Work(building, Tile.Work_Type.Forage) && tile.Building == null) {
                     if (tile.Internal_Name == "grass") {
                         wool += 1.00f;
                         if(tile.Entities.Count == 0) {
@@ -1078,25 +1000,67 @@ public class BuildingPrototypes {
             building.Produce(Resource.Wool, wool, delta_time);
             building.Produce(Resource.Mutton, mutton, delta_time);
             building.Produce(Resource.Hide, hide, delta_time);
-        }, delegate (Building building) {
+        }, unreserve_tiles, Highlight_Tiles(Tile.Work_Type.Forage), new List<Resource>(), new List<Resource>() { Resource.Mutton, Resource.Wool, Resource.Hide }, 0.0f, 0.0f));
+
+        prototypes.Add(new Residence("Homestead", "homestead", Building.UI_Category.Housing, "homestead", Building.BuildingSize.s3x3, 200, new Dictionary<Resource, int>() {
+            { Resource.Wood, 100 }, { Resource.Lumber, 100 }, { Resource.Stone, 20 }, { Resource.Tools, 15 }
+        }, 175, new List<Resource>(), 0, 220, new Dictionary<Resource, float>() { { Resource.Wood, 0.05f }, { Resource.Lumber, 0.05f } }, 2.25f, 0.0f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 15 } }, 3.75f,
+        delegate (Building building) {
             foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                if (tile.Worked_By.Contains(building)) {
-                    tile.Worked_By.Remove(building);
+                tile.Add_Workers(building, Tile.Work_Type.Cut_Wood);
+                tile.Add_Workers(building, Tile.Work_Type.Farm);
+                tile.Add_Workers(building, Tile.Work_Type.Fish);
+            }
+        },
+        delegate (Building building, float delta_time) {
+            if (!building.Is_Operational) {
+                return;
+            }
+            float efficency = (building as Residence).Current_Residents[Building.Resident.Peasant] / (float)(building as Residence).Resident_Space[Building.Resident.Peasant];
+            if(efficency == 0.0f) {
+                return;
+            }
+            float potatoes = 0.0f;
+            float wood = 0.0f;
+            float fish = 0.0f;
+            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
+                if (tile.Building != null && tile.Building.Internal_Name == "potato_field" && tile.Can_Work(building, Tile.Work_Type.Farm)) {
+                    if (tile.Internal_Name == "grass") {
+                        potatoes += 0.10f;
+                    } else if (tile.Internal_Name == "fertile_ground") {
+                        potatoes += 0.15f;
+                    }
+                }
+                if (tile.Can_Work(building, Tile.Work_Type.Cut_Wood) && tile.Building == null) {
+                    if (tile.Internal_Name == "forest") {
+                        wood += 1.75f;
+                    } else if (tile.Internal_Name == "sparse_forest") {
+                        wood += 0.75f;
+                    } else if (tile.Internal_Name.StartsWith("hill_")) {
+                        wood += 0.25f;
+                    }
+                }
+                if (tile.Can_Work(building, Tile.Work_Type.Fish) && tile.Internal_Name.StartsWith("water")) {
+                    fish += 0.10f;
                 }
             }
-        }, delegate (Building building) {
-            List<Tile> worked_tiles = new List<Tile>();
-            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                if (tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building) {
-                    worked_tiles.Add(tile);
-                }
-            }
-            return worked_tiles;
-        }, new List<Resource>(), new List<Resource>() { Resource.Mutton, Resource.Wool, Resource.Hide }, 0.0f, 0.0f));
+
+            potatoes *= efficency;
+            wood *= efficency;
+            fish *= efficency;
+
+            float potato_multiplier = 0.883f;
+            float wood_multiplier = 0.094f;
+            float fish_multiplier = 0.90f;
+            building.Produce(Resource.Potatoes, potatoes * potato_multiplier, delta_time);
+            building.Produce(Resource.Wood, wood * wood_multiplier, delta_time);
+            building.Produce(Resource.Fish, fish * fish_multiplier, delta_time);
+        }, unreserve_tiles, Highlight_Tiles(Tile.Work_Type.Forage), new List<Resource>(), new List<Resource>() { Resource.Potatoes, Resource.Fish, Resource.Wood }, 0.0f, 0.0f));
 
         prototypes.Add(new Residence("Abode", "abode", Building.UI_Category.Housing, "abode", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
             { Resource.Lumber, 50 }, { Resource.Stone, 75 }, { Resource.Tools, 10 }
-        }, 150, new List<Resource>(), 0, 125, new Dictionary<Resource, float>() { { Resource.Lumber, 0.025f }, { Resource.Stone, 0.025f } }, 0.0f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Citizen, 5 } }, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
+        }, 150, new List<Resource>(), 0, 125, new Dictionary<Resource, float>() { { Resource.Lumber, 0.025f }, { Resource.Stone, 0.025f } }, 0.0f, 0.0f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Citizen, 5 } },
+        0.0f, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
 
         prototypes.Add(new Building("Tax Office", "tax_office", Building.UI_Category.Admin, "tax_office", Building.BuildingSize.s2x2, 150, new Dictionary<Resource, int>() {
             { Resource.Lumber, 90 }, { Resource.Stone, 90 }, { Resource.Tools, 10 }
@@ -1258,11 +1222,8 @@ public class BuildingPrototypes {
 
         prototypes.Add(new Building("Farmhouse", "farmhouse", Building.UI_Category.Agriculture, "farmhouse", Building.BuildingSize.s3x3, 200, new Dictionary<Resource, int>() {
             { Resource.Lumber, 220 }, { Resource.Stone, 20 }, { Resource.Tools, 20 }
-        }, 190, new List<Resource>(), 0, 0.0f, 240, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f } }, 1.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 15 } }, 15, true, false, true, 6.5f, 0, delegate (Building building) {
-            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                tile.Worked_By.Add(building);
-            }
-        }, delegate (Building building, float delta_time) {
+        }, 190, new List<Resource>(), 0, 0.0f, 240, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f } }, 1.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 15 } }, 15, true, false, true, 6.5f, 0, Reserve_Tiles(Tile.Work_Type.Farm),
+        delegate (Building building, float delta_time) {
             if (!building.Is_Operational) {
                 return;
             }
@@ -1270,7 +1231,7 @@ public class BuildingPrototypes {
             float wheat = 0.0f;
             float corn = 0.0f;
             foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                if (tile.Building != null && tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building) {
+                if (tile.Building != null && tile.Can_Work(building, Tile.Work_Type.Farm)) {
                     if (tile.Building.Internal_Name == "potato_field") {
                         if (tile.Internal_Name == "grass") {
                             potatoes += 0.10f;
@@ -1296,21 +1257,7 @@ public class BuildingPrototypes {
             building.Produce(Resource.Potatoes, potatoes * multiplier, delta_time);
             building.Produce(Resource.Wheat, wheat * multiplier, delta_time);
             building.Produce(Resource.Corn, corn * multiplier, delta_time);
-        }, delegate (Building building) {
-            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                if (tile.Worked_By.Contains(building)) {
-                    tile.Worked_By.Remove(building);
-                }
-            }
-        }, delegate (Building building) {
-            List<Tile> worked_tiles = new List<Tile>();
-            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                if (tile.Worked_By.FirstOrDefault(x => x.Internal_Name == building.Internal_Name) == building) {
-                    worked_tiles.Add(tile);
-                }
-            }
-            return worked_tiles;
-        }, new List<Resource>(), new List<Resource>() { Resource.Potatoes, Resource.Wheat, Resource.Corn }, 0.0f, 0.0f));
+        }, unreserve_tiles, Highlight_Tiles(Tile.Work_Type.Farm), new List<Resource>(), new List<Resource>() { Resource.Potatoes, Resource.Wheat, Resource.Corn }, 0.0f, 0.0f));
 
         prototypes.Add(new Building("Wheat Field", "wheat_field", Building.UI_Category.Agriculture, "wheat_field", Building.BuildingSize.s1x1, 50, new Dictionary<Resource, int>() {
             { Resource.Tools, 1 }

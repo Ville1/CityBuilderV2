@@ -6,6 +6,7 @@ public class MouseManager : MonoBehaviour
     public static MouseManager Instance { get; private set; }
 
     private Vector3 last_position;
+    private Tile tile_clicked;
 
     /// <summary>
     /// Initialization
@@ -44,6 +45,13 @@ public class MouseManager : MonoBehaviour
                 } else if(tile != null) {
                     InspectorManager.Instance.Building = tile.Building;
                     MasterUIManager.Instance.Close_Others(typeof(InspectorManager).Name);
+                    if(tile.Building == null) {
+                        if(tile_clicked == tile) {
+                            TileInspectorManager.Instance.Tile = tile_clicked;
+                        } else {
+                            tile_clicked = tile;
+                        }
+                    }
                 } else if(Map.Instance.State == Map.MapState.Normal) {
                     MasterUIManager.Instance.Close_Others(string.Empty);
                 }

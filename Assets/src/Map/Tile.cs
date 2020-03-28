@@ -7,6 +7,7 @@ public class Tile
 {
     public static readonly string GAME_OBJECT_NAME_PREFIX = "Tile_";
     public enum Fog_Of_War_Status { Visible, Not_Visible, Not_Explored }
+    public enum Work_Type { Forage, Hunt, Fish, Farm, Cut_Wood, Mine }
 
     private static long current_id = 0;
     
@@ -31,7 +32,7 @@ public class Tile
     public float Base_Appeal_Range { get; private set; }
     public bool Can_Have_Minerals { get; private set; }
     public float Appeal { get; set; }
-    public List<Building> Worked_By { get; private set; }
+    public List<WorkData> Worked_By { get; private set; }
     public Dictionary<Mineral, float> Minerals { get; private set; }
     public List<Entity> Entities { get; private set; }
     public bool Adjacent_To_Water { get; set; }
@@ -52,7 +53,7 @@ public class Tile
         current_id++;
         X = x;
         Y = y;
-        Worked_By = new List<Building>();
+        Worked_By = new List<WorkData>();
 
         GameObject = GameObject.Instantiate(
             PrefabManager.Instance.Tile,
@@ -252,13 +253,36 @@ public class Tile
         text_game_object.SetActive(false);
     }
 
+    public void Add_Workers(Building building, Work_Type type)
+    {
+        if(!Worked_By.Exists(x => x.Building == building && x.Type == type)) {
+            Worked_By.Add(new WorkData() { Building = building, Type = type });
+        }
+    }
+
+    public bool Can_Work(Building building, Work_Type type)
+    {
+        if (!Worked_By.Exists(x => x.Building == building && x.Type == type)) {
+            return false;
+        }
+        Building first = Worked_By.First(x => x.Type == type).Building;
+        return first.Id == building.Id;
+    }
+
+    public void Remove_Workers(Building building)
+    {
+        if (Worked_By.Exists(x => x.Building == building)) {
+            Worked_By = Worked_By.Where(x => x.Building != building).ToList();
+        }
+    }
+
     public TileSaveData Save_Data()
     {
         return new TileSaveData() {
             X = X,
             Y = Y,
             Internal_Name = Internal_Name,
-            Worked_By = Worked_By.Select(x => x.Id).ToList(),
+            Worked_By = Worked_By.Select(x => new WorkSaveData() { Id = x.Building.Id, Type = (int)x.Type }).ToList(),
             Minerals = Minerals.Select(x => new MineralSaveData() { Mineral = (int)x.Key, Amount = x.Value }).ToList(),
             Adjacent_To_Water = Adjacent_To_Water
         };
@@ -315,5 +339,11 @@ public class Tile
             return null;
         }
         return new Coordinates(x, y);
+    }
+
+    public class WorkData
+    {
+        public Work_Type Type { get; set; }
+        public Building Building { get; set; }
     }
 }

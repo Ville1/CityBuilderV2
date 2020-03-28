@@ -130,6 +130,7 @@
     <Compile Include="Assets\src\UI\SaveGUIManager.cs" />
     <Compile Include="Assets\src\UI\SpecialSettingsGUIManager.cs" />
     <Compile Include="Assets\src\UI\StorageSettingsGUIManager.cs" />
+    <Compile Include="Assets\src\UI\TileInspectorManager.cs" />
     <Compile Include="Assets\src\UI\TooltipManager.cs" />
     <Compile Include="Assets\src\UI\TopGUIManager.cs" />
   </ItemGroup>
