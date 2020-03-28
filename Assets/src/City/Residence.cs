@@ -313,6 +313,9 @@ public class Residence : Building {
                     }
 
                     Happiness[Resident.Peasant] = Math.Max(0.0f, Happiness[Resident.Peasant]);
+                    if(Happiness[Resident.Peasant] < 0.4f) {
+                        Show_Alert("alert_unhappiness");
+                    }
                 }
             }
         }
@@ -433,6 +436,9 @@ public class Residence : Building {
                 }
 
                 Happiness[Resident.Citizen] = Math.Max(0.0f, Happiness[Resident.Citizen]);
+                if (Happiness[Resident.Citizen] < 0.4f) {
+                    Show_Alert("alert_unhappiness");
+                }
             }
         }
 
@@ -524,6 +530,9 @@ public class Residence : Building {
                 }
 
                 Happiness[Resident.Noble] = Math.Max(0.0f, Happiness[Resident.Noble]);
+                if (Happiness[Resident.Noble] < 0.4f) {
+                    Show_Alert("alert_unhappiness");
+                }
             }
         }
 

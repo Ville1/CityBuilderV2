@@ -552,6 +552,19 @@ public class Building {
             Is_Paused = false;
         }
 
+        if (Is_Paused) {
+            Show_Alert("alert_pause");
+        }
+        if(Max_Workers_Total != 0 && !Is_Paused && Is_Built) {
+            int workers_missing = 0;
+            foreach(KeyValuePair<Resident, int> pair in Worker_Settings) {
+                workers_missing += (pair.Value - Current_Workers[pair.Key]);
+            }
+            if(workers_missing > Workers_Allocated / 2) {
+                Show_Alert("alert_workers");
+            }
+        }
+
         Per_Day_Resource_Delta.Clear();
         Per_Day_Cash_Delta = 0.0f;
         Food_Production_Per_Day = 0.0f;

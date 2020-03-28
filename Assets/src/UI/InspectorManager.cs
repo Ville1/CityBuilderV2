@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Events;
@@ -222,7 +223,7 @@ public class InspectorManager : MonoBehaviour {
                 Update_Cash_Row(cash_cost_row, building.Cash_Cost, 0, false, false);
                 cost_rows.Add(cash_cost_row);
             }
-            foreach(KeyValuePair<Resource, int> cost in building.Cost) {
+            foreach(KeyValuePair<Resource, int> cost in building.Cost.OrderByDescending(x => x.Value).ToArray()) {
                 GameObject cost_row = GameObject.Instantiate(
                     Cost_Row_Prototype,
                     new Vector3(
@@ -278,7 +279,7 @@ public class InspectorManager : MonoBehaviour {
                 Update_Cash_Row(cash_upkeep_row, building.Cash_Upkeep, 2, true, true);
                 upkeep_rows.Add(cash_upkeep_row);
             }
-            foreach (KeyValuePair<Resource, float> upkeep in building.Upkeep) {
+            foreach (KeyValuePair<Resource, float> upkeep in building.Upkeep.OrderByDescending(x => x.Value).ToArray()) {
                 GameObject upkeep_row = GameObject.Instantiate(
                     Upkeep_Row_Prototype,
                     new Vector3(
