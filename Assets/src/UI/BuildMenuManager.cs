@@ -17,12 +17,13 @@ public class BuildMenuManager : MonoBehaviour
     public GameObject Tab_Prototype;
     public GameObject Building_Container_Prototype;
 
+    public bool Flip_Bridge { get; private set; }
+
     private Vector3 tab_button_container_original_position;
     private Dictionary<Building.UI_Category, Button> tab_buttons;
     private Dictionary<Building.UI_Category, GameObject> tabs;
 
     private Building preview_building;
-
     private List<Tile> highlighted_tiles;
 
     /// <summary>
@@ -77,6 +78,23 @@ public class BuildMenuManager : MonoBehaviour
                             t.Highlight = new Color(0.35f, 0.35f, 1.0f, 1.0f);
                             highlighted_tiles.Add(t);
                         }
+                    }
+                }
+                if(preview_building.Tags.Contains(Building.Tag.Bridge) && tile.Is_Water) {
+                    List<Tile> bridge_tiles = new List<Tile>();
+                    Tile next_tile = Map.Instance.Get_Tile_At(tile.Coordinates, Flip_Bridge ? Coordinates.Direction.North : Coordinates.Direction.East);
+                    while (next_tile != null && next_tile.Is_Water) {
+                        bridge_tiles.Add(next_tile);
+                        next_tile = Map.Instance.Get_Tile_At(next_tile.Coordinates, Flip_Bridge ? Coordinates.Direction.North : Coordinates.Direction.East);
+                    }
+                    next_tile = Map.Instance.Get_Tile_At(tile.Coordinates, Flip_Bridge ? Coordinates.Direction.South : Coordinates.Direction.West);
+                    while (next_tile != null && next_tile.Is_Water) {
+                        bridge_tiles.Add(next_tile);
+                        next_tile = Map.Instance.Get_Tile_At(next_tile.Coordinates, Flip_Bridge ? Coordinates.Direction.South : Coordinates.Direction.West);
+                    }
+                    foreach(Tile bridge_tile in bridge_tiles) {
+                        bridge_tile.Highlight = new Color(0.35f, 1.00f, 0.35f, 1.0f);
+                        highlighted_tiles.Add(bridge_tile);
                     }
                 }
                 if (preview_building.Road_Range != 0) {
@@ -156,7 +174,12 @@ public class BuildMenuManager : MonoBehaviour
         if (!Preview_Active) {
             return;
         }
-        preview_building.Switch_Selected_Sprite();
+        if (preview_building.Tags.Contains(Building.Tag.Bridge)) {
+            Flip_Bridge = !Flip_Bridge;
+            preview_building.Switch_Selected_Sprite(Flip_Bridge ? 1 : 0);
+        } else {
+            preview_building.Switch_Selected_Sprite();
+        }
     }
 
     public void Build()
@@ -279,5 +302,6 @@ public class BuildMenuManager : MonoBehaviour
         }
         preview_building = null;
         InspectorManager.Instance.Building = null;
+        Flip_Bridge = false;
     }
 }

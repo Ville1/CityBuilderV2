@@ -36,6 +36,7 @@ public class Tile
     public Dictionary<Mineral, float> Minerals { get; private set; }
     public List<Entity> Entities { get; private set; }
     public bool Adjacent_To_Water { get; set; }
+    public bool Is_Water { get { return Internal_Name.StartsWith("water"); } }
 
     protected Color highlight_color;
     protected bool show_coordinates;

@@ -24,7 +24,7 @@ public class Building {
     public enum UI_Category { Admin, Infrastructure, Housing, Services, Forestry, Agriculture, Textile, Industry }
     public enum Resident { Peasant, Citizen, Noble }
     public enum BuildingSize { s1x1, s2x2, s3x3 }
-    public enum Tag { Undeletable, Does_Not_Block_Wind }
+    public enum Tag { Undeletable, Does_Not_Block_Wind, Bridge }
 
     public long Id { get; protected set; }
     public string Name { get; private set; }
@@ -424,6 +424,21 @@ public class Building {
             Selected_Sprite = 0;
         } else {
             Selected_Sprite++;
+        }
+    }
+
+    public void Switch_Selected_Sprite(string sprite)
+    {
+        SpriteData data = Sprites.FirstOrDefault(x => x.Name == sprite);
+        if(data != null) {
+            Selected_Sprite = Sprites.IndexOf(data);
+        }
+    }
+
+    public void Switch_Selected_Sprite(int index)
+    {
+        if(index >= 0 && index < Sprites.Count) {
+            Selected_Sprite = index;
         }
     }
 

@@ -172,6 +172,28 @@ public class BuildingPrototypes {
         });
         prototypes.First(x => x.Internal_Name == "cobblestone_road").Tags.Add(Building.Tag.Does_Not_Block_Wind);
 
+        prototypes.Add(new Building("Wooden Bridge", "wooden_bridge", Building.UI_Category.Infrastructure, "bridge_ew", Building.BuildingSize.s1x1, 10, new Dictionary<Resource, int>() { { Resource.Lumber, 10 }, { Resource.Wood, 10 }, { Resource.Stone, 1 }, { Resource.Tools, 1 } }, 25,
+            new List<Resource>(), 0, 0.0f, 50, new Dictionary<Resource, float>() { { Resource.Lumber, 0.01f }, { Resource.Wood, 0.01f } }, 0.01f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, true, true, 0.0f, 0, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
+        prototypes.First(x => x.Internal_Name == "wooden_bridge").Tags.Add(Building.Tag.Does_Not_Block_Wind);
+        prototypes.First(x => x.Internal_Name == "wooden_bridge").Tags.Add(Building.Tag.Bridge);
+        prototypes.First(x => x.Internal_Name == "wooden_bridge").Sprites.Add(new SpriteData("bridge_ns"));
+        prototypes.First(x => x.Internal_Name == "wooden_bridge").Sprites.Add(new SpriteData("bridge_e"));
+        prototypes.First(x => x.Internal_Name == "wooden_bridge").Sprites.Add(new SpriteData("bridge_w"));
+        prototypes.First(x => x.Internal_Name == "wooden_bridge").Permitted_Terrain.Add("water_nesw");
+        prototypes.First(x => x.Internal_Name == "wooden_bridge").Permitted_Terrain.Add("water_es");
+        prototypes.First(x => x.Internal_Name == "wooden_bridge").Permitted_Terrain.Add("water_sw");
+        prototypes.First(x => x.Internal_Name == "wooden_bridge").Permitted_Terrain.Add("water_nw");
+        prototypes.First(x => x.Internal_Name == "wooden_bridge").Permitted_Terrain.Add("water_ne");
+        prototypes.First(x => x.Internal_Name == "wooden_bridge").Permitted_Terrain.Add("water_esw");
+        prototypes.First(x => x.Internal_Name == "wooden_bridge").Permitted_Terrain.Add("water_nes");
+        prototypes.First(x => x.Internal_Name == "wooden_bridge").Permitted_Terrain.Add("water_new");
+        prototypes.First(x => x.Internal_Name == "wooden_bridge").Permitted_Terrain.Add("water_nsw");
+        prototypes.First(x => x.Internal_Name == "wooden_bridge").Permitted_Terrain.Add("water_n");
+        prototypes.First(x => x.Internal_Name == "wooden_bridge").Permitted_Terrain.Add("water_e");
+        prototypes.First(x => x.Internal_Name == "wooden_bridge").Permitted_Terrain.Add("water_s");
+        prototypes.First(x => x.Internal_Name == "wooden_bridge").Permitted_Terrain.Add("water_w");
+        prototypes.First(x => x.Internal_Name == "wooden_bridge").Permitted_Terrain.Add("water_");
+
         prototypes.Add(new Building("Lumber Mill", "lumber_mill", Building.UI_Category.Forestry, "lumber_mill", Building.BuildingSize.s3x3, 200, new Dictionary<Resource, int>() {
             { Resource.Wood, 225 }, { Resource.Stone, 20 }, { Resource.Tools, 40 }
         }, 200, new List<Resource>(), 0, 50.0f, 250, new Dictionary<Resource, float>() { { Resource.Wood, 0.10f } }, 2.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() {

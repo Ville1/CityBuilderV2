@@ -332,23 +332,46 @@ public class City {
             message = "Obstructed";
             return false;
         }
-        if(prototype.Cash_Cost > Cash) {
-            message = string.Format("Not enough cash");
-            return false;
-        }
-        foreach(KeyValuePair<Resource, int> pair in prototype.Cost) {
-            if(Usable_Resource_Totals[pair.Key] < pair.Value) {
-                message = string.Format("Not enough {0}", pair.Key.ToString().ToLower());
+        if (!prototype.Tags.Contains(Building.Tag.Bridge)) {
+            if (prototype.Cash_Cost > Cash) {
+                message = string.Format("Not enough cash, {0} needed", prototype.Cash_Cost);
+                return false;
+            }
+            foreach (KeyValuePair<Resource, int> pair in prototype.Cost) {
+                if (Usable_Resource_Totals[pair.Key] < pair.Value) {
+                    message = string.Format("Not enough {0}, {1} required", pair.Key.ToString().ToLower(), pair.Value);
+                    return false;
+                }
+            }
+        } else {
+            Dictionary<Resource, int> total_cost = new Dictionary<Resource, int>();
+            List<Tile> bridge_tiles = Bridge_Tiles(tile);
+            foreach (Tile t in bridge_tiles) {
+                foreach(Tile t2 in Map.Instance.Get_Adjanced_Tiles(t).Select(x => x.Value).ToArray()) {
+                    if(t2.Building != null && t2.Building.Tags.Contains(Building.Tag.Bridge)) {
+                        message = "Too close to existing bridge";
+                        return false;
+                    }
+                }
+            }
+            foreach (KeyValuePair<Resource, int> pair in Bridge_Cost(prototype, bridge_tiles)) {
+                if (Usable_Resource_Totals[pair.Key] < pair.Value) {
+                    message = string.Format("Not enough {0}, {1} required", pair.Key.ToString().ToLower(), pair.Value);
+                    return false;
+                }
+            }
+            if (prototype.Cash_Cost * bridge_tiles.Count > Cash) {
+                message = string.Format("Not enough cash, {0} needed", prototype.Cash_Cost * bridge_tiles.Count);
                 return false;
             }
         }
         return true;
     }
 
-    public void Build(Building prototype, Tile tile)
+    public void Build(Building prototype, Tile tile, bool bridge_part = false)
     {
         string message;
-        if(!Can_Build(prototype, out message)) {
+        if(!bridge_part && !Can_Build(prototype, out message)) {
             return;
         }
         List<Tile> tiles = Map.Instance.Get_Tiles(tile.Coordinates, prototype.Width, prototype.Height);
@@ -369,6 +392,19 @@ public class City {
                 CustomLogger.Instance.Error(string.Format("Failed to take {0} {1}, only {2} taken", pair.Value, pair.Key, taken));
             }
         }
+        if(prototype.Tags.Contains(Building.Tag.Bridge) && !BuildMenuManager.Instance.Flip_Bridge) {
+            Tile west_tile = Map.Instance.Get_Tile_At(tile.Coordinates, Coordinates.Direction.West);
+            Tile east_tile = Map.Instance.Get_Tile_At(tile.Coordinates, Coordinates.Direction.East);
+            if(west_tile != null && east_tile != null) {
+                if(west_tile.Is_Water && !east_tile.Is_Water) {
+                    prototype.Switch_Selected_Sprite(3);
+                } else if(!west_tile.Is_Water && east_tile.Is_Water) {
+                    prototype.Switch_Selected_Sprite(2);
+                } else {
+                    prototype.Switch_Selected_Sprite(0);
+                }
+            }
+        }
         if(BuildingPrototypes.Instance.Is_Residence(prototype.Internal_Name)) {
             Residence residence = new Residence(BuildingPrototypes.Instance.Get_Residence(prototype.Internal_Name) as Residence, tile, tiles, false);
             residence.Selected_Sprite = prototype.Selected_Sprite;
@@ -377,6 +413,13 @@ public class City {
             Building building = new Building(prototype, tile, tiles, false);
             building.Selected_Sprite = prototype.Selected_Sprite;
             Buildings.Add(building);
+        }
+        if (!bridge_part) {
+            if (prototype.Tags.Contains(Building.Tag.Bridge)) {
+                foreach (Tile t in Bridge_Tiles(tile)) {
+                    Build(prototype, t, true);
+                }
+            }
         }
     }
 
@@ -428,5 +471,34 @@ public class City {
             }
         }
         return amount_taken;
+    }
+
+    private List<Tile> Bridge_Tiles(Tile tile)
+    {
+        List<Tile> bridge_tiles = new List<Tile>();
+        Tile next_tile = Map.Instance.Get_Tile_At(tile.Coordinates, BuildMenuManager.Instance.Flip_Bridge ? Coordinates.Direction.North : Coordinates.Direction.East);
+        while (next_tile != null && next_tile.Is_Water) {
+            bridge_tiles.Add(next_tile);
+            next_tile = Map.Instance.Get_Tile_At(next_tile.Coordinates, BuildMenuManager.Instance.Flip_Bridge ? Coordinates.Direction.North : Coordinates.Direction.East);
+        }
+        next_tile = Map.Instance.Get_Tile_At(tile.Coordinates, BuildMenuManager.Instance.Flip_Bridge ? Coordinates.Direction.South : Coordinates.Direction.West);
+        while (next_tile != null && next_tile.Is_Water) {
+            bridge_tiles.Add(next_tile);
+            next_tile = Map.Instance.Get_Tile_At(next_tile.Coordinates, BuildMenuManager.Instance.Flip_Bridge ? Coordinates.Direction.South : Coordinates.Direction.West);
+        }
+        return bridge_tiles;
+    }
+
+    private Dictionary<Resource, int> Bridge_Cost(Building prototype, List<Tile> bridge_tiles)
+    {
+        if (!prototype.Tags.Contains(Building.Tag.Bridge)) {
+            CustomLogger.Instance.Error(string.Format("{0} is not a bridge", prototype.Internal_Name));
+            return null;
+        }
+        Dictionary<Resource, int> total_cost = new Dictionary<Resource, int>();
+        foreach (KeyValuePair<Resource, int> pair in prototype.Cost) {
+            total_cost.Add(pair.Key, (bridge_tiles.Count + 1) * pair.Value);
+        }
+        return total_cost;
     }
 }
