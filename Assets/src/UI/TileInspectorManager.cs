@@ -14,6 +14,8 @@ public class TileInspectorManager : MonoBehaviour {
     public Text Base_Appeal_Text;
     public Text Base_Appeal_Range_Text;
     public Text Current_Appeal_Text;
+    public GameObject Water_Container;
+    public Text Water_Flow_Text;
 
     public GameObject Worker_Row_Prototype;
     public GameObject Workers_Content;
@@ -95,6 +97,10 @@ public class TileInspectorManager : MonoBehaviour {
         Base_Appeal_Text.text = Helper.Float_To_String(Tile.Base_Appeal, 2);
         Base_Appeal_Range_Text.text = Helper.Float_To_String(Tile.Base_Appeal_Range, 2);
         Current_Appeal_Text.text = Helper.Float_To_String(Tile.Appeal, 2);
+        Water_Container.SetActive(Tile.Is_Water);
+        if (Tile.Is_Water) {
+            Water_Flow_Text.text = Tile.Water_Flow.HasValue ? Helper.Snake_Case_To_UI(Tile.Water_Flow.Value.ToString(), true) : "None";
+        }
 
         if(current_id > 99999) {
             current_id = 0;

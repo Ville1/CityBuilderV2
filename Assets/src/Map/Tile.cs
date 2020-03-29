@@ -35,8 +35,8 @@ public class Tile
     public List<WorkData> Worked_By { get; private set; }
     public Dictionary<Mineral, float> Minerals { get; private set; }
     public List<Entity> Entities { get; private set; }
-    public bool Adjacent_To_Water { get; set; }
     public bool Is_Water { get { return Internal_Name.StartsWith("water"); } }
+    public Coordinates.Direction? Water_Flow { get; set; }
 
     protected Color highlight_color;
     protected bool show_coordinates;
@@ -285,7 +285,7 @@ public class Tile
             Internal_Name = Internal_Name,
             Worked_By = Worked_By.Select(x => new WorkSaveData() { Id = x.Building.Id, Type = (int)x.Type }).ToList(),
             Minerals = Minerals.Select(x => new MineralSaveData() { Mineral = (int)x.Key, Amount = x.Value }).ToList(),
-            Adjacent_To_Water = Adjacent_To_Water
+            Water_Flow = Water_Flow.HasValue ? (int)Water_Flow : -1
         };
     }
 

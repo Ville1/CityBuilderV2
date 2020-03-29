@@ -68,4 +68,40 @@ public class Helper {
         }
         return snake_case;
     }
+
+    public static Coordinates.Direction Rotate(Coordinates.Direction direction, int amount)
+    {
+        int direction_i = (int)direction;
+        direction_i += amount;
+        while(direction_i < 0) {
+            direction_i += 8;
+        }
+        while(direction_i > 7) {
+            direction_i -= 8;
+        }
+        return (Coordinates.Direction)direction_i;
+    }
+
+    public static string Abreviation(Coordinates.Direction direction)
+    {
+        switch (direction) {
+            case Coordinates.Direction.North:
+                return "N";
+            case Coordinates.Direction.North_East:
+                return "NE";
+            case Coordinates.Direction.East:
+                return "E";
+            case Coordinates.Direction.South_East:
+                return "SE";
+            case Coordinates.Direction.South:
+                return "S";
+            case Coordinates.Direction.South_West:
+                return "SW";
+            case Coordinates.Direction.West:
+                return "W";
+            case Coordinates.Direction.North_West:
+                return "NW";
+        }
+        return "?";
+    }
 }

@@ -306,8 +306,8 @@ public class BuildingPrototypes {
             }
 
             bool water_front = false;
-            foreach(Tile t in building.Tiles) {
-                if (t.Adjacent_To_Water) {
+            foreach(Tile t in Map.Instance.Get_Tiles_Around(building)) {
+                if (t.Is_Water) {
                     water_front = true;
                     break;
                 }

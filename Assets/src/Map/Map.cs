@@ -8,7 +8,7 @@ public enum Mineral { Iron, Coal, Salt, Clay }
 public class Map : MonoBehaviour
 {
     public enum MapState { Inactive, Normal, Generating, Loading, Saving }
-    public enum MapView { None, Appeal, Minerals }
+    public enum MapView { None, Appeal, Minerals, Water_Flow }
 
     public static readonly float Z_LEVEL = 0.0f;
     public static Dictionary<Mineral, int> MINERAL_BASE_SPAWN_CHANCE = new Dictionary<Mineral, int>() {
@@ -60,6 +60,7 @@ public class Map : MonoBehaviour
     private int loop_progress;
     private List<Tile> fine_tuned_tiles;
     private List<Tile> lake_spawns;
+    private bool rivers_generated;
     private bool city_loaded;
     private List<Mineral> minerals_spawned;
     private bool mineral_safety_spawn;
@@ -130,6 +131,14 @@ public class Map : MonoBehaviour
                         tiles[x][y].Show_Text(Helper.Float_To_String(tiles[x][y].Appeal, 1));
                     } else if(View == MapView.Minerals) {
                         tiles[x][y].Show_Text(tiles[x][y].Mineral_String());
+                    } else if (View == MapView.Water_Flow) {
+                        if (tiles[x][y].Is_Water) {
+                            if (tiles[x][y].Water_Flow.HasValue) {
+                                tiles[x][y].Show_Text(Helper.Abreviation(tiles[x][y].Water_Flow.Value));
+                            } else {
+                                tiles[x][y].Show_Text("None");
+                            }
+                        }
                     }
                 }
             }
@@ -170,6 +179,7 @@ public class Map : MonoBehaviour
         loop_progress = 0;
         fine_tuned_tiles = new List<Tile>();
         lake_spawns = new List<Tile>();
+        rivers_generated = false;
         minerals_spawned = new List<Mineral>();
         mineral_safety_spawn = false;
 
@@ -217,7 +227,52 @@ public class Map : MonoBehaviour
     private void Generation_Loop_2()
     {
         Tile tile = tiles[generation_index_x][generation_index_y];
-        
+        if (!rivers_generated) {
+            rivers_generated = true;
+            //Rivers
+            int river_count = Mathf.RoundToInt((river_setting * Mathf.Min(Width, Height) * 0.075f) + (-1.0f + (RNG.Instance.Next_F() * (river_setting * 4.0f))));
+            for (int i = 0; i < river_count; i++) {
+                Coordinates.Direction starting_side = RNG.Instance.Item(Coordinates.Directly_Adjacent_Directions);
+                Tile starting_tile = null;
+                int length = Mathf.RoundToInt((RNG.Instance.Next_F() + 0.5f) * Mathf.Sqrt(Mathf.Pow(Width, 2) + Mathf.Pow(Height, 2)));
+                switch (starting_side) {
+                    case Coordinates.Direction.North:
+                        starting_tile = tiles[RNG.Instance.Next(0, Width - 1)][Height - 1];
+                        break;
+                    case Coordinates.Direction.East:
+                        starting_tile = tiles[Width - 1][RNG.Instance.Next(0, Height - 1)];
+                        break;
+                    case Coordinates.Direction.South:
+                        starting_tile = tiles[RNG.Instance.Next(0, Width - 1)][0];
+                        break;
+                    case Coordinates.Direction.West:
+                        starting_tile = tiles[0][RNG.Instance.Next(0, Height - 1)];
+                        break;
+                }
+                Tile next_tile = starting_tile;
+                Coordinates.Direction direction = Helper.Rotate(starting_side, 4);
+                Coordinates.Direction last_direction = direction;
+                int current_length = 0;
+                while (next_tile != null && current_length < length) {
+                    next_tile.Change_To(TilePrototypes.Instance.Get("water_nesw"));
+                    next_tile.Water_Flow = direction;
+                    last_direction = direction;
+                    if (RNG.Instance.Next(0, 100) <= 60) {
+                        direction = Helper.Rotate(direction, -1 + RNG.Instance.Next(0, 2));
+                    }
+                    foreach(KeyValuePair<Coordinates.Direction, Tile> pair in Get_Adjanced_Tiles(next_tile, true)) {
+                        if(pair.Key != direction && !pair.Value.Is_Water && RNG.Instance.Next(0, 100) < 60 + Mathf.RoundToInt(35.0f * river_setting)) {
+                            pair.Value.Change_To(TilePrototypes.Instance.Get("water_nesw"));
+                            pair.Value.Water_Flow = last_direction;
+                        }
+                    }
+                    next_tile = Get_Tile_At(next_tile.Coordinates, direction);
+                    current_length++;
+                }
+            }
+        }
+
+        //Spread
         int spread_range = 2 + Mathf.RoundToInt(forest_size_setting * 2.0f);
         int water_range = 2 + Mathf.RoundToInt(lake_size_setting * 2.0f);
         int spread_chance_base = 50 + Mathf.RoundToInt(forest_density_setting * 35.0f);
@@ -307,9 +362,6 @@ public class Map : MonoBehaviour
                 float distance = tile.Coordinates.Distance(t.Coordinates);
                 if (distance < water_range * 0.75f || RNG.Instance.Next(0, 100) < 25) {
                     t.Change_To(TilePrototypes.Instance.Get("water_nesw"));
-                    foreach(KeyValuePair<Coordinates.Direction, Tile> pair in Get_Adjanced_Tiles(t, true)) {
-                        pair.Value.Adjacent_To_Water = true;
-                    }
                 }
             }
         } else if (tile.Internal_Name.StartsWith("fertile_ground")) {
@@ -346,11 +398,18 @@ public class Map : MonoBehaviour
 
         if (tile.Minerals.Count == 0 && tile.Can_Have_Minerals) {
             List<Mineral> spawn = new List<Mineral>();
+            bool water_front = false;
+            foreach(KeyValuePair<Coordinates.Direction, Tile> pair in Get_Adjanced_Tiles(tile, true)) {
+                if (pair.Value.Is_Water) {
+                    water_front = true;
+                    break;
+                }
+            }
             foreach (Mineral mineral in Enum.GetValues(typeof(Mineral))) {
                 int chance = MINERAL_BASE_SPAWN_CHANCE[mineral];
                 if(mineral != Mineral.Clay && tile.Internal_Name.StartsWith("hill_")) {
                     chance = Mathf.RoundToInt(1.25f * chance);
-                } else if(mineral == Mineral.Clay && tile.Adjacent_To_Water) {
+                } else if(mineral == Mineral.Clay && water_front) {
                     chance = Mathf.RoundToInt(1.35f * chance);
                 }
                 if (RNG.Instance.Next(0, 10000) < chance) {
@@ -445,13 +504,24 @@ public class Map : MonoBehaviour
 
         if (!mineral_safety_spawn) {
             mineral_safety_spawn = true;
+            int max_tries = 10000;
+            bool tile_not_found = false;
             foreach(Mineral mineral in Enum.GetValues(typeof(Mineral))) {
                 if (!minerals_spawned.Contains(mineral) && MINERAL_BASE_SPAWN_CHANCE[mineral] > 5) {
                     int spawn_chance = MINERAL_BASE_SPAWN_CHANCE[mineral] * 10;
                     if(RNG.Instance.Next(0, 100) < spawn_chance) {
                         Tile random_tile = Get_Tile_At(RNG.Instance.Next(0, Width - 1), RNG.Instance.Next(0, Height - 1));
+                        int try_count = 0;
                         while (!random_tile.Can_Have_Minerals) {
                             random_tile = Get_Tile_At(RNG.Instance.Next(0, Width - 1), RNG.Instance.Next(0, Height - 1));
+                            try_count++;
+                            if(try_count == max_tries) {
+                                tile_not_found = true;
+                                break;
+                            }
+                        }
+                        if (tile_not_found) {
+                            break;
                         }
                         float amount = 1.5f * (MINERAL_VEIN_RICHNESS[mineral] * (0.25f + (1.50f * RNG.Instance.Next_F())));
                         random_tile.Minerals.Add(mineral, amount);
@@ -538,7 +608,22 @@ public class Map : MonoBehaviour
             float max = Width * Height * 4;
             float current = ((generation_loop - 1) * (Width * Height)) + loop_progress;
             float progress = current / max;
-            ProgressBarManager.Instance.Show("Generating map...", progress);
+            string message = "Generating map...";
+            switch (generation_loop) {
+                case 1:
+                    message = "Generating map layout...";
+                    break;
+                case 2:
+                    message = "Generating terrain...";
+                    break;
+                case 3:
+                    message = "Fine tuning terrain...";
+                    break;
+                case 4:
+                    message = "Finalizing...";
+                    break;
+            }
+            ProgressBarManager.Instance.Show(message, progress);
         } else if(State == MapState.Saving) {
             float max = (Width * Height) + City.Instance.Buildings.Count;
             float current = save_load_loop == 1 ? loop_progress : (Width * Height) + loop_progress;
@@ -691,7 +776,8 @@ public class Map : MonoBehaviour
     {
         for (int x = 0; x < Width; x++) {
             for (int y = 0; y < Height; y++) {
-                foreach (WorkSaveData data in SaveManager.Instance.Get_Tile(x, y).Worked_By) {
+                TileSaveData save_data = SaveManager.Instance.Get_Tile(x, y);
+                foreach (WorkSaveData data in save_data.Worked_By) {
                     Building building = City.Instance.Buildings.FirstOrDefault(b => b.Id == data.Id);
                     if (building == null) {
                         CustomLogger.Instance.Error(string.Format("Building not found #{0}", data.Id));
@@ -699,10 +785,10 @@ public class Map : MonoBehaviour
                         tiles[x][y].Worked_By.Add(new Tile.WorkData() { Building = building, Type = (Tile.Work_Type)data.Type });
                     }
                 }
-                foreach(MineralSaveData mineral_data in SaveManager.Instance.Get_Tile(x, y).Minerals) {
+                foreach(MineralSaveData mineral_data in save_data.Minerals) {
                     tiles[x][y].Minerals.Add((Mineral)mineral_data.Mineral, mineral_data.Amount);
                 }
-                tiles[x][y].Adjacent_To_Water = SaveManager.Instance.Get_Tile(x, y).Adjacent_To_Water;
+                tiles[x][y].Water_Flow = save_data.Water_Flow != -1 ? (Coordinates.Direction)save_data.Water_Flow : (Coordinates.Direction?)null;
             }
         }
         Update_Appeal();
