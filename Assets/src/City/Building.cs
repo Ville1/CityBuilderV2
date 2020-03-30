@@ -10,6 +10,7 @@ public class Building {
     public delegate void OnBuiltDelegate(Building building);
     public delegate void OnDeconstructDelegate(Building building);
     public delegate List<Tile> OnHighlightDelegate(Building building);
+    public delegate bool OnBuildCheckDelegate(Building building, Tile tile, out string message);
 
     public static readonly float UPDATE_INTERVAL = 1.0f;
     public static readonly float ALERT_CHANGE_INTERVAL = 2.0f;
@@ -21,7 +22,7 @@ public class Building {
     public static float DISREPAIR_SPEED = 1.0f;//HP / day
     public static float PAUSE_UPKEEP_MULTIPLIER = 0.5f;
 
-    public enum UI_Category { Admin, Infrastructure, Housing, Services, Forestry, Agriculture, Textile, Industry }
+    public enum UI_Category { Admin, Infrastructure, Housing, Services, Forestry, Agriculture, Textile, Industry, Unbuildable }
     public enum Resident { Peasant, Citizen, Noble }
     public enum BuildingSize { s1x1, s2x2, s3x3 }
     public enum Tag { Undeletable, Does_Not_Block_Wind, Bridge }
@@ -82,6 +83,7 @@ public class Building {
     public OnUpdateDelegate On_Update { get; private set; }
     public OnDeconstructDelegate On_Deconstruct { get; private set; }
     public OnHighlightDelegate On_Highlight { get; private set; }
+    public OnBuildCheckDelegate On_Build_Check { get; set; }
     public List<string> Permitted_Terrain { get; private set; }
     public List<Tag> Tags { get; private set; }
     public Dictionary<Resource, float> Per_Day_Resource_Delta { get; private set; }
@@ -187,6 +189,7 @@ public class Building {
         On_Update = prototype.On_Update;
         On_Deconstruct = prototype.On_Deconstruct;
         On_Highlight = prototype.On_Highlight;
+        On_Build_Check = prototype.On_Build_Check;
         Permitted_Terrain = Helper.Clone_List(prototype.Permitted_Terrain);
         Tags = Helper.Clone_List(prototype.Tags);
         Per_Day_Resource_Delta = new Dictionary<Resource, float>();

@@ -341,6 +341,21 @@ public class BuildingPrototypes {
 
             building.Produce(Resource.Fish, fish, delta_time);
         }, unreserve_tiles, Highlight_Tiles(Tile.Work_Type.Fish), new List<Resource>(), new List<Resource>() { Resource.Fish }, 0.0f, 0.0f));
+        prototypes.First(x => x.Internal_Name == "fishers_hut").On_Build_Check = delegate (Building building, Tile tile, out string message) {
+            message = string.Empty;
+            bool water_front = false;
+            foreach (Tile t in Map.Instance.Get_Tiles_Around(building)) {
+                if (t.Is_Water) {
+                    water_front = true;
+                    break;
+                }
+            }
+            if (!water_front) {
+                message = "Must be placed on a waterfront";
+                return false;
+            }
+            return water_front;
+        };
 
         prototypes.Add(new Building("Marketplace", "marketplace", Building.UI_Category.Services, "marketplace", Building.BuildingSize.s3x3, 150, new Dictionary<Resource, int>() {
             { Resource.Lumber, 20 },
@@ -1329,6 +1344,121 @@ public class BuildingPrototypes {
             }, null, null, new List<Resource>() { Resource.Wheat }, new List<Resource>() { Resource.Flour }, 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "windmill").Sprite.Animation_Frame_Time = 0.5f;
         prototypes.First(x => x.Internal_Name == "windmill").Sprite.Animation_Sprites = new List<string>() { "windmill", "windmill_1" };
+
+        prototypes.Add(new Building("Watermill", "watermill", Building.UI_Category.Agriculture, "watermill", Building.BuildingSize.s2x2, 200, new Dictionary<Resource, int>() {
+            { Resource.Lumber, 90 }, { Resource.Bricks, 180 }, { Resource.Stone, 50 }, { Resource.Mechanisms, 15 }, { Resource.Tools, 35 }
+        }, 250, new List<Resource>(), 0, 50.0f, 365, new Dictionary<Resource, float>() { { Resource.Bricks, 0.05f }, { Resource.Lumber, 0.02f } }, 1.75f, 0.0f, 0, new Dictionary<Building.Resident, int>() {
+            { Building.Resident.Peasant, 5 }, { Building.Resident.Citizen, 5 } }, 5, true, false, true, 0.0f, 8,
+            delegate(Building building) {
+                Coordinates.Direction orientation = building.Selected_Sprite == 0 ? Coordinates.Direction.East : Coordinates.Direction.West;
+                List<Tile> wheel_tiles = new List<Tile>();
+                switch (orientation) {
+                    case Coordinates.Direction.East:
+                        wheel_tiles = Map.Instance.Get_Tiles(building.Tile.Coordinates.Shift(new Coordinates(2, 0)), 2, 2);
+                        break;
+                    case Coordinates.Direction.West:
+                        wheel_tiles = Map.Instance.Get_Tiles(building.Tile.Coordinates.Shift(new Coordinates(-2, 0)), 2, 2);
+                        break;
+                }
+                bool blocked = false;
+                foreach(Tile t in wheel_tiles) {
+                    if(t.Building != null || !t.Is_Water) {
+                        blocked = true;
+                        break;
+                    }
+                }
+                if (!blocked) {
+                    Building wheel = new Building(Get(orientation == Coordinates.Direction.East ? "waterwheel" : "waterwheel_flip"), wheel_tiles[0], wheel_tiles, false);
+                    City.Instance.Buildings.Add(wheel);
+                }
+            }, delegate (Building building, float delta_time) {
+                if (!building.Is_Operational) {
+                    return;
+                }
+                Building wheel = null;
+                Coordinates.Direction orientation = building.Selected_Sprite == 0 ? Coordinates.Direction.East : Coordinates.Direction.West;
+                switch (orientation) {
+                    case Coordinates.Direction.East:
+                        wheel = Map.Instance.Get_Tiles(building.Tile.Coordinates.Shift(new Coordinates(2, 0)), 2, 2)[0].Building;
+                        break;
+                    case Coordinates.Direction.West:
+                        wheel = Map.Instance.Get_Tiles(building.Tile.Coordinates.Shift(new Coordinates(-2, 0)), 2, 2)[0].Building;
+                        break;
+                }
+                if (wheel == null) {
+                    building.Show_Alert("alert_general");
+                    return;
+                }
+                building.Process(Resource.Wheat, 30.0f, Resource.Flour, 30.0f, delta_time);
+            }, null, delegate(Building building) {
+                Coordinates.Direction orientation = building.Selected_Sprite == 0 ? Coordinates.Direction.East : Coordinates.Direction.West;
+                List<Tile> wheel_tiles = new List<Tile>();
+                switch (orientation) {
+                    case Coordinates.Direction.East:
+                        wheel_tiles = Map.Instance.Get_Tiles(building.Tile.Coordinates.Shift(new Coordinates(2, 0)), 2, 2);
+                        break;
+                    case Coordinates.Direction.West:
+                        wheel_tiles = Map.Instance.Get_Tiles(building.Tile.Coordinates.Shift(new Coordinates(-2, 0)), 2, 2);
+                        break;
+                }
+                if(wheel_tiles.Count == 0) {
+                    CustomLogger.Instance.Warning("No wheel tiles");
+                }
+                return wheel_tiles;
+            }, new List<Resource>() { Resource.Wheat }, new List<Resource>() { Resource.Flour }, 0.0f, 0.0f));
+        prototypes.First(x => x.Internal_Name == "watermill").Sprites.Add(new SpriteData("watermill_1"));
+        prototypes.First(x => x.Internal_Name == "watermill").On_Build_Check = delegate (Building building, Tile tile, out string message) {
+            message = string.Empty;
+            Coordinates.Direction orientation = building.Selected_Sprite == 0 ? Coordinates.Direction.East : Coordinates.Direction.West;
+            List<Tile> wheel_tiles = new List<Tile>();
+            switch (orientation) {
+                case Coordinates.Direction.East:
+                    wheel_tiles = Map.Instance.Get_Tiles(tile.Coordinates.Shift(new Coordinates(2, 0)), 2, 2);
+                    break;
+                case Coordinates.Direction.West:
+                    wheel_tiles = Map.Instance.Get_Tiles(tile.Coordinates.Shift(new Coordinates(-2, 0)), 2, 2);
+                    break;
+            }
+            if (wheel_tiles.Count < 4) {
+                message = "Nor enough space foe waterwheel";
+                return false;
+            }
+            foreach (Tile wheel_tile in wheel_tiles) {
+                if (!wheel_tile.Is_Water) {
+                    message = "Nor enough space foe waterwheel";
+                    return false;
+                }
+            }
+            int north_flow = 0;
+            int east_flow = 0;
+            int south_flow = 0;
+            int west_flow = 0;
+            foreach(Tile wheel_tile in wheel_tiles) {
+                if (wheel_tile.Water_Flow == Coordinates.Direction.North || wheel_tile.Water_Flow == Coordinates.Direction.North_East || wheel_tile.Water_Flow == Coordinates.Direction.North_West) {
+                    north_flow++;
+                } else if(wheel_tile.Water_Flow == Coordinates.Direction.East || wheel_tile.Water_Flow == Coordinates.Direction.North_East || wheel_tile.Water_Flow == Coordinates.Direction.South_East) {
+                    east_flow++;
+                } else if(wheel_tile.Water_Flow == Coordinates.Direction.South || wheel_tile.Water_Flow == Coordinates.Direction.South_East || wheel_tile.Water_Flow == Coordinates.Direction.South_West) {
+                    south_flow++;
+                } else if (wheel_tile.Water_Flow == Coordinates.Direction.West || wheel_tile.Water_Flow == Coordinates.Direction.South_West || wheel_tile.Water_Flow == Coordinates.Direction.North_West) {
+                    west_flow++;
+                }
+            }
+            int total_flow = north_flow + east_flow + south_flow + west_flow;
+            if(total_flow < 3) {
+                message = "Not enough water flow";
+                return false;
+            }
+            return true;
+        };
+
+        prototypes.Add(new Building("Waterwheel", "waterwheel", Building.UI_Category.Unbuildable, "waterwheel", Building.BuildingSize.s2x2, 50, new Dictionary<Resource, int>(), 0, new List<Resource>(), 0, 0.0f, 0, new Dictionary<Resource, float>(), 0.0f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 0, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
+        prototypes.First(x => x.Internal_Name == "waterwheel").Sprite.Animation_Frame_Time = 0.35f;
+        prototypes.First(x => x.Internal_Name == "waterwheel").Sprite.Animation_Sprites = new List<string>() { "waterwheel", "waterwheel_1", "waterwheel_2" };
+
+        prototypes.Add(new Building("Waterwheel", "waterwheel_flip", Building.UI_Category.Unbuildable, "waterwheel_flip", Building.BuildingSize.s2x2, 50, new Dictionary<Resource, int>(), 0, new List<Resource>(), 0, 0.0f, 0, new Dictionary<Resource, float>(), 0.0f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 0, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
+        prototypes.First(x => x.Internal_Name == "waterwheel_flip").Sprite.Animation_Frame_Time = 0.35f;
+        prototypes.First(x => x.Internal_Name == "waterwheel_flip").Sprite.Animation_Sprites = new List<string>() { "waterwheel_flip", "waterwheel_1_flip", "waterwheel_2_flip" };
 
         prototypes.Add(new Building("Bakery", "bakery", Building.UI_Category.Agriculture, "bakery", Building.BuildingSize.s2x2, 125, new Dictionary<Resource, int>() {
             { Resource.Lumber, 50 }, { Resource.Stone, 40 }, { Resource.Bricks, 100 }, { Resource.Tools, 25 }

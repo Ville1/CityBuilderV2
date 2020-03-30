@@ -365,6 +365,11 @@ public class City {
                 return false;
             }
         }
+        if(prototype.On_Build_Check != null) {
+            if(!prototype.On_Build_Check(prototype, tile, out message)) {
+                return false;
+            }
+        }
         return true;
     }
 
@@ -477,12 +482,12 @@ public class City {
     {
         List<Tile> bridge_tiles = new List<Tile>();
         Tile next_tile = Map.Instance.Get_Tile_At(tile.Coordinates, BuildMenuManager.Instance.Flip_Bridge ? Coordinates.Direction.North : Coordinates.Direction.East);
-        while (next_tile != null && next_tile.Is_Water) {
+        while (next_tile != null && next_tile.Is_Water && next_tile.Building == null) {
             bridge_tiles.Add(next_tile);
             next_tile = Map.Instance.Get_Tile_At(next_tile.Coordinates, BuildMenuManager.Instance.Flip_Bridge ? Coordinates.Direction.North : Coordinates.Direction.East);
         }
         next_tile = Map.Instance.Get_Tile_At(tile.Coordinates, BuildMenuManager.Instance.Flip_Bridge ? Coordinates.Direction.South : Coordinates.Direction.West);
-        while (next_tile != null && next_tile.Is_Water) {
+        while (next_tile != null && next_tile.Is_Water && next_tile.Building == null) {
             bridge_tiles.Add(next_tile);
             next_tile = Map.Instance.Get_Tile_At(next_tile.Coordinates, BuildMenuManager.Instance.Flip_Bridge ? Coordinates.Direction.South : Coordinates.Direction.West);
         }

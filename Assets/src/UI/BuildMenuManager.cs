@@ -83,12 +83,12 @@ public class BuildMenuManager : MonoBehaviour
                 if(preview_building.Tags.Contains(Building.Tag.Bridge) && tile.Is_Water) {
                     List<Tile> bridge_tiles = new List<Tile>();
                     Tile next_tile = Map.Instance.Get_Tile_At(tile.Coordinates, Flip_Bridge ? Coordinates.Direction.North : Coordinates.Direction.East);
-                    while (next_tile != null && next_tile.Is_Water) {
+                    while (next_tile != null && next_tile.Is_Water && next_tile.Building == null) {
                         bridge_tiles.Add(next_tile);
                         next_tile = Map.Instance.Get_Tile_At(next_tile.Coordinates, Flip_Bridge ? Coordinates.Direction.North : Coordinates.Direction.East);
                     }
                     next_tile = Map.Instance.Get_Tile_At(tile.Coordinates, Flip_Bridge ? Coordinates.Direction.South : Coordinates.Direction.West);
-                    while (next_tile != null && next_tile.Is_Water) {
+                    while (next_tile != null && next_tile.Is_Water && next_tile.Building == null) {
                         bridge_tiles.Add(next_tile);
                         next_tile = Map.Instance.Get_Tile_At(next_tile.Coordinates, Flip_Bridge ? Coordinates.Direction.South : Coordinates.Direction.West);
                     }
@@ -202,6 +202,9 @@ public class BuildMenuManager : MonoBehaviour
     private void Initialize()
     {
         foreach (Building.UI_Category category in Enum.GetValues(typeof(Building.UI_Category))) {
+            if(category == Building.UI_Category.Unbuildable) {
+                continue;
+            }
             Button button = GameObject.Instantiate(
                 Tab_Button_Prototype,
                 new Vector3(
