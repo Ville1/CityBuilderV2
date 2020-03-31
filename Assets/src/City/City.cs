@@ -31,6 +31,7 @@ public class City {
 
     private float grace_time_remaining;
     private List<Building> removed_buildings;
+    private List<Building> added_buildings;
 
     private City()
     {
@@ -60,6 +61,7 @@ public class City {
         Name = name;
         grace_time_remaining = GRACE_TIME;
         removed_buildings = new List<Building>();
+        added_buildings = new List<Building>();
         foreach (Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
             Unemployment[resident] = 0.0f;
             Happiness[resident] = 0.0f;
@@ -109,9 +111,13 @@ public class City {
             Buildings.Remove(building);
         }
         removed_buildings.Clear();
-        
+        foreach (Building building in added_buildings) {
+            Buildings.Add(building);
+        }
+        added_buildings.Clear();
+
         //Update statistics
-        foreach(Resource resource in Resource.All) {
+        foreach (Resource resource in Resource.All) {
             Resource_Totals[resource] = 0.0f;
             Usable_Resource_Totals[resource] = 0.0f;
             Resource_Max_Storage[resource] = 0.0f;
@@ -432,6 +438,13 @@ public class City {
     {
         if (!removed_buildings.Contains(building)) {
             removed_buildings.Add(building);
+        }
+    }
+
+    public void Add_Building(Building building)
+    {
+        if (!added_buildings.Contains(building)) {
+            added_buildings.Add(building);
         }
     }
 

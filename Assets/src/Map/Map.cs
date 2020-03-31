@@ -235,6 +235,7 @@ public class Map : MonoBehaviour
                 Coordinates.Direction starting_side = RNG.Instance.Item(Coordinates.Directly_Adjacent_Directions);
                 Tile starting_tile = null;
                 int length = Mathf.RoundToInt((RNG.Instance.Next_F() + 0.5f) * Mathf.Sqrt(Mathf.Pow(Width, 2) + Mathf.Pow(Height, 2)));
+                //TODO:? If river does not end at the adge of the map it will be flowing in the wrong direction. Unless there is suppoused to be a cave instead of a spring
                 switch (starting_side) {
                     case Coordinates.Direction.North:
                         starting_tile = tiles[RNG.Instance.Next(0, Width - 1)][Height - 1];
