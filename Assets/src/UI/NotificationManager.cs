@@ -51,6 +51,7 @@ public class NotificationManager : MonoBehaviour {
                 }
             }
             if (notification_under_cursor != null) {
+                active_notifications.Remove(notification_under_cursor);
                 Delete_Active_Notification(notification_under_cursor, true);
             }
         }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 public class Resource {
     public enum ResourceType { Wood, Stone, Lumber, Tools, Roots, Berries, Mushrooms, Herbs, Firewood, Charcoal, Game, Hide, Leather, Potatoes, Corn, Bread, Iron_Ore, Coal, Salt, Iron_Bars, Ale, Wool, Cloth, Thread, Mutton,
-        Barrels, Simple_Clothes, Leather_Clothes, Wheat, Flour, Mechanisms, Clay, Bricks, Fish }
+        Barrels, Simple_Clothes, Leather_Clothes, Wheat, Flour, Mechanisms, Clay, Bricks, Fish, Marble }
     public enum FoodType { None, Meat, Vegetable }
 
     public static Resource Wood { get { return Get(ResourceType.Wood); } }
@@ -40,6 +40,7 @@ public class Resource {
     public static Resource Clay { get { return Get(ResourceType.Clay); } }
     public static Resource Bricks { get { return Get(ResourceType.Bricks); } }
     public static Resource Fish { get { return Get(ResourceType.Fish); } }
+    public static Resource Marble { get { return Get(ResourceType.Marble); } }
     private static Dictionary<ResourceType, Resource> resources;
 
     public int Id { get { return (int)Type; } }
@@ -122,6 +123,7 @@ public class Resource {
             resources.Add(ResourceType.Flour, new Resource(ResourceType.Flour, "Flour", null, SpriteManager.SpriteType.UI, 0.60f));
             resources.Add(ResourceType.Mechanisms, new Resource(ResourceType.Mechanisms, "Mechanisms", "mechanisms", SpriteManager.SpriteType.UI, 5.00f));
             resources.Add(ResourceType.Clay, new Resource(ResourceType.Clay, "Clay", "clay", SpriteManager.SpriteType.UI, 0.10f));
+            resources.Add(ResourceType.Marble, new Resource(ResourceType.Marble, "Marble", null, SpriteManager.SpriteType.UI, 2.50f));
 
             resources.Add(ResourceType.Game, new Resource(ResourceType.Game, "Game", null, SpriteManager.SpriteType.UI, FoodType.Meat, 1.05f, 1.10f));
             resources.Add(ResourceType.Roots, new Resource(ResourceType.Roots, "Roots", "roots", SpriteManager.SpriteType.UI, FoodType.Vegetable, 0.15f, 0.65f));

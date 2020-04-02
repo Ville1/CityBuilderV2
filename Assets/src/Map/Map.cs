@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-public enum Mineral { Iron, Coal, Salt, Clay }//Marble, silver, gold, gems
+public enum Mineral { Iron, Coal, Salt, Clay, Marble } // silver, gold, gems
 public class Map : MonoBehaviour
 {
     public enum MapState { Inactive, Normal, Generating, Loading, Saving }
@@ -15,21 +15,24 @@ public class Map : MonoBehaviour
         { Mineral.Iron, 8 },
         { Mineral.Coal, 6 },
         { Mineral.Salt, 5 },
-        { Mineral.Clay, 8 }
+        { Mineral.Clay, 8 },
+        { Mineral.Marble, 4 }
     };
     public static Dictionary<Mineral, float> MINERAL_VEIN_SIZE = new Dictionary<Mineral, float>() {
         { Mineral.Iron, 3.0f },
         { Mineral.Coal, 3.0f },
         { Mineral.Salt, 2.0f },
-        { Mineral.Clay, 4.0f }
+        { Mineral.Clay, 4.0f },
+        { Mineral.Marble, 2.0f }
     };
     public static Dictionary<Mineral, float> MINERAL_VEIN_RICHNESS = new Dictionary<Mineral, float>() {
         { Mineral.Iron, 0.90f },
         { Mineral.Coal, 0.65f },
         { Mineral.Salt, 0.65f },
-        { Mineral.Clay, 0.75f }
+        { Mineral.Clay, 0.75f },
+        { Mineral.Marble, 0.65f }
     };
-    public static List<Mineral> IMPORTANT_MINERALS = new List<Mineral>() { Mineral.Iron, Mineral.Clay };
+    public static List<Mineral> IMPORTANT_MINERALS = new List<Mineral>() { Mineral.Iron, Mineral.Clay, Mineral.Marble };
 
     public static Map Instance { get; private set; }
     

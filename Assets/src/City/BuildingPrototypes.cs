@@ -232,7 +232,7 @@ public class BuildingPrototypes {
         prototypes.Add(new Building("Storehouse", "storehouse", Building.UI_Category.Infrastructure, "storehouse", Building.BuildingSize.s2x2, 200, new Dictionary<Resource, int>() {
             { Resource.Stone, 30 }, { Resource.Tools, 25 }, { Resource.Lumber, 275 }
         }, 225, new List<Resource>() { Resource.Lumber, Resource.Stone, Resource.Tools, Resource.Wood, Resource.Firewood, Resource.Hide, Resource.Leather, Resource.Salt, Resource.Coal, Resource.Charcoal, Resource.Iron_Ore, Resource.Iron_Bars, Resource.Wool, Resource.Thread, Resource.Cloth, Resource.Barrels,
-            Resource.Simple_Clothes, Resource.Leather_Clothes, Resource.Mechanisms, Resource.Clay, Resource.Bricks },
+            Resource.Simple_Clothes, Resource.Leather_Clothes, Resource.Mechanisms, Resource.Clay, Resource.Bricks, Resource.Marble },
         2000, 65.0f, 250, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f } }, 1.0f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 } }, 10, false, false, true, 0.0f, 16, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "storehouse").Sprites.Add(new SpriteData("storehouse_1"));
 
@@ -634,13 +634,33 @@ public class BuildingPrototypes {
             if (!building.Is_Operational) {
                 return;
             }
-            building.Produce(Resource.Stone, 10.0f, delta_time);
-        }, null, null, new List<Resource>(), new List<Resource>() { Resource.Stone }, -0.5f, 7.0f));
+            float base_stone = 10.0f;
+            float stone_tiles = 0.0f;
+            float marble = 0.0f;
+            float marble_multiplier = 1.0f;
+            float total_tiles = building.Tiles.Count;
+            foreach(Tile tile in building.Tiles) {
+                if (tile.Minerals.ContainsKey(Mineral.Marble)) {
+                    marble += tile.Minerals[Mineral.Marble];
+                } else {
+                    stone_tiles += 1.0f;
+                }
+            }
+            building.Produce(Resource.Stone, base_stone * (stone_tiles / total_tiles), delta_time);
+            building.Produce(Resource.Marble, marble * marble_multiplier, delta_time);
+        }, null, null, new List<Resource>(), new List<Resource>() { Resource.Stone, Resource.Marble }, -0.5f, 7.0f));
 
         prototypes.Add(new Building("Decorative Tree", "decorative_tree", Building.UI_Category.Services, "decorative_tree", Building.BuildingSize.s1x1, 50, new Dictionary<Resource, int>() {
             { Resource.Stone, 5 }, { Resource.Tools, 1 }
         }, 25, new List<Resource>(), 0, 0.0f, 50, new Dictionary<Resource, float>(), 0.02f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 0, null, null, null, null,
         new List<Resource>(), new List<Resource>(), 0.5f, 3.0f));
+
+        prototypes.Add(new Building("Fountain Plaza", "fountain_plaza", Building.UI_Category.Services, "fountain_plaza", Building.BuildingSize.s1x1, 75, new Dictionary<Resource, int>() {
+            { Resource.Stone, 15 }, { Resource.Marble, 10 }, { Resource.Mechanisms, 1 }, { Resource.Tools, 5 }
+        }, 300, new List<Resource>(), 0, 0.0f, 150, new Dictionary<Resource, float>() { { Resource.Stone, 0.01f }, { Resource.Marble, 0.01f } }, 0.05f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, true, false, 0.0f, 0, null, null, null, null,
+        new List<Resource>(), new List<Resource>(), 0.75f, 5.0f));
+        prototypes.First(x => x.Internal_Name == "fountain_plaza").Sprite.Animation_Frame_Time = 0.25f;
+        prototypes.First(x => x.Internal_Name == "fountain_plaza").Sprite.Animation_Sprites = new List<string>() { "fountain_plaza_1", "fountain_plaza_2", "fountain_plaza_3", "fountain_plaza_4" };
 
         prototypes.Add(new Building("Mine", "mine", Building.UI_Category.Industry, "mine", Building.BuildingSize.s2x2, 200, new Dictionary<Resource, int>() {
             { Resource.Wood, 90 }, { Resource.Lumber, 90 }, { Resource.Stone, 15 }, { Resource.Tools, 40 }
