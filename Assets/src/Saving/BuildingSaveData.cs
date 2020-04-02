@@ -12,6 +12,7 @@ public class BuildingSaveData {
     public List<ResourceSaveData> Output_Storage;
     public bool Is_Residence;
     public List<ResidentSaveData> Residents;
+    public List<ResidentSaveData> Recently_Moved_Residents;
     public List<ResidentSaveData> Worker_Allocation;
     public bool Is_Deconstructing;
     public bool Is_Paused;

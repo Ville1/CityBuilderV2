@@ -55,6 +55,7 @@ public class Residence : Building {
     public float Residence_Quality { get; private set; }
     public Dictionary<Resident, int> Resident_Space { get; private set; }
     public Dictionary<Resident, int> Current_Residents { get; private set; }
+    public Dictionary<Resident, int> Recently_Moved { get; private set; }
     public Dictionary<Resident, float> Happiness { get; private set; }
     public Dictionary<Resident, List<string>> Happiness_Info { get; private set; }
     public float Food_Consumed { get; private set; }
@@ -68,8 +69,10 @@ public class Residence : Building {
         Residence_Quality = prototype.Residence_Quality;
         Resident_Space = Helper.Clone_Dictionary(prototype.Resident_Space);
         Current_Residents = new Dictionary<Resident, int>();
+        Recently_Moved = new Dictionary<Resident, int>();
         foreach (Resident resident in Enum.GetValues(typeof(Resident))) {
             Current_Residents.Add(resident, 0);
+            Recently_Moved.Add(resident, 0);
         }
         Happiness = new Dictionary<Resident, float>();
         foreach (Resident resident in Enum.GetValues(typeof(Resident))) {
@@ -101,6 +104,7 @@ public class Residence : Building {
             }
         }
         Current_Residents = new Dictionary<Resident, int>();
+        Recently_Moved = new Dictionary<Resident, int>();
         Happiness = new Dictionary<Resident, float>();
         migration_progress = new Dictionary<Resident, float>();
     }
@@ -111,11 +115,16 @@ public class Residence : Building {
         Residence_Quality = prototype.Residence_Quality;
         Resident_Space = Helper.Clone_Dictionary(prototype.Resident_Space);
         Current_Residents = new Dictionary<Resident, int>();
+        Recently_Moved = new Dictionary<Resident, int>();
         foreach (Resident resident in Enum.GetValues(typeof(Resident))) {
             Current_Residents.Add(resident, 0);
+            Recently_Moved.Add(resident, 0);
         }
         foreach (ResidentSaveData resident_data in data.Residents) {
             Current_Residents[(Resident)resident_data.Resident] = resident_data.Count;
+        }
+        foreach (ResidentSaveData resident_data in data.Recently_Moved_Residents) {
+            Recently_Moved[(Resident)resident_data.Resident] = resident_data.Count;
         }
         Happiness = new Dictionary<Resident, float>();
         foreach (Resident resident in Enum.GetValues(typeof(Resident))) {
@@ -536,6 +545,10 @@ public class Residence : Building {
             }
         }
 
+        foreach (Resident resident in Enum.GetValues(typeof(Resident))) {
+            Recently_Moved[resident] = 0;
+        }
+
         float migration_threshold = 0.35f;
         float emigration_threshold = 0.20f;
         foreach (Resident resident in Enum.GetValues(typeof(Resident))) {
@@ -544,14 +557,29 @@ public class Residence : Building {
                 if(migration_progress[resident] >= 1.0f) {
                     migration_progress[resident] -= 1.0f;
                     Current_Residents[resident]++;
+                    Recently_Moved[resident]++;
                 }
             } else if(Happiness[resident] < emigration_threshold && Current_Residents[resident] > 0) {
                 migration_progress[resident] -= (delta_time * (1.0f + (((float)((int)resident + 1)) / 3.0f)));
                 if (migration_progress[resident] <= -1.0f) {
                     migration_progress[resident] += 1.0f;
                     Current_Residents[resident]--;
+                    if(Recently_Moved[resident] > 0) {
+                        Recently_Moved[resident] = 0;
+                    }
                 }
             }
+        }
+    }
+
+    public Dictionary<Resident, int> Available_Work_Force
+    {
+        get {
+            Dictionary<Resident, int> dictionary = new Dictionary<Resident, int>();
+            foreach (Resident resident in Enum.GetValues(typeof(Resident))) {
+                dictionary.Add(resident, Math.Max(0, Current_Residents[resident] - Recently_Moved[resident]));
+            }
+            return dictionary;
         }
     }
 

@@ -126,6 +126,7 @@
     <Compile Include="Assets\src\UI\MessageManager.cs" />
     <Compile Include="Assets\src\UI\MouseManager.cs" />
     <Compile Include="Assets\src\UI\NewGameGUIManager.cs" />
+    <Compile Include="Assets\src\UI\NotificationManager.cs" />
     <Compile Include="Assets\src\UI\ProgressBarManager.cs" />
     <Compile Include="Assets\src\UI\SaveGUIManager.cs" />
     <Compile Include="Assets\src\UI\SpecialSettingsGUIManager.cs" />

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-public enum Mineral { Iron, Coal, Salt, Clay }
+public enum Mineral { Iron, Coal, Salt, Clay }//Marble, silver, gold, gems
 public class Map : MonoBehaviour
 {
     public enum MapState { Inactive, Normal, Generating, Loading, Saving }
@@ -29,6 +29,7 @@ public class Map : MonoBehaviour
         { Mineral.Salt, 0.65f },
         { Mineral.Clay, 0.75f }
     };
+    public static List<Mineral> IMPORTANT_MINERALS = new List<Mineral>() { Mineral.Iron, Mineral.Clay };
 
     public static Map Instance { get; private set; }
     
@@ -158,6 +159,7 @@ public class Map : MonoBehaviour
         City.Instance.Delete();
         TimeManager.Instance.Paused = true;
         TimeManager.Instance.Reset_Time();
+        NotificationManager.Instance.Clear_Notifications();
         Active = false;
         State = MapState.Generating;
         View = MapView.None;
@@ -507,35 +509,32 @@ public class Map : MonoBehaviour
             mineral_safety_spawn = true;
             int max_tries = 10000;
             bool tile_not_found = false;
-            foreach(Mineral mineral in Enum.GetValues(typeof(Mineral))) {
-                if (!minerals_spawned.Contains(mineral) && MINERAL_BASE_SPAWN_CHANCE[mineral] > 5) {
-                    int spawn_chance = MINERAL_BASE_SPAWN_CHANCE[mineral] * 10;
-                    if(RNG.Instance.Next(0, 100) < spawn_chance) {
-                        Tile random_tile = Get_Tile_At(RNG.Instance.Next(0, Width - 1), RNG.Instance.Next(0, Height - 1));
-                        int try_count = 0;
-                        while (!random_tile.Can_Have_Minerals) {
-                            random_tile = Get_Tile_At(RNG.Instance.Next(0, Width - 1), RNG.Instance.Next(0, Height - 1));
-                            try_count++;
-                            if(try_count == max_tries) {
-                                tile_not_found = true;
-                                break;
-                            }
-                        }
-                        if (tile_not_found) {
+            foreach(Mineral mineral in IMPORTANT_MINERALS) {
+                if (!minerals_spawned.Contains(mineral)) {
+                    Tile random_tile = Get_Tile_At(RNG.Instance.Next(0, Width - 1), RNG.Instance.Next(0, Height - 1));
+                    int try_count = 0;
+                    while (!random_tile.Can_Have_Minerals) {
+                        random_tile = Get_Tile_At(RNG.Instance.Next(0, Width - 1), RNG.Instance.Next(0, Height - 1));
+                        try_count++;
+                        if(try_count == max_tries) {
+                            tile_not_found = true;
                             break;
                         }
-                        float amount = 1.5f * (MINERAL_VEIN_RICHNESS[mineral] * (0.25f + (1.50f * RNG.Instance.Next_F())));
-                        random_tile.Minerals.Add(mineral, amount);
-                        foreach (Tile t in Get_Tiles_In_Circle(random_tile.Coordinates, MINERAL_VEIN_SIZE[mineral] * 0.5f)) {
-                            float distance = t.Coordinates.Distance(random_tile.Coordinates);
-                            int chance = Mathf.RoundToInt(((MINERAL_VEIN_RICHNESS[mineral] * 35.0f) + (MINERAL_BASE_SPAWN_CHANCE[mineral] * 0.5f)) * (((MINERAL_VEIN_SIZE[mineral] - distance) + 1) / (MINERAL_VEIN_SIZE[mineral]) + 1));
-                            if (t.Can_Have_Minerals && RNG.Instance.Next(0, 100) < chance) {
-                                amount = 1.5f * (MINERAL_VEIN_RICHNESS[mineral] * (0.25f + (1.50f * RNG.Instance.Next_F())));
-                                if (t.Minerals.ContainsKey(mineral)) {
-                                    t.Minerals[mineral] = amount;
-                                } else {
-                                    t.Minerals.Add(mineral, amount);
-                                }
+                    }
+                    if (tile_not_found) {
+                        break;
+                    }
+                    float amount = 1.5f * (MINERAL_VEIN_RICHNESS[mineral] * (0.25f + (1.50f * RNG.Instance.Next_F())));
+                    random_tile.Minerals.Add(mineral, amount);
+                    foreach (Tile t in Get_Tiles_In_Circle(random_tile.Coordinates, MINERAL_VEIN_SIZE[mineral] * 0.5f)) {
+                        float distance = t.Coordinates.Distance(random_tile.Coordinates);
+                        int chance = Mathf.RoundToInt(((MINERAL_VEIN_RICHNESS[mineral] * 35.0f) + (MINERAL_BASE_SPAWN_CHANCE[mineral] * 0.5f)) * (((MINERAL_VEIN_SIZE[mineral] - distance) + 1) / (MINERAL_VEIN_SIZE[mineral]) + 1));
+                        if (t.Can_Have_Minerals && RNG.Instance.Next(0, 100) < chance) {
+                            amount = 1.5f * (MINERAL_VEIN_RICHNESS[mineral] * (0.25f + (1.50f * RNG.Instance.Next_F())));
+                            if (t.Minerals.ContainsKey(mineral)) {
+                                t.Minerals[mineral] = amount;
+                            } else {
+                                t.Minerals.Add(mineral, amount);
                             }
                         }
                     }
@@ -700,6 +699,7 @@ public class Map : MonoBehaviour
         City.Instance.Delete();
         TimeManager.Instance.Paused = true;
         TimeManager.Instance.Reset_Time();
+        NotificationManager.Instance.Clear_Notifications();
         Active = false;
         State = MapState.Loading;
         Entities = new List<Entity>();

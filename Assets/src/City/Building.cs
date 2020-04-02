@@ -677,6 +677,10 @@ public class Building {
                                     b.Update_Connectivity();
                                 }
                             }
+                        } else {
+                            NotificationManager.Instance.Add_Notification(new Notification(string.Format("Building completed: {0}", building.Name), building.Sprite.Name, building.Sprite.Type, delegate() {
+                                CameraManager.Instance.Set_Camera_Location(building.Tile.Coordinates.Vector);
+                            }));
                         }
                     }
                 } else if(building.Is_Built && building.HP < building.Max_HP && !building.Losing_HP_From_No_Upkeep) {
@@ -937,6 +941,7 @@ public class Building {
             Input_Storage = new List<ResourceSaveData>(),
             Output_Storage = new List<ResourceSaveData>(),
             Residents = new List<ResidentSaveData>(),
+            Recently_Moved_Residents = new List<ResidentSaveData>(),
             Is_Residence = this is Residence,
             Worker_Allocation = new List<ResidentSaveData>(),
             Is_Deconstructing = Is_Deconstructing,
@@ -966,7 +971,10 @@ public class Building {
             foreach (KeyValuePair<Resident, int> pair in (this as Residence).Current_Residents) {
                 data.Residents.Add(new ResidentSaveData() { Resident = (int)pair.Key, Count = pair.Value });
             }
-            foreach(Residence.ServiceType service in Enum.GetValues(typeof(Residence.ServiceType))) {
+            foreach (KeyValuePair<Resident, int> pair in (this as Residence).Recently_Moved) {
+                data.Recently_Moved_Residents.Add(new ResidentSaveData() { Resident = (int)pair.Key, Count = pair.Value });
+            }
+            foreach (Residence.ServiceType service in Enum.GetValues(typeof(Residence.ServiceType))) {
                 if ((this as Residence).Service_Level(service) > 0.0f) {
                     data.Services.Add(new ServiceSaveData() {
                         Service = (int)service,

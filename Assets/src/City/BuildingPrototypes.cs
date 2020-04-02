@@ -1098,6 +1098,7 @@ public class BuildingPrototypes {
             { Resource.Lumber, 50 }, { Resource.Stone, 75 }, { Resource.Tools, 10 }
         }, 150, new List<Resource>(), 0, 125, new Dictionary<Resource, float>() { { Resource.Lumber, 0.025f }, { Resource.Stone, 0.025f } }, 0.01f, 0.0f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Citizen, 5 } },
         0.0f, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
+        prototypes.First(x => x.Internal_Name == "abode").Sprites.Add(new SpriteData("abode_1"));
 
         prototypes.Add(new Residence("Townhouse", "townhouse", Building.UI_Category.Housing, "townhouse", Building.BuildingSize.s2x2, 200, new Dictionary<Resource, int>() {
             { Resource.Bricks, 200 }, { Resource.Lumber, 85 }, { Resource.Stone, 20 }, { Resource.Tools, 15 }

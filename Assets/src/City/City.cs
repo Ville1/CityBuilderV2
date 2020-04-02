@@ -134,11 +134,13 @@ public class City {
         Dictionary<Building.Resident, int> max_population = new Dictionary<Building.Resident, int>();
         Dictionary<Building.Resident, float> happiness = new Dictionary<Building.Resident, float>();
         Dictionary<Building.Resident, int> workers_required = new Dictionary<Building.Resident, int>();
+        Dictionary<Building.Resident, int> available_workers = new Dictionary<Building.Resident, int>();
         foreach (Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
             current_population.Add(resident, 0);
             max_population.Add(resident, 0);
             happiness.Add(resident, 0.0f);
             workers_required.Add(resident, 0);
+            available_workers.Add(resident, 0);
         }
         foreach (Building building in Buildings) {
             foreach(KeyValuePair<Resource, float> pair in building.Storage) {
@@ -181,6 +183,7 @@ public class City {
                     Residence residence = building as Residence;
                     foreach (Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
                         current_population[resident] += residence.Current_Residents[resident];
+                        available_workers[resident] += residence.Available_Work_Force[resident];
                         max_population[resident] += residence.Resident_Space[resident];
                         happiness[resident] += residence.Happiness[resident] * residence.Current_Residents[resident];
                     }
@@ -195,11 +198,9 @@ public class City {
 
         //Allocate workers
         Dictionary<Building.Resident, float> worker_ratios = new Dictionary<Building.Resident, float>();
-        Dictionary<Building.Resident, int> available_workers = new Dictionary<Building.Resident, int>();
         Dictionary<Building.Resident, int> workers_allocated = new Dictionary<Building.Resident, int>();
         foreach (Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
             worker_ratios.Add(resident, workers_required[resident] == 0 ? 0.0f : current_population[resident] / (float)workers_required[resident]);
-            available_workers.Add(resident, current_population[resident]);
             workers_allocated.Add(resident, 0);
         }
         foreach (Building building in Buildings) {
