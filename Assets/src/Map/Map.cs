@@ -32,7 +32,7 @@ public class Map : MonoBehaviour
         { Mineral.Clay, 0.75f },
         { Mineral.Marble, 0.65f }
     };
-    public static List<Mineral> IMPORTANT_MINERALS = new List<Mineral>() { Mineral.Iron, Mineral.Clay, Mineral.Marble };
+    public static List<Mineral> IMPORTANT_MINERALS = new List<Mineral>() { Mineral.Iron, Mineral.Clay };
 
     public static Map Instance { get; private set; }
     
