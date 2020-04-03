@@ -81,8 +81,10 @@
     <Compile Include="Assets\src\City\Building.cs" />
     <Compile Include="Assets\src\City\BuildingPrototypes.cs" />
     <Compile Include="Assets\src\City\City.cs" />
+    <Compile Include="Assets\src\City\Contacts.cs" />
     <Compile Include="Assets\src\City\Entity.cs" />
     <Compile Include="Assets\src\City\EntityPrototypes.cs" />
+    <Compile Include="Assets\src\City\ForeignCity.cs" />
     <Compile Include="Assets\src\City\Residence.cs" />
     <Compile Include="Assets\src\City\Resource.cs" />
     <Compile Include="Assets\src\City\SpecialSetting.cs" />
@@ -97,12 +99,14 @@
     <Compile Include="Assets\src\Map\Map.cs" />
     <Compile Include="Assets\src\Map\Tile.cs" />
     <Compile Include="Assets\src\Map\TilePrototypes.cs" />
+    <Compile Include="Assets\src\NameManager.cs" />
     <Compile Include="Assets\src\Pathfinding\Pathfinding.cs" />
     <Compile Include="Assets\src\Pathfinding\PathfindingNode.cs" />
     <Compile Include="Assets\src\PrefabManager.cs" />
     <Compile Include="Assets\src\RNG.cs" />
     <Compile Include="Assets\src\Saving\BuildingSaveData.cs" />
     <Compile Include="Assets\src\Saving\CitySaveData.cs" />
+    <Compile Include="Assets\src\Saving\ContactsSaveData.cs" />
     <Compile Include="Assets\src\Saving\MapSaveData.cs" />
     <Compile Include="Assets\src\Saving\ResidentSaveData.cs" />
     <Compile Include="Assets\src\Saving\ResourceSaveData.cs" />
@@ -117,6 +121,7 @@
     <Compile Include="Assets\src\UI\CityInfoGUIManager.cs" />
     <Compile Include="Assets\src\UI\ConfirmationDialogManager.cs" />
     <Compile Include="Assets\src\UI\ConsoleManager.cs" />
+    <Compile Include="Assets\src\UI\ContactsGUIManager.cs" />
     <Compile Include="Assets\src\UI\InspectorManager.cs" />
     <Compile Include="Assets\src\UI\KeyboardManager.cs" />
     <Compile Include="Assets\src\UI\LoadGUIManager.cs" />

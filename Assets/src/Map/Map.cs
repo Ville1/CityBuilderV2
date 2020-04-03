@@ -596,6 +596,7 @@ public class Map : MonoBehaviour
         fine_tuned_tiles.Clear();
         lake_spawns.Clear();
         Update_Appeal();
+        Contacts.Instance.Generate_New();
         State = MapState.Normal;
         ProgressBarManager.Instance.Active = false;
         City.Instance.Start_New("PLACEHOLDER");

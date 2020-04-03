@@ -7,6 +7,7 @@ public class MenuManager : MonoBehaviour {
     public Button Menu_Button;
     public Button City_Button;
     public Button Views_Button;
+    public Button Contacts_Button;
     public GameObject Views_Panel;
     public Button None_Button;
     public Button Appeal_Button;
@@ -34,6 +35,7 @@ public class MenuManager : MonoBehaviour {
     {
         City_Button.interactable = Map.Instance != null && Map.Instance.State == Map.MapState.Normal;
         Views_Button.interactable = Map.Instance != null && Map.Instance.State == Map.MapState.Normal;
+        Contacts_Button.interactable = Map.Instance != null && Map.Instance.State == Map.MapState.Normal;
         None_Button.interactable = Map.Instance != null && Map.Instance.View != Map.MapView.None;
         Appeal_Button.interactable = Map.Instance != null && Map.Instance.View != Map.MapView.Appeal;
         Minerals_Button.interactable = Map.Instance != null && Map.Instance.View != Map.MapView.Minerals;
@@ -54,6 +56,11 @@ public class MenuManager : MonoBehaviour {
     public void Views_On_Click()
     {
         Views_Panel.SetActive(!Views_Panel.activeSelf);
+    }
+
+    public void Contacts_On_Click()
+    {
+        ContactsGUIManager.Instance.Active = true;
     }
 
     public void None_On_Click()

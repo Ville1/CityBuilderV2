@@ -73,6 +73,7 @@ public class City {
         Start_New(data.Name);
         Cash = data.Cash;
         Has_Town_Hall = data.Buildings.FirstOrDefault(x => x.Internal_Name == Building.TOWN_HALL_INTERNAL_NAME) != null;
+        Contacts.Instance.Load(data.Contacts);
     }
 
     public void Update_Grace_Time(float total_days)
@@ -454,7 +455,8 @@ public class City {
         return new CitySaveData() {
             Name = Name,
             Cash = Cash,
-            Buildings = new List<BuildingSaveData>()
+            Buildings = new List<BuildingSaveData>(),
+            Contacts = Contacts.Instance.Save()
         };
     }
 

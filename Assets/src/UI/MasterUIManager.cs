@@ -61,6 +61,9 @@ public class MasterUIManager : MonoBehaviour {
         if (TileInspectorManager.Instance != null && typeof(TileInspectorManager).Name != type_name) {
             TileInspectorManager.Instance.Active = false;
         }
+        if(ContactsGUIManager.Instance != null && typeof(ContactsGUIManager).Name != type_name) {
+            ContactsGUIManager.Instance.Active = false;
+        }
         MenuManager.Instance.Close_Views_Panel();
     }
 

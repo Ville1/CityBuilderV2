@@ -6,4 +6,5 @@ public class CitySaveData {
     public string Name;
     public float Cash;
     public List<BuildingSaveData> Buildings;
+    public ContactsSaveData Contacts;
 }
