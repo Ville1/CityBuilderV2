@@ -352,7 +352,6 @@ public class City {
                 }
             }
         } else {
-            Dictionary<Resource, int> total_cost = new Dictionary<Resource, int>();
             List<Tile> bridge_tiles = Bridge_Tiles(tile);
             foreach (Tile t in bridge_tiles) {
                 foreach(Tile t2 in Map.Instance.Get_Adjanced_Tiles(t).Select(x => x.Value).ToArray()) {
@@ -492,6 +491,25 @@ public class City {
             }
         }
         return amount_taken;
+    }
+
+    public bool Has_Outside_Road_Connection()
+    {
+        bool has_connection = false;
+        foreach (Building building in Buildings) {
+            if (building.Is_Road && building.Is_Connected) {
+                foreach (Tile tile in building.Tiles) {
+                    if (Map.Instance.Is_Edge_Tile(tile)) {
+                        has_connection = true;
+                        break;
+                    }
+                }
+            }
+            if (has_connection) {
+                break;
+            }
+        }
+        return has_connection;
     }
 
     private List<Tile> Bridge_Tiles(Tile tile)

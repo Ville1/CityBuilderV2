@@ -896,6 +896,11 @@ public class Map : MonoBehaviour
         return tiles[coordinates.X][coordinates.Y];
     }
 
+    public bool Is_Edge_Tile(Tile tile)
+    {
+        return tile.Coordinates.X == 0 || tile.Coordinates.Y == 0 || tile.Coordinates.X == Width - 1 || tile.Coordinates.Y == Height - 1;
+    }
+
     /// <summary>
     /// Returns list of tiles in the rectangle
     /// </summary>

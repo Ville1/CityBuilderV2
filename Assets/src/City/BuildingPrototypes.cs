@@ -1060,7 +1060,7 @@ public class BuildingPrototypes {
         }, unreserve_tiles, Highlight_Tiles(Tile.Work_Type.Forage), new List<Resource>(), new List<Resource>() { Resource.Mutton, Resource.Wool, Resource.Hide }, 0.0f, 0.0f));
 
         prototypes.Add(new Residence("Homestead", "homestead", Building.UI_Category.Housing, "homestead", Building.BuildingSize.s3x3, 200, new Dictionary<Resource, int>() {
-            { Resource.Wood, 100 }, { Resource.Lumber, 100 }, { Resource.Stone, 20 }, { Resource.Tools, 15 }
+            { Resource.Wood, 110 }, { Resource.Lumber, 110 }, { Resource.Stone, 20 }, { Resource.Tools, 15 }
         }, 175, new List<Resource>(), 0, 220, new Dictionary<Resource, float>() { { Resource.Wood, 0.05f }, { Resource.Lumber, 0.05f } }, 2.25f, 0.0f, 0.0f, 0.05f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 15 } }, 3.75f,
         delegate (Building building) {
             foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
@@ -1287,7 +1287,7 @@ public class BuildingPrototypes {
         prototypes.First(x => x.Internal_Name == "tailors_shop").Special_Settings.Add(new SpecialSetting("production", "Production", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() { "Simple clothes", "Leather clothes" }, 0));
 
         prototypes.Add(new Building("Farmhouse", "farmhouse", Building.UI_Category.Agriculture, "farmhouse", Building.BuildingSize.s3x3, 200, new Dictionary<Resource, int>() {
-            { Resource.Lumber, 220 }, { Resource.Stone, 20 }, { Resource.Tools, 20 }
+            { Resource.Lumber, 265 }, { Resource.Stone, 25 }, { Resource.Tools, 20 }
         }, 190, new List<Resource>(), 0, 0.0f, 240, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f } }, 1.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 15 } }, 15, true, false, true, 6.5f, 0, Reserve_Tiles(Tile.Work_Type.Farm),
         delegate (Building building, float delta_time) {
             if (!building.Is_Operational) {
@@ -1537,6 +1537,60 @@ public class BuildingPrototypes {
                 building.Process(new Dictionary<Resource, float>() { { Resource.Flour, 10.0f }, { selected_fuel, fuel_usage } }, new Dictionary<Resource, float>() { { Resource.Bread, 30.0f } }, delta_time);
             }, null, null, new List<Resource>() { Resource.Flour, Resource.Firewood, Resource.Charcoal, Resource.Coal }, new List<Resource>() { Resource.Bread }, 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "bakery").Special_Settings.Add(new SpecialSetting("fuel", "Fuel", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() { Resource.Firewood.UI_Name + " (2.5/day)", Resource.Charcoal.UI_Name + " (1.25/day)", Resource.Coal.UI_Name + " (1.25/day)" }, 0));
+
+        prototypes.Add(new Building("Trading Post", "trading_post", Building.UI_Category.Admin, "trading_post_1", Building.BuildingSize.s3x3, 190, new Dictionary<Resource, int>() {
+             { Resource.Lumber, 250 }, { Resource.Stone, 20 }, { Resource.Bricks, 50 }, { Resource.Tools, 15 }
+        }, 450, new List<Resource>(), 0, 0.0f, 320, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f } }, 3.00f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Citizen, 10 }, { Building.Resident.Noble, 5 } }, 10,
+        true, false, true, 0.0f, 0, null, delegate(Building building, float delta_time) {
+            building.Trade_Route_Settings.Caravan_Cooldown -= TimeManager.Instance.Seconds_To_Days(delta_time, 1.0f);
+            bool trade = false;
+            if(building.Trade_Route_Settings.Caravan_Cooldown <= 0.0f) {
+                building.Trade_Route_Settings.Caravan_Cooldown += TradeRouteSettings.CARAVAN_INTERVAL;
+                trade = true;
+            }
+            building.Consumes.Clear();
+            building.Produces.Clear();
+            if (building.Trade_Route_Settings.Set) {
+                if(building.Trade_Route_Settings.Action == TradeRouteSettings.TradeAction.Buy) {
+                    building.Produces.Add(building.Trade_Route_Settings.Resource);
+                } else {
+                    building.Consumes.Add(building.Trade_Route_Settings.Resource);
+                }
+            }
+            if (!building.Is_Operational) {
+                return;
+            }
+            if (!City.Instance.Has_Outside_Road_Connection()) {
+                building.Show_Alert("alert_general");
+                return;
+            }
+            if (building.Trade_Route_Settings.Set && trade) {
+                building.Trade_Route_Settings.Validate();
+                if (building.Trade_Route_Settings.Set) {
+                    float amount = building.Trade_Route_Settings.Effective_Amount;//TODO:? * (building.Trade_Route_Settings.Caravan_Cooldown / TradeRouteSettings.CARAVAN_INTERVAL);
+                    if (building.Trade_Route_Settings.Action == TradeRouteSettings.TradeAction.Buy) {
+                        if (!building.Output_Storage.ContainsKey(building.Trade_Route_Settings.Resource)) {
+                            building.Output_Storage.Add(building.Trade_Route_Settings.Resource, 0.0f);
+                        }
+                        amount = Math.Min(amount, Building.INPUT_OUTPUT_STORAGE_LIMIT - building.Output_Storage[building.Trade_Route_Settings.Resource]);
+                        building.Output_Storage[building.Trade_Route_Settings.Resource] += amount;
+                        City.Instance.Take_Cash(amount * building.Trade_Route_Settings.Partner.Get_Export_Price(building.Trade_Route_Settings.Resource));
+                        float opinion_boost = (amount * building.Trade_Route_Settings.Resource.Value) / 10000.0f;
+                        building.Trade_Route_Settings.Partner.Relations = Mathf.Clamp(building.Trade_Route_Settings.Partner.Relations + opinion_boost, -1.0f, 1.0f);
+                    } else {
+                        if (!building.Input_Storage.ContainsKey(building.Trade_Route_Settings.Resource)) {
+                            building.Input_Storage.Add(building.Trade_Route_Settings.Resource, 0.0f);
+                        }
+                        amount = Math.Min(amount, building.Input_Storage[building.Trade_Route_Settings.Resource]);
+                        building.Input_Storage[building.Trade_Route_Settings.Resource] -= amount;
+                        City.Instance.Add_Cash(amount * building.Trade_Route_Settings.Partner.Get_Import_Price(building.Trade_Route_Settings.Resource));
+                        float opinion_boost = (amount * building.Trade_Route_Settings.Resource.Value) / 10000.0f;
+                        building.Trade_Route_Settings.Partner.Relations = Mathf.Clamp(building.Trade_Route_Settings.Partner.Relations + opinion_boost, -1.0f, 1.0f);
+                    }
+                }
+            }
+        }, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
+        prototypes.First(x => x.Internal_Name == "trading_post").Tags.Add(Building.Tag.Land_Trade);
     }
 
     public static BuildingPrototypes Instance

@@ -64,13 +64,16 @@ public class MasterUIManager : MonoBehaviour {
         if(ContactsGUIManager.Instance != null && typeof(ContactsGUIManager).Name != type_name) {
             ContactsGUIManager.Instance.Active = false;
         }
+        if (TradeGUIManager.Instance != null && typeof(TradeGUIManager).Name != type_name) {
+            TradeGUIManager.Instance.Active = false;
+        }
         MenuManager.Instance.Close_Views_Panel();
     }
 
     public bool Intercept_Keyboard_Input
     {
         get {
-            return ConsoleManager.Instance.Is_Open() || SaveGUIManager.Instance.Active || LoadGUIManager.Instance.Active || StorageSettingsGUIManager.Instance.Active;
+            return ConsoleManager.Instance.Is_Open() || SaveGUIManager.Instance.Active || LoadGUIManager.Instance.Active || StorageSettingsGUIManager.Instance.Active || TradeGUIManager.Instance.Active;
         }
     }
 

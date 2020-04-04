@@ -24,6 +24,7 @@ public class BuildingSaveData {
     public List<ServiceSaveData> Services;
     public List<StorageSettingSaveData> Storage_Settings;
     public int Selected_Sprite;
+    public TradeRouteSettingsSaveData Trade_Route_Settings;
 }
 
 [Serializable]
@@ -40,4 +41,14 @@ public class StorageSettingSaveData
     public int Resource;
     public int Limit;
     public int Priority;
+}
+
+[Serializable]
+public class TradeRouteSettingsSaveData
+{
+    public long Partner;
+    public int Action;
+    public int Resource;
+    public float Amount;
+    public float Caravan_Cooldown;
 }

@@ -16,7 +16,7 @@ public class ForeignCity {
 
     public long Id { get; private set; }
     public string Name { get; private set; }
-    public float Relations { get; private set; }
+    public float Relations { get; set; }
     public List<Resource> Preferred_Imports { get; private set; }
     public List<Resource> Disliked_Imports { get; private set; }
     public List<Resource> Unaccepted_Imports { get; private set; }

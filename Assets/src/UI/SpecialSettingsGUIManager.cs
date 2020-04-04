@@ -137,7 +137,6 @@ public class SpecialSettingsGUIManager : MonoBehaviour {
         }
         foreach(KeyValuePair<SpecialSetting, GameObject> pair in rows) {
             if(pair.Key.Type == SpecialSetting.SettingType.Slider) {
-                var a = GameObject.Find(string.Format("{0}/Slider", pair.Value.name)).GetComponent<Slider>();
                 pair.Key.Slider_Value = GameObject.Find(string.Format("{0}/Slider", pair.Value.name)).GetComponent<Slider>().value;
                 pair.Key.Slider_Value = Mathf.RoundToInt(pair.Key.Slider_Value * 100.0f) / 100.0f;
             } else if(pair.Key.Type == SpecialSetting.SettingType.Input) {

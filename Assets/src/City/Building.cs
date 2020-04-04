@@ -25,7 +25,7 @@ public class Building {
     public enum UI_Category { Admin, Infrastructure, Housing, Services, Forestry, Agriculture, Textile, Industry, Unbuildable }
     public enum Resident { Peasant, Citizen, Noble }
     public enum BuildingSize { s1x1, s2x2, s3x3 }
-    public enum Tag { Undeletable, Does_Not_Block_Wind, Bridge }
+    public enum Tag { Undeletable, Does_Not_Block_Wind, Bridge, Land_Trade, Water_Trade }
 
     public long Id { get; protected set; }
     public string Name { get; private set; }
@@ -94,6 +94,7 @@ public class Building {
     public float Appeal { get; private set; }
     public float Appeal_Range { get; private set; }
     public List<Entity> Entities_Spawned { get; private set; }
+    public TradeRouteSettings Trade_Route_Settings { get; set; }
 
     public GameObject GameObject { get; private set; }
     public SpriteRenderer Renderer { get { return GameObject != null ? GameObject.GetComponent<SpriteRenderer>() : null; } }
@@ -211,6 +212,9 @@ public class Building {
         Appeal = prototype.Appeal;
         Appeal_Range = prototype.Appeal_Range;
         Entities_Spawned = new List<Entity>();
+        if(Tags.Contains(Tag.Land_Trade) || Tags.Contains(Tag.Water_Trade)) {
+            Trade_Route_Settings = new TradeRouteSettings(this);
+        }
 
         animation_index = 0;
         animation_cooldown = Sprite.Animation_Frame_Time;
@@ -361,6 +365,14 @@ public class Building {
             }
         }
         Selected_Sprite = data.Selected_Sprite;
+        if(Tags.Contains(Tag.Land_Trade) || Tags.Contains(Tag.Water_Trade)) {
+            if (data.Trade_Route_Settings == null) {
+                CustomLogger.Instance.Error("No TradeRouteSettings save data found");
+                Trade_Route_Settings = new TradeRouteSettings(this);
+            } else {
+                Trade_Route_Settings = new TradeRouteSettings(this, data.Trade_Route_Settings);
+            }
+        }
         Update_Sprite();
     }
 
@@ -701,7 +713,7 @@ public class Building {
                     }
                     foreach(Resource resource in Allowed_Resources) {
                         float take = Math.Min(max_transfer - resources_transfered, Storage_Settings.Get(resource).Limit - Storage[resource]);
-                        if (building.Produces.Contains(resource)) {
+                        if (building.Produces.Contains(resource) && building.Output_Storage.ContainsKey(resource)) {
                             float resources_taken = Mathf.Min(building.Output_Storage[resource], take);
                             building.Output_Storage[resource] -= resources_taken;
                             resources_transfered += resources_taken;
@@ -763,6 +775,11 @@ public class Building {
                     Storage[resource] -= resources_given;
                 }
             }
+        }
+
+        if((Tags.Contains(Tag.Land_Trade) || Tags.Contains(Tag.Water_Trade)) && Trade_Route_Settings.Set) {
+            Per_Day_Cash_Delta += Trade_Route_Settings.Cash_Delta;
+            Update_Delta(Trade_Route_Settings.Resource, Trade_Route_Settings.Resource_Delta);
         }
 
         if(On_Update != null) {
@@ -1001,7 +1018,9 @@ public class Building {
                 });
             }
         }
-
+        if(Tags.Contains(Tag.Land_Trade) || Tags.Contains(Tag.Water_Trade)) {
+            data.Trade_Route_Settings = Trade_Route_Settings.Save_Data;
+        }
         return data;
     }
 

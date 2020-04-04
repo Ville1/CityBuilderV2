@@ -90,6 +90,7 @@
     <Compile Include="Assets\src\City\SpecialSetting.cs" />
     <Compile Include="Assets\src\City\SpriteData.cs" />
     <Compile Include="Assets\src\City\StorageSetting.cs" />
+    <Compile Include="Assets\src\City\TradeRouteSettings.cs" />
     <Compile Include="Assets\src\ConsoleScriptManager.cs" />
     <Compile Include="Assets\src\Coordinates.cs" />
     <Compile Include="Assets\src\CustomLogger.cs" />
@@ -139,6 +140,7 @@
     <Compile Include="Assets\src\UI\TileInspectorManager.cs" />
     <Compile Include="Assets\src\UI\TooltipManager.cs" />
     <Compile Include="Assets\src\UI\TopGUIManager.cs" />
+    <Compile Include="Assets\src\UI\TradeGUIManager.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="GenerateTargetFrameworkMonikerAttribute" />
