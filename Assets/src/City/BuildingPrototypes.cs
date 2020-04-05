@@ -1591,6 +1591,49 @@ public class BuildingPrototypes {
             }
         }, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "trading_post").Tags.Add(Building.Tag.Land_Trade);
+
+        prototypes.Add(new Building("Embassy", "embassy", Building.UI_Category.Admin, "embassy", Building.BuildingSize.s2x2, 225, new Dictionary<Resource, int>() {
+            { Resource.Lumber, 75 }, { Resource.Bricks, 160 }, { Resource.Marble, 75 }, { Resource.Tools, 20 }
+        }, 600, new List<Resource>(), 0, 0.0f, 310, new Dictionary<Resource, float>() { { Resource.Bricks, 0.05f }, { Resource.Lumber, 0.01f }, { Resource.Marble, 0.01f } }, 5.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() {
+            { Building.Resident.Citizen, 10 }, { Building.Resident.Noble, 20 } }, 20, true, false, true, 0.0f, 0, null, delegate (Building building, float delta_time) {
+                if (!building.Is_Operational) {
+                    return;
+                }
+                if (!City.Instance.Has_Outside_Road_Connection()) {
+                    building.Show_Alert("alert_general");
+                    return;
+                }
+                int dropdown_index = building.Special_Settings.First(x => x.Name == "target").Dropdown_Selection;
+                if(dropdown_index == 0) {
+                    return;
+                }
+                ForeignCity target = Contacts.Instance.Cities.OrderBy(x => x.Id).ToArray()[dropdown_index - 1];
+                if(target.Relations == 1.0f) {
+                    building.Show_Alert("alert_general");
+                    return;
+                }
+                float multiplier = 1.0f;
+                if(building.Current_Workers[Building.Resident.Noble] == 1) {
+                    multiplier += 0.1f;
+                } else if(building.Current_Workers[Building.Resident.Noble] > 1) {
+                    multiplier += 0.35f;
+                }
+                if(target.Relations >= 0.50f) {
+                    multiplier -= 0.5f;
+                } else if(target.Relations > 0.35f) {
+                    multiplier -= 0.25f;
+                } else if(target.Relations < -0.50f) {
+                    multiplier -= 0.35f;
+                }
+                float opinion_bonus = ((delta_time * building.Efficency) / 2000.0f) * multiplier;
+                target.Relations = Mathf.Clamp(target.Relations + opinion_bonus, -1.0f, 1.0f);
+            }, null, null, new List<Resource>(), new List<Resource>(), 0.10f, 5.0f));
+        prototypes.First(x => x.Internal_Name == "embassy").Tags.Add(Building.Tag.Unique);
+        List<string> embassy_options = new List<string>() { "None" };
+        foreach(ForeignCity city in Contacts.Instance.Cities.OrderBy(x => x.Id).ToArray()) {
+            embassy_options.Add(city.Name);
+        }
+        prototypes.First(x => x.Internal_Name == "embassy").Special_Settings.Add(new SpecialSetting("target", "Target", SpecialSetting.SettingType.Dropdown, 0, false, embassy_options, 0));
     }
 
     public static BuildingPrototypes Instance

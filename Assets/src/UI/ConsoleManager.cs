@@ -223,6 +223,12 @@ public class ConsoleManager : MonoBehaviour
             return "Changed";
         });
 
+        commands.Add("ignore_citizen_needs", (string[] arguments) => {
+            bool val = !City.Instance.Ignore_Citizen_Needs;
+            City.Instance.Ignore_Citizen_Needs = val;
+            return val.ToString();
+        });
+
         Update_Output();
         Panel.SetActive(false);
     }

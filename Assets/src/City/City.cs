@@ -29,6 +29,8 @@ public class City {
     public float Food_Consumed { get; private set; }
     public float Food_Delta { get; private set; }
 
+    public bool Ignore_Citizen_Needs { get; set; }
+
     private float grace_time_remaining;
     private List<Building> removed_buildings;
     private List<Building> added_buildings;
@@ -310,8 +312,16 @@ public class City {
             return false;
         }
         if (Has_Town_Hall && prototype.Is_Town_Hall) {
-            message = "Only one town hall may be placed";
+            message = "Only one town hall allowed per city";
             return false;
+        }
+        if (prototype.Tags.Contains(Building.Tag.Unique)) {
+            foreach(Building building in Buildings) {
+                if(building.Internal_Name == prototype.Internal_Name) {
+                    message = string.Format("Only one {0} allowed per city", prototype.Name.ToLower());
+                    return false;
+                }
+            }
         }
         return true;
     }

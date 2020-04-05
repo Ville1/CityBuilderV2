@@ -22,7 +22,7 @@ public class ContactsGUIManager : MonoBehaviour {
     public GameObject Import_Content;
 
     private long current_row_id;
-    private List<GameObject> rows;
+    private Dictionary<ForeignCity, GameObject> rows;
     private List<GameObject> export_rows;
     private List<GameObject> import_rows;
 
@@ -42,7 +42,7 @@ public class ContactsGUIManager : MonoBehaviour {
         Import_Row_Prototype.SetActive(false);
         Side_Panel.SetActive(false);
         current_row_id = 0;
-        rows = new List<GameObject>();
+        rows = new Dictionary<ForeignCity, GameObject>();
         export_rows = new List<GameObject>();
         import_rows = new List<GameObject>();
     }
@@ -51,7 +51,13 @@ public class ContactsGUIManager : MonoBehaviour {
     /// Per frame update
     /// </summary>
     private void Update()
-    { }
+    {
+        if (Active) {
+            foreach(KeyValuePair<ForeignCity, GameObject> pair in rows) {
+                GameObject.Find(string.Format("{0}/RelationsText", pair.Value.name)).GetComponent<Text>().text = Helper.Float_To_String(pair.Key.Relations * 100.0f, 0, true) + "%";
+            }
+        }
+    }
 
     public bool Active
     {
@@ -71,8 +77,8 @@ public class ContactsGUIManager : MonoBehaviour {
 
     private void Update_GUI()
     {
-        foreach (GameObject row in rows) {
-            GameObject.Destroy(row.gameObject);
+        foreach (KeyValuePair<ForeignCity, GameObject> row in rows) {
+            GameObject.Destroy(row.Value.gameObject);
         }
         rows.Clear();
         
@@ -101,7 +107,7 @@ public class ContactsGUIManager : MonoBehaviour {
             click.AddListener(new UnityAction(delegate () { Select_City(city); }));
             row.GetComponentInChildren<Button>().onClick = click;
 
-            rows.Add(row);
+            rows.Add(city, row);
         }
         Content.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, (25.0f * rows.Count) + 5.0f);
     }
@@ -112,7 +118,7 @@ public class ContactsGUIManager : MonoBehaviour {
         Name_Text.text = city.Name;
         Type_Text.text = Helper.Snake_Case_To_UI(city.City_Type.ToString(), true);
         Relations_Text.text = Helper.Float_To_String(city.Relations * 100.0f, 0, true) + "%";
-        Discount_Text.text = city.Discount.HasValue ? Helper.Float_To_String(city.Discount.Value * 100.0f, 0, true) + "%" : "-";
+        Discount_Text.text = city.Discount.HasValue ? Helper.Float_To_String(city.Discount.Value * 100.0f, 0) + "%" : "-";
 
         switch (city.Trade_Route_Type) {
             case ForeignCity.TradeRouteType.Both:
