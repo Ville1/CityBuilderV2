@@ -1576,7 +1576,12 @@ public class BuildingPrototypes {
                         building.Output_Storage[building.Trade_Route_Settings.Resource] += amount;
                         City.Instance.Take_Cash(amount * building.Trade_Route_Settings.Partner.Get_Export_Price(building.Trade_Route_Settings.Resource));
                         float opinion_boost = (amount * building.Trade_Route_Settings.Resource.Value) / 10000.0f;
-                        building.Trade_Route_Settings.Partner.Relations = Mathf.Clamp(building.Trade_Route_Settings.Partner.Relations + opinion_boost, -1.0f, 1.0f);
+                        if(building.Trade_Route_Settings.Partner.Opinion > 0.5f && building.Trade_Route_Settings.Partner.Opinion <= 0.75f) {
+                            opinion_boost *= 0.5f;
+                        } else if(building.Trade_Route_Settings.Partner.Opinion > 0.75f) {
+                            opinion_boost *= 0.1f;
+                        }
+                        building.Trade_Route_Settings.Partner.Improve_Opinion(opinion_boost);
                     } else {
                         if (!building.Input_Storage.ContainsKey(building.Trade_Route_Settings.Resource)) {
                             building.Input_Storage.Add(building.Trade_Route_Settings.Resource, 0.0f);
@@ -1585,7 +1590,12 @@ public class BuildingPrototypes {
                         building.Input_Storage[building.Trade_Route_Settings.Resource] -= amount;
                         City.Instance.Add_Cash(amount * building.Trade_Route_Settings.Partner.Get_Import_Price(building.Trade_Route_Settings.Resource));
                         float opinion_boost = (amount * building.Trade_Route_Settings.Resource.Value) / 10000.0f;
-                        building.Trade_Route_Settings.Partner.Relations = Mathf.Clamp(building.Trade_Route_Settings.Partner.Relations + opinion_boost, -1.0f, 1.0f);
+                        if (building.Trade_Route_Settings.Partner.Opinion > 0.5f && building.Trade_Route_Settings.Partner.Opinion <= 0.75f) {
+                            opinion_boost *= 0.5f;
+                        } else if (building.Trade_Route_Settings.Partner.Opinion > 0.75f) {
+                            opinion_boost *= 0.1f;
+                        }
+                        building.Trade_Route_Settings.Partner.Improve_Opinion(opinion_boost);
                     }
                 }
             }
@@ -1608,7 +1618,7 @@ public class BuildingPrototypes {
                     return;
                 }
                 ForeignCity target = Contacts.Instance.Cities.OrderBy(x => x.Id).ToArray()[dropdown_index - 1];
-                if(target.Relations == 1.0f) {
+                if(target.Opinion == 1.0f) {
                     building.Show_Alert("alert_general");
                     return;
                 }
@@ -1618,15 +1628,15 @@ public class BuildingPrototypes {
                 } else if(building.Current_Workers[Building.Resident.Noble] > 1) {
                     multiplier += 0.35f;
                 }
-                if(target.Relations >= 0.50f) {
-                    multiplier -= 0.5f;
-                } else if(target.Relations > 0.35f) {
+                if(target.Opinion >= 0.50f) {
+                    multiplier -= 0.20f;
+                } else if(target.Opinion > 0.35f) {
+                    multiplier -= 0.15f;
+                } else if(target.Opinion < -0.50f) {
                     multiplier -= 0.25f;
-                } else if(target.Relations < -0.50f) {
-                    multiplier -= 0.35f;
                 }
-                float opinion_bonus = ((delta_time * building.Efficency) / 2000.0f) * multiplier;
-                target.Relations = Mathf.Clamp(target.Relations + opinion_bonus, -1.0f, 1.0f);
+                float opinion_bonus = ((delta_time * building.Efficency) / 1500.0f) * multiplier;
+                target.Improve_Opinion(opinion_bonus);
             }, null, null, new List<Resource>(), new List<Resource>(), 0.10f, 5.0f));
         prototypes.First(x => x.Internal_Name == "embassy").Tags.Add(Building.Tag.Unique);
         List<string> embassy_options = new List<string>() { "None" };

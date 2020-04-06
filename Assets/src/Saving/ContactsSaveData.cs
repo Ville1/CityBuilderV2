@@ -10,7 +10,8 @@ public class ContactsSaveData {
 public class ForeignCitySaveData {
     public long Id;
     public string Name;
-    public float Relations;
+    public float Opinion;
+    public float Opinion_Resting_Point;
     public List<int> Preferred_Imports;
     public List<int> Disliked_Imports;
     public List<int> Unaccepted_Imports;

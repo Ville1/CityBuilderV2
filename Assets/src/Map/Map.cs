@@ -128,6 +128,7 @@ public class Map : MonoBehaviour
         } else if (State == MapState.Normal) {
             City.Instance.Update(Time.deltaTime);
             TilePrototypes.Instance.Update(Time.deltaTime);
+            Contacts.Instance.Update(Time.deltaTime);
             for (int x = 0; x < Width; x++) {
                 for (int y = 0; y < Height; y++) {
                     tiles[x][y].Update(Time.deltaTime);

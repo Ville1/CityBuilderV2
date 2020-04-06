@@ -54,7 +54,7 @@ public class ContactsGUIManager : MonoBehaviour {
     {
         if (Active) {
             foreach(KeyValuePair<ForeignCity, GameObject> pair in rows) {
-                GameObject.Find(string.Format("{0}/RelationsText", pair.Value.name)).GetComponent<Text>().text = Helper.Float_To_String(pair.Key.Relations * 100.0f, 0, true) + "%";
+                GameObject.Find(string.Format("{0}/RelationsText", pair.Value.name)).GetComponent<Text>().text = Helper.Float_To_String(pair.Key.Opinion * 100.0f, 0, true) + "%";
             }
         }
     }
@@ -101,7 +101,7 @@ public class ContactsGUIManager : MonoBehaviour {
             }
 
             GameObject.Find(string.Format("{0}/NameText", row.name)).GetComponent<Text>().text = city.Name;
-            GameObject.Find(string.Format("{0}/RelationsText", row.name)).GetComponent<Text>().text = Helper.Float_To_String(city.Relations * 100.0f, 0, true) + "%";
+            GameObject.Find(string.Format("{0}/RelationsText", row.name)).GetComponent<Text>().text = Helper.Float_To_String(city.Opinion * 100.0f, 0, true) + "%";
 
             Button.ButtonClickedEvent click = new Button.ButtonClickedEvent();
             click.AddListener(new UnityAction(delegate () { Select_City(city); }));
@@ -117,7 +117,7 @@ public class ContactsGUIManager : MonoBehaviour {
         Side_Panel.SetActive(true);
         Name_Text.text = city.Name;
         Type_Text.text = Helper.Snake_Case_To_UI(city.City_Type.ToString(), true);
-        Relations_Text.text = Helper.Float_To_String(city.Relations * 100.0f, 0, true) + "%";
+        Relations_Text.text = Helper.Float_To_String(city.Opinion * 100.0f, 0, true) + "%";
         Discount_Text.text = city.Discount.HasValue ? Helper.Float_To_String(city.Discount.Value * 100.0f, 0) + "%" : "-";
 
         switch (city.Trade_Route_Type) {

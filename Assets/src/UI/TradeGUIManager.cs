@@ -47,7 +47,7 @@ public class TradeGUIManager : MonoBehaviour {
         if (Active) {
             Next_Trade_Text.text = building.Trade_Route_Settings.Caravan_Cooldown == 1.0f ? "1.0 day" : string.Format("{0} days", Helper.Float_To_String(building.Trade_Route_Settings.Caravan_Cooldown, 1));
             if(settings.Partner != null) {
-                Opinion_Text.text = Helper.Float_To_String(settings.Partner.Relations * 100.0f, 0, true) + "%";
+                Opinion_Text.text = Helper.Float_To_String(settings.Partner.Opinion * 100.0f, 0, true) + "%";
             }
         }
     }
@@ -84,7 +84,7 @@ public class TradeGUIManager : MonoBehaviour {
                     }
                 }
             }
-            partners = partners.OrderByDescending(x => x.Relations).ToList();
+            partners = partners.OrderByDescending(x => x.Opinion).ToList();
             return partners;
         }
     }
@@ -109,19 +109,19 @@ public class TradeGUIManager : MonoBehaviour {
         Partner_Dropdown.value = index;
 
         if (settings.Partner != null) {
-            Opinion_Text.text = Helper.Float_To_String(settings.Partner.Relations * 100.0f, 0, true) + "%";
+            Opinion_Text.text = Helper.Float_To_String(settings.Partner.Opinion * 100.0f, 0, true) + "%";
         } else {
             Opinion_Text.text = "-";
         }
-        Action_Dropdown.interactable = settings.Partner != null && settings.Partner.Relations >= 0.0f;
-        Resource_Dropdown.interactable = settings.Partner != null && settings.Partner.Relations >= 0.0f;
-        Amount_Input_Field.interactable = settings.Partner != null && settings.Partner.Relations >= 0.0f;
+        Action_Dropdown.interactable = settings.Partner != null && settings.Partner.Opinion >= 0.0f;
+        Resource_Dropdown.interactable = settings.Partner != null && settings.Partner.Opinion >= 0.0f;
+        Amount_Input_Field.interactable = settings.Partner != null && settings.Partner.Opinion >= 0.0f;
 
         List<string> errors = new List<string>();
         if (!City.Instance.Has_Outside_Road_Connection()) {
             errors.Add("no outside connection");
         }
-        if(settings.Partner != null && settings.Partner.Relations < 0) {
+        if(settings.Partner != null && settings.Partner.Opinion < 0) {
             errors.Add("opinion too low");
         }
         StringBuilder error_builder = new StringBuilder();

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 public class ForeignCity {
     private static long current_id;
@@ -13,10 +14,15 @@ public class ForeignCity {
     public static readonly float IMPORT_BASE_PRICE_MULTIPLIER = 0.50f;
     public static readonly float IMPORT_PREFERRED_PRICE_MULTIPLIER = 1.00f;
     public static readonly float IMPORT_DISLIKED_PRICE_MULTIPLIER = 0.10f;
+    public static readonly float OPINION_MAX_RESTING_POINT = 0.50f;
+    public static readonly float OPINION_PASSIVE_DELTA_PER_DAY = 0.00025f;
+    public static readonly float OPINION_IMPROVED_TIMER_DAYS = 30.0f;
 
     public long Id { get; private set; }
     public string Name { get; private set; }
-    public float Relations { get; set; }
+    public float Opinion { get; private set; }
+    public float Opinion_Resting_Point { get; private set; }
+    public float Opinion_Improved_Timer { get; private set; }
     public List<Resource> Preferred_Imports { get; private set; }
     public List<Resource> Disliked_Imports { get; private set; }
     public List<Resource> Unaccepted_Imports { get; private set; }
@@ -33,15 +39,16 @@ public class ForeignCity {
         Name = NameManager.Instance.Get_Name(NameManager.NameType.City, false);
         if(RNG.Instance.Next(0, 100) < 33) {
             //Hostile
-            Relations = -1.0f + RNG.Instance.Next_F();
+            Opinion = -1.0f + RNG.Instance.Next_F();
         } else if(RNG.Instance.Next(0, 100) < 10) {
             //Positive
-            Relations = 0.25f + (RNG.Instance.Next_F() * 0.5f);
+            Opinion = 0.25f + (RNG.Instance.Next_F() * (OPINION_MAX_RESTING_POINT - 0.25f));
         } else {
             //Neutral
-            Relations = RNG.Instance.Next_F() * 0.25f;
+            Opinion = RNG.Instance.Next_F() * 0.25f;
         }
-
+        Opinion_Resting_Point = -1.0f;
+        Update_Opinion_Resting_Point();
         City_Type = RNG.Instance.Item(Enum.GetValues(typeof(CityType)).Cast<CityType>().ToList());
         Trade_Route_Type = RNG.Instance.Item(Enum.GetValues(typeof(TradeRouteType)).Cast<TradeRouteType>().ToList());
 
@@ -138,7 +145,8 @@ public class ForeignCity {
             current_id = Id + 1;
         }
         Name = data.Name;
-        Relations = data.Relations;
+        Opinion = data.Opinion;
+        Opinion_Resting_Point = data.Opinion_Resting_Point;
         City_Type = (CityType)data.City_Type;
         Trade_Route_Type = (TradeRouteType)data.Trade_Route_Type;
         Preferred_Imports = Make_Resource_List(data.Preferred_Imports);
@@ -152,7 +160,21 @@ public class ForeignCity {
     public float? Discount
     {
         get {
-            return Relations < 0.0f ? (float?)null : (Relations > 0.5f ? (Relations - 0.5f) / 2.0f : 0.0f);
+            return Opinion < 0.0f ? (float?)null : (Opinion > 0.5f ? (Opinion - 0.5f) / 2.0f : 0.0f);
+        }
+    }
+
+    public void Update(float delta_time)
+    {
+        float delta_days = TimeManager.Instance.Seconds_To_Days(delta_time);
+        if (Opinion_Improved_Timer > 0.0f) {
+            Opinion_Improved_Timer -= delta_days;
+            return;
+        }
+        if(Opinion > Opinion_Resting_Point) {
+            Opinion = Mathf.Clamp(Opinion - (OPINION_PASSIVE_DELTA_PER_DAY * delta_days), Opinion_Resting_Point, 1.0f);
+        } else if(Opinion < Opinion_Resting_Point) {
+            Opinion = Mathf.Clamp(Opinion + (OPINION_PASSIVE_DELTA_PER_DAY * delta_days), -1.0f, Opinion_Resting_Point);
         }
     }
 
@@ -185,6 +207,17 @@ public class ForeignCity {
         return resource.Value * multiplier;
     }
 
+    public void Improve_Opinion(float amount)
+    {
+        if(amount <= 0.0f) {
+            CustomLogger.Instance.Warning(string.Format("amount = {0}", amount));
+            return;
+        }
+        Opinion = Mathf.Clamp(Opinion + amount, -1.0f, 1.0f);
+        Opinion_Improved_Timer = OPINION_IMPROVED_TIMER_DAYS;
+        Update_Opinion_Resting_Point();
+    }
+
     public override string ToString()
     {
         return string.Format("{0} #{1}", Name, Id);
@@ -193,6 +226,16 @@ public class ForeignCity {
     public static void Reset_Current_Id()
     {
         current_id = 0;
+    }
+
+    private void Update_Opinion_Resting_Point()
+    {
+        if(Opinion > Opinion_Resting_Point) {
+            Opinion_Resting_Point = Opinion;
+            if(Opinion_Resting_Point > OPINION_MAX_RESTING_POINT) {
+                Opinion_Resting_Point = OPINION_MAX_RESTING_POINT;
+            }
+        }
     }
 
     private List<Resource> Make_Resource_List(List<int> types)

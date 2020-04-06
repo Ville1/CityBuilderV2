@@ -23,7 +23,7 @@ public class ConsoleManager : MonoBehaviour
     private List<string> command_history;
     private int command_history_index;
     private Dictionary<string, string> variables;
-
+    
     /// <summary>
     /// Initialization
     /// </summary>

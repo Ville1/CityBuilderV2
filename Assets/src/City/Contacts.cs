@@ -32,6 +32,15 @@ public class Contacts {
         }
     }
 
+    public void Update(float delta_time)
+    {
+        if (!TimeManager.Instance.Paused) {
+            foreach (ForeignCity city in Cities) {
+                city.Update(delta_time);
+            }
+        }
+    }
+
     public ContactsSaveData Save()
     {
         ContactsSaveData data = new ContactsSaveData();
@@ -40,7 +49,8 @@ public class Contacts {
             data.Cities.Add(new ForeignCitySaveData() {
                 Id = city.Id,
                 Name = city.Name,
-                Relations = city.Relations,
+                Opinion = city.Opinion,
+                Opinion_Resting_Point = city.Opinion_Resting_Point,
                 City_Type = (int)city.City_Type,
                 Trade_Route_Type = (int)city.Trade_Route_Type,
                 Preferred_Imports = city.Preferred_Imports.Select(x => (int)x.Type).ToList(),
