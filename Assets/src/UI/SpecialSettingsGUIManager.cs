@@ -127,7 +127,7 @@ public class SpecialSettingsGUIManager : MonoBehaviour {
 
             rows.Add(setting, row);
         }
-        Content.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, rows.Count * 20.0f);
+        Content.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, (rows.Count * 22.5f) + 5.0f);
     }
 
     public void Apply()

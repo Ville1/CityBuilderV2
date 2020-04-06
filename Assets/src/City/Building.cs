@@ -514,6 +514,7 @@ public class Building {
                     max.Add(resource, (INPUT_OUTPUT_STORAGE_LIMIT - current));
                 }
             }
+            //TODO: fix this, there is some weirdness going on
             foreach (Resource resource in Produces) {
                 float current = Output_Storage.ContainsKey(resource) ? Output_Storage[resource] : 0.0f;
                 if (max.ContainsKey(resource)) {
@@ -713,6 +714,7 @@ public class Building {
                     }
                     foreach(Resource resource in Allowed_Resources) {
                         float take = Math.Min(max_transfer - resources_transfered, Storage_Settings.Get(resource).Limit - Storage[resource]);
+                        take = Math.Max(0.0f, Math.Min(take, Storage_Limit - Current_Storage_Amount));
                         if (building.Produces.Contains(resource) && building.Output_Storage.ContainsKey(resource)) {
                             float resources_taken = Mathf.Min(building.Output_Storage[resource], take);
                             building.Output_Storage[resource] -= resources_taken;

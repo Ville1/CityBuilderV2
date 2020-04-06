@@ -25,6 +25,16 @@ public class CityInfoGUIManager : MonoBehaviour {
     public GameObject Resources_Content;
     public GameObject Resource_Row_Prototype;
 
+    public GameObject Resource_Info_Panel;
+    public Text Resource_Name_Text;
+    public Image Resource_Icon_Image_Text;
+    public Text Resource_Value_Text;
+    public GameObject Resource_Food_Info;
+    public Text Resource_Food_Quality;
+    public Text Resource_Food_Type;
+    public GameObject Resource_Fuel_Info;
+    public Text Resource_Fuel_Value;
+
     private Dictionary<Resource, GameObject> resource_rows;
 
     /// <summary>
@@ -44,6 +54,7 @@ public class CityInfoGUIManager : MonoBehaviour {
         Overview_Tab_Panel.SetActive(false);
         Resources_Tab_Panel.SetActive(false);
         Resource_Row_Prototype.SetActive(false);
+        Resource_Info_Panel.SetActive(false);
         resource_rows = new Dictionary<Resource, GameObject>();
     }
 
@@ -74,6 +85,8 @@ public class CityInfoGUIManager : MonoBehaviour {
             if (value) {
                 Open_Overview_Tab();
                 MasterUIManager.Instance.Close_Others(GetType().Name);
+            } else {
+                Resource_Info_Panel.SetActive(false);
             }
         }
     }
@@ -84,6 +97,7 @@ public class CityInfoGUIManager : MonoBehaviour {
         Resources_Tab_Button.interactable = true;
         Overview_Tab_Panel.SetActive(true);
         Resources_Tab_Panel.SetActive(false);
+        Resource_Info_Panel.SetActive(false);
     }
 
     public void Open_Resources_Tab()
@@ -122,7 +136,7 @@ public class CityInfoGUIManager : MonoBehaviour {
                 );
                 row.SetActive(true);
                 row.name = string.Format("{0}_row", resouce.ToString().ToLower());
-                GameObject.Find(string.Format("{0}/NameText", row.name)).GetComponent<Text>().text = resouce.ToString();
+                GameObject.Find(string.Format("{0}/NameText", row.name)).GetComponent<Text>().text = resouce.UI_Name;
                 if (resouce.Has_Sprite) {
                     GameObject.Find(string.Format("{0}/IconImage", row.name)).GetComponent<Image>().sprite = SpriteManager.Instance.Get(resouce.Sprite_Name, resouce.Sprite_Type);
                 } else {
@@ -131,12 +145,41 @@ public class CityInfoGUIManager : MonoBehaviour {
                 resource_rows.Add(resouce, row);
             }
         }
+        Resources_Content.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, (resource_rows.Count * 30.0f) + 5.0f);
 
-        foreach(Resource resource in Resource.All) {
+        foreach (Resource resource in Resource.All) {
             GameObject row = resource_rows[resource];
             GameObject.Find(string.Format("{0}/CurrentText", row.name)).GetComponent<Text>().text = Helper.Float_To_String(City.Instance.Resource_Totals[resource], 0);
             GameObject.Find(string.Format("{0}/MaxText", row.name)).GetComponent<Text>().text = Helper.Float_To_String(City.Instance.Resource_Max_Storage[resource], 0);
             GameObject.Find(string.Format("{0}/DeltaText", row.name)).GetComponent<Text>().text = Helper.Float_To_String(City.Instance.Resource_Delta[resource], 1, true);
+
+            Button.ButtonClickedEvent on_click_event = new Button.ButtonClickedEvent();
+            on_click_event.AddListener(new UnityEngine.Events.UnityAction(delegate () {
+                Show_Resource_Info(resource);
+            }));
+            GameObject.Find(string.Format("{0}/InvisibleButton", row.name)).GetComponent<Button>().onClick = on_click_event;
+
+        }
+    }
+
+    private void Show_Resource_Info(Resource resource)
+    {
+        Resource_Info_Panel.SetActive(true);
+        Resource_Name_Text.text = resource.UI_Name;
+        if (resource.Has_Sprite) {
+            Resource_Icon_Image_Text.sprite = SpriteManager.Instance.Get(resource.Sprite_Name, resource.Sprite_Type);
+        } else {
+            Resource_Icon_Image_Text.sprite = SpriteManager.Instance.Get("placeholder", SpriteManager.SpriteType.UI);
+        }
+        Resource_Value_Text.text = Helper.Float_To_String(resource.Value, 2);
+        Resource_Food_Info.SetActive(resource.Is_Food);
+        if (resource.Is_Food) {
+            Resource_Food_Quality.text = Helper.Float_To_String(resource.Food_Quality, 2);
+            Resource_Food_Type.text = Helper.Snake_Case_To_UI(resource.Food_Type.ToString(), false);
+        }
+        Resource_Fuel_Info.SetActive(resource.Is_Fuel);
+        if (resource.Is_Fuel) {
+            Resource_Fuel_Value.text = Helper.Float_To_String(resource.Fuel_Value, 2);
         }
     }
 }
