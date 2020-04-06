@@ -412,6 +412,9 @@ public class InspectorManager : MonoBehaviour {
             }
 
             foreach (KeyValuePair<Resource, float> resource in building.Per_Day_Resource_Delta) {
+                if(resource.Value == 0.0f) {
+                    continue;
+                }
                 GameObject delta_row = GameObject.Instantiate(
                     Delta_Row_Prototype,
                     new Vector3(

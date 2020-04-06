@@ -1644,6 +1644,14 @@ public class BuildingPrototypes {
             embassy_options.Add(city.Name);
         }
         prototypes.First(x => x.Internal_Name == "embassy").Special_Settings.Add(new SpecialSetting("target", "Target", SpecialSetting.SettingType.Dropdown, 0, false, embassy_options, 0));
+
+        prototypes.Add(new Building("General Store", "general_store", Building.UI_Category.Services, "general_store", Building.BuildingSize.s2x2, 125, new Dictionary<Resource, int>() {
+         { Resource.Bricks, 100 }, { Resource.Lumber, 45 }, { Resource.Stone, 20 }, { Resource.Tools, 15 } }, 150, new List<Resource>(), 0, 0.0f, 165, new Dictionary<Resource, float>() {
+         { Resource.Bricks, 0.025f }, { Resource.Lumber, 0.025f } }, 1.0f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Citizen, 10 } }, 10, true, false, true, 0.0f, 8,
+         null, prototypes.First(x => x.Internal_Name == "marketplace").On_Update, null, null, prototypes.First(x => x.Internal_Name == "marketplace").Consumes, new List<Resource>(), 0.0f, 0.0f));
+        foreach(SpecialSetting setting in prototypes.First(x => x.Internal_Name == "marketplace").Special_Settings) {
+            prototypes.First(x => x.Internal_Name == "general_store").Special_Settings.Add(new SpecialSetting(setting));
+        }
     }
 
     public static BuildingPrototypes Instance
