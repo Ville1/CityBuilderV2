@@ -373,6 +373,11 @@ public class Building {
                 Trade_Route_Settings = new TradeRouteSettings(this, data.Trade_Route_Settings);
             }
         }
+
+        if(Special_Settings.Count != 0 && On_Update != null) {
+            On_Update(this, 0.0f);
+        }
+
         Update_Sprite();
     }
 

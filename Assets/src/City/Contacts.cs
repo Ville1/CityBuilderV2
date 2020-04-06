@@ -30,6 +30,22 @@ public class Contacts {
         for(int i = 0; i < RNG.Instance.Next(MIN_CONTACTS, MAX_CONTACTS); i++) {
             Cities.Add(new ForeignCity());
         }
+        foreach(Resource export in ForeignCity.IMPORTANT_EXPORTS) {
+            bool found = false;
+            foreach(ForeignCity city in Cities) {
+                if(city.Cheap_Exports.Contains(export) || city.Exports.Contains(export) || city.Expensive_Exports.Contains(export)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                foreach(ForeignCity city in Cities) {
+                    if (city.Insert_Export(export)) {
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     public void Update(float delta_time)

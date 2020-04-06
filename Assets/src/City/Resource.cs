@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 public class Resource {
     public enum ResourceType { Wood, Stone, Lumber, Tools, Roots, Berries, Mushrooms, Herbs, Firewood, Charcoal, Game, Hide, Leather, Potatoes, Corn, Bread, Iron_Ore, Coal, Salt, Iron_Bars, Ale, Wool, Cloth, Thread, Mutton,
-        Barrels, Simple_Clothes, Leather_Clothes, Wheat, Flour, Mechanisms, Clay, Bricks, Fish, Marble, Bananas, Oranges }
-    public enum FoodType { None, Meat, Vegetable }
-    public enum ResourceTag { Agricultural, Industrial, Forestry, Archaic, Coastal, Mining, Opulent, Foraging, Hunting, Construction, Livestock, Food, Crop, Clothing, Fine, Exotic }
+        Barrels, Simple_Clothes, Leather_Clothes, Wheat, Flour, Mechanisms, Clay, Bricks, Fish, Marble, Bananas, Oranges, Beer, Rum, Wine, Coffee, Pretzels, Cakes }
+    public enum FoodType { None, Meat, Vegetable, Delicacy }
+    public enum ResourceTag { Agricultural, Industrial, Forestry, Archaic, Coastal, Mining, Opulent, Foraging, Hunting, Construction, Livestock, Food, Crop, Clothing, Fine, Exotic, Alcohol, Pastry }
     public enum ResourceRarity { Very_Rare, Rare, Uncommon, Common }
 
     public static Resource Wood { get { return Get(ResourceType.Wood); } }
@@ -45,6 +45,12 @@ public class Resource {
     public static Resource Marble { get { return Get(ResourceType.Marble); } }
     public static Resource Bananas { get { return Get(ResourceType.Bananas); } }
     public static Resource Oranges { get { return Get(ResourceType.Oranges); } }
+    public static Resource Beer { get { return Get(ResourceType.Beer); } }
+    public static Resource Rum { get { return Get(ResourceType.Rum); } }
+    public static Resource Wine { get { return Get(ResourceType.Wine); } }
+    public static Resource Coffee { get { return Get(ResourceType.Coffee); } }
+    public static Resource Pretzels { get { return Get(ResourceType.Pretzels); } }
+    public static Resource Cake { get { return Get(ResourceType.Cakes); } }
     private static Dictionary<ResourceType, Resource> resources;
 
     public int Id { get { return (int)Type; } }
@@ -120,11 +126,17 @@ public class Resource {
 
             resources.Add(ResourceType.Hide, new Resource(ResourceType.Hide, "Hide", "hides", SpriteManager.SpriteType.UI, 0.25f, ResourceRarity.Common, new List<ResourceTag>() { ResourceTag.Hunting, ResourceTag.Archaic }));
             resources.Add(ResourceType.Leather, new Resource(ResourceType.Leather, "Leather", "leather", SpriteManager.SpriteType.UI, 1.00f, ResourceRarity.Uncommon, new List<ResourceTag>() { ResourceTag.Hunting, ResourceTag.Archaic, ResourceTag.Livestock }));
-            resources.Add(ResourceType.Herbs, new Resource(ResourceType.Herbs, "Herbs", null, SpriteManager.SpriteType.UI, 5.0f, ResourceRarity.Rare, new List<ResourceTag>() { ResourceTag.Foraging }));
             resources.Add(ResourceType.Iron_Ore, new Resource(ResourceType.Iron_Ore, "Iron Ore", "iron_ore", SpriteManager.SpriteType.UI, 1.0f, ResourceRarity.Uncommon, new List<ResourceTag>() { ResourceTag.Mining }));
             resources.Add(ResourceType.Iron_Bars, new Resource(ResourceType.Iron_Bars, "Iron Bars", "iron_bars", SpriteManager.SpriteType.UI, 2.5f, ResourceRarity.Rare, new List<ResourceTag>() { ResourceTag.Mining, ResourceTag.Industrial }));
+
+            resources.Add(ResourceType.Herbs, new Resource(ResourceType.Herbs, "Herbs", null, SpriteManager.SpriteType.UI, 5.0f, ResourceRarity.Rare, new List<ResourceTag>() { ResourceTag.Foraging }));
             resources.Add(ResourceType.Salt, new Resource(ResourceType.Salt, "Salt", null, SpriteManager.SpriteType.UI, 0.75f, ResourceRarity.Uncommon, new List<ResourceTag>() { ResourceTag.Coastal, ResourceTag.Mining }));
-            resources.Add(ResourceType.Ale, new Resource(ResourceType.Ale, "Ale", null, SpriteManager.SpriteType.UI, 1.25f, ResourceRarity.Rare, new List<ResourceTag>() { ResourceTag.Agricultural, ResourceTag.Fine }));
+            resources.Add(ResourceType.Ale, new Resource(ResourceType.Ale, "Ale", null, SpriteManager.SpriteType.UI, 1.25f, ResourceRarity.Uncommon, new List<ResourceTag>() { ResourceTag.Agricultural, ResourceTag.Fine, ResourceTag.Alcohol }));
+            resources.Add(ResourceType.Beer, new Resource(ResourceType.Beer, "Beer", null, SpriteManager.SpriteType.UI, 1.25f, ResourceRarity.Uncommon, new List<ResourceTag>() { ResourceTag.Agricultural, ResourceTag.Fine, ResourceTag.Alcohol }));
+            resources.Add(ResourceType.Rum, new Resource(ResourceType.Rum, "Rum", null, SpriteManager.SpriteType.UI, 1.35f, ResourceRarity.Rare, new List<ResourceTag>() { ResourceTag.Exotic, ResourceTag.Fine, ResourceTag.Alcohol }));
+            resources.Add(ResourceType.Wine, new Resource(ResourceType.Wine, "Wine", null, SpriteManager.SpriteType.UI, 3.50f, ResourceRarity.Very_Rare, new List<ResourceTag>() { ResourceTag.Agricultural, ResourceTag.Opulent, ResourceTag.Alcohol }));
+            resources.Add(ResourceType.Coffee, new Resource(ResourceType.Coffee, "Coffee", null, SpriteManager.SpriteType.UI, 2.75f, ResourceRarity.Very_Rare, new List<ResourceTag>() { ResourceTag.Agricultural, ResourceTag.Crop, ResourceTag.Opulent, ResourceTag.Exotic }));
+
             resources.Add(ResourceType.Wool, new Resource(ResourceType.Wool, "Wool", null, SpriteManager.SpriteType.UI, 0.50f, ResourceRarity.Common, new List<ResourceTag>() { ResourceTag.Agricultural, ResourceTag.Archaic, ResourceTag.Livestock }));
             resources.Add(ResourceType.Thread, new Resource(ResourceType.Thread, "Thread", null, SpriteManager.SpriteType.UI, 0.75f, ResourceRarity.Rare, new List<ResourceTag>() { ResourceTag.Agricultural, ResourceTag.Archaic, ResourceTag.Livestock }));
             resources.Add(ResourceType.Cloth, new Resource(ResourceType.Cloth, "Cloth", null, SpriteManager.SpriteType.UI, 1.00f, ResourceRarity.Rare, new List<ResourceTag>() { ResourceTag.Agricultural, ResourceTag.Livestock }));
@@ -148,6 +160,8 @@ public class Resource {
             resources.Add(ResourceType.Fish, new Resource(ResourceType.Fish, "Fish", "fish", SpriteManager.SpriteType.UI, FoodType.Meat, 1.00f, 0.75f, ResourceRarity.Common, new List<ResourceTag>() { ResourceTag.Coastal, ResourceTag.Food }));
             resources.Add(ResourceType.Bananas, new Resource(ResourceType.Bananas, "Bananas", null, SpriteManager.SpriteType.UI, FoodType.Vegetable, 0.85f, 1.10f, ResourceRarity.Rare, new List<ResourceTag>() { ResourceTag.Exotic, ResourceTag.Food, ResourceTag.Crop }));
             resources.Add(ResourceType.Oranges, new Resource(ResourceType.Oranges, "Oranges", null, SpriteManager.SpriteType.UI, FoodType.Vegetable, 0.90f, 1.15f, ResourceRarity.Rare, new List<ResourceTag>() { ResourceTag.Exotic, ResourceTag.Food, ResourceTag.Crop }));
+            resources.Add(ResourceType.Pretzels, new Resource(ResourceType.Pretzels, "Pretzels", null, SpriteManager.SpriteType.UI, FoodType.Delicacy, 0.0f, 1.35f, ResourceRarity.Very_Rare, new List<ResourceTag>() { ResourceTag.Food, ResourceTag.Fine, ResourceTag.Pastry }));
+            resources.Add(ResourceType.Cakes, new Resource(ResourceType.Cakes, "Cakes", null, SpriteManager.SpriteType.UI, FoodType.Delicacy, 0.0f, 5.00f, ResourceRarity.Very_Rare, new List<ResourceTag>() { ResourceTag.Food, ResourceTag.Opulent, ResourceTag.Pastry }));
         }
         return resources[type];
     }

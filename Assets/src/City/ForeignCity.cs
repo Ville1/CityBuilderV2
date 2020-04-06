@@ -8,6 +8,7 @@ public class ForeignCity {
     public enum TradeRouteType { Land, Water, Both }
     public enum CityType { Farming_Town, Rural_Town, Industrial_City, Forest_Village, Remote_Village, Coastal_Town, Mining_Town, Large_City }
 
+    public static readonly List<Resource> IMPORTANT_EXPORTS = new List<Resource>() { Resource.Coffee };
     public static readonly float EXPORT_BASE_PRICE_MULTIPLIER = 2.0f;
     public static readonly float EXPORT_CHEAP_PRICE_MULTIPLIER = 1.25f;
     public static readonly float EXPORT_EXPENSIVE_PRICE_MULTIPLIER = 5.0f;
@@ -31,6 +32,9 @@ public class ForeignCity {
     public List<Resource> Expensive_Exports { get; private set; }
     public TradeRouteType Trade_Route_Type { get; private set; }
     public CityType City_Type { get; private set; }
+
+    private List<Resource.ResourceTag> possible_exports;
+    private List<Resource.ResourceTag> impossible_exports;
 
     public ForeignCity()
     {
@@ -58,7 +62,9 @@ public class ForeignCity {
         Exports = new List<Resource>();
         Cheap_Exports = new List<Resource>();
         Expensive_Exports = new List<Resource>();
-        
+        possible_exports = new List<Resource.ResourceTag>();
+        impossible_exports = new List<Resource.ResourceTag>();
+
         switch (City_Type) {
             case CityType.Farming_Town:
                 Initialize_Exports_And_Imports(
@@ -207,6 +213,34 @@ public class ForeignCity {
         return resource.Value * multiplier;
     }
 
+    public bool Insert_Export(Resource resource)
+    {
+        if(Cheap_Exports.Contains(resource) || Exports.Contains(resource) || Expensive_Exports.Contains(resource)) {
+            return false;
+        }
+        bool possible = false;
+        foreach(Resource.ResourceTag tag in resource.Tags) {
+            if (impossible_exports.Contains(tag)) {
+                return false;
+            }
+            if (possible_exports.Contains(tag)) {
+                possible = true;
+            }
+        }
+        if (!possible) {
+            return false;
+        }
+        int random = RNG.Instance.Next(0, 100);
+        if(random < 35) {
+            Cheap_Exports.Add(resource);
+        } else if(random >= 35 && random < 65) {
+            Exports.Add(resource);
+        } else {
+            Expensive_Exports.Add(resource);
+        }
+        return true;
+    }
+
     public void Improve_Opinion(float amount)
     {
         if(amount <= 0.0f) {
@@ -255,6 +289,16 @@ public class ForeignCity {
     private void Initialize_Exports_And_Imports(List<Resource.ResourceTag> main_exports, List<Resource.ResourceTag> rare_exports, List<Resource.ResourceTag> never_export, List<Resource.ResourceTag> main_imports,
         List<Resource.ResourceTag> disliked_imports, List<Resource.ResourceTag> unacceped_imports)
     {
+        foreach(Resource.ResourceTag tag in main_exports) {
+            possible_exports.Add(tag);
+        }
+        foreach (Resource.ResourceTag tag in rare_exports) {
+            possible_exports.Add(tag);
+        }
+        foreach (Resource.ResourceTag tag in never_export) {
+            impossible_exports.Add(tag);
+        }
+
         Initialize_Exports(main_exports, rare_exports, never_export);
         if(Exports.Count + Cheap_Exports.Count + Expensive_Exports.Count <= 1) {
             Initialize_Exports(main_exports, rare_exports, never_export);

@@ -474,6 +474,9 @@ public class InspectorManager : MonoBehaviour {
                 service_rows.Clear();
 
                 foreach(Residence.ServiceType service in Enum.GetValues(typeof(Residence.ServiceType))) {
+                    if (!residence.Consumes_Service(service)) {
+                        continue;
+                    }
                     GameObject service_row = GameObject.Instantiate(
                         Services_Row_Prototype,
                         new Vector3(
