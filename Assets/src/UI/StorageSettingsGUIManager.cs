@@ -93,7 +93,7 @@ public class StorageSettingsGUIManager : MonoBehaviour {
             }
 
             GameObject resource_text = GameObject.Find(string.Format("{0}/ResourceNameText", row.name));
-            resource_text.GetComponentInChildren<Text>().text = setting.Resource.ToString();
+            resource_text.GetComponentInChildren<Text>().text = setting.Resource.UI_Name;
             GameObject current_text = GameObject.Find(string.Format("{0}/CurrentAmountText", row.name));
             current_text.GetComponentInChildren<Text>().text = Helper.Float_To_String(building.Storage.ContainsKey(setting.Resource) ? building.Storage[setting.Resource] : 0.0f, 1);
             row.GetComponentInChildren<InputField>().text = setting.Limit.ToString();

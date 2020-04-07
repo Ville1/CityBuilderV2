@@ -51,8 +51,8 @@ public class Resource {
     public static Resource Coffee { get { return Get(ResourceType.Coffee); } }
     public static Resource Pretzels { get { return Get(ResourceType.Pretzels); } }
     public static Resource Cake { get { return Get(ResourceType.Cakes); } }
-    public static Resource Copper_Ore { get { return Get(ResourceType.Tin_Ore); } }
-    public static Resource Copper_Bars { get { return Get(ResourceType.Tin_Bars); } }
+    public static Resource Copper_Ore { get { return Get(ResourceType.Copper_Ore); } }
+    public static Resource Copper_Bars { get { return Get(ResourceType.Copper_Bars); } }
     public static Resource Tin_Ore { get { return Get(ResourceType.Tin_Ore); } }
     public static Resource Tin_Bars { get { return Get(ResourceType.Tin_Bars); } }
     public static Resource Pewter_Bars { get { return Get(ResourceType.Pewter_Bars); } }
@@ -127,19 +127,19 @@ public class Resource {
             resources.Add(ResourceType.Tools, new Resource(ResourceType.Tools, "Tools", "tools", SpriteManager.SpriteType.UI, 3.0f, ResourceRarity.Rare, new List<ResourceTag>() { ResourceTag.Industrial, ResourceTag.Construction, ResourceTag.Fine }));
 
             resources.Add(ResourceType.Firewood, new Resource(ResourceType.Firewood, "Firewood", "firewood", SpriteManager.SpriteType.UI, 0.50f, 1.0f, ResourceRarity.Common, new List<ResourceTag>() { ResourceTag.Archaic }));
-            resources.Add(ResourceType.Charcoal, new Resource(ResourceType.Charcoal, "Charcoal", null, SpriteManager.SpriteType.UI, 1.0f, 10.0f, ResourceRarity.Uncommon, new List<ResourceTag>() { ResourceTag.Forestry, ResourceTag.Industrial }));
-            resources.Add(ResourceType.Coal, new Resource(ResourceType.Coal, "Coal", null, SpriteManager.SpriteType.UI, 1.0f, 10.0f, ResourceRarity.Uncommon, new List<ResourceTag>() { ResourceTag.Mining, ResourceTag.Industrial }));
+            resources.Add(ResourceType.Charcoal, new Resource(ResourceType.Charcoal, "Charcoal", "charcoal", SpriteManager.SpriteType.UI, 1.0f, 10.0f, ResourceRarity.Uncommon, new List<ResourceTag>() { ResourceTag.Forestry, ResourceTag.Industrial }));
+            resources.Add(ResourceType.Coal, new Resource(ResourceType.Coal, "Coal", "coal", SpriteManager.SpriteType.UI, 1.0f, 10.0f, ResourceRarity.Uncommon, new List<ResourceTag>() { ResourceTag.Mining, ResourceTag.Industrial }));
 
             resources.Add(ResourceType.Hide, new Resource(ResourceType.Hide, "Hide", "hides", SpriteManager.SpriteType.UI, 0.25f, ResourceRarity.Common, new List<ResourceTag>() { ResourceTag.Hunting, ResourceTag.Archaic }));
             resources.Add(ResourceType.Leather, new Resource(ResourceType.Leather, "Leather", "leather", SpriteManager.SpriteType.UI, 1.00f, ResourceRarity.Uncommon, new List<ResourceTag>() { ResourceTag.Hunting, ResourceTag.Archaic, ResourceTag.Livestock }));
 
             resources.Add(ResourceType.Iron_Ore, new Resource(ResourceType.Iron_Ore, "Iron Ore", "iron_ore", SpriteManager.SpriteType.UI, 1.0f, ResourceRarity.Uncommon, new List<ResourceTag>() { ResourceTag.Mining }));
             resources.Add(ResourceType.Iron_Bars, new Resource(ResourceType.Iron_Bars, "Iron Bars", "iron_bars", SpriteManager.SpriteType.UI, 2.5f, ResourceRarity.Rare, new List<ResourceTag>() { ResourceTag.Mining, ResourceTag.Industrial }));
-            resources.Add(ResourceType.Copper_Ore, new Resource(ResourceType.Copper_Ore, "Copper Ore", null, SpriteManager.SpriteType.UI, 0.75f, ResourceRarity.Uncommon, new List<ResourceTag>() { ResourceTag.Mining }));
-            resources.Add(ResourceType.Copper_Bars, new Resource(ResourceType.Copper_Bars, "Copper Bars", null, SpriteManager.SpriteType.UI, 1.85f, ResourceRarity.Rare, new List<ResourceTag>() { ResourceTag.Mining, ResourceTag.Industrial }));
-            resources.Add(ResourceType.Tin_Ore, new Resource(ResourceType.Tin_Ore, "Tin Ore", null, SpriteManager.SpriteType.UI, 0.75f, ResourceRarity.Uncommon, new List<ResourceTag>() { ResourceTag.Mining }));
-            resources.Add(ResourceType.Tin_Bars, new Resource(ResourceType.Tin_Bars, "Tin Bars", null, SpriteManager.SpriteType.UI, 1.85f, ResourceRarity.Rare, new List<ResourceTag>() { ResourceTag.Mining, ResourceTag.Industrial }));
-            resources.Add(ResourceType.Pewter_Bars, new Resource(ResourceType.Pewter_Bars, "Pewter Bars", null, SpriteManager.SpriteType.UI, 3.00f, ResourceRarity.Very_Rare, new List<ResourceTag>() { ResourceTag.Mining, ResourceTag.Industrial, ResourceTag.Fine }));
+            resources.Add(ResourceType.Copper_Ore, new Resource(ResourceType.Copper_Ore, "Copper Ore", "copper_ore", SpriteManager.SpriteType.UI, 0.75f, ResourceRarity.Uncommon, new List<ResourceTag>() { ResourceTag.Mining }));
+            resources.Add(ResourceType.Copper_Bars, new Resource(ResourceType.Copper_Bars, "Copper Bars", "copper_bars", SpriteManager.SpriteType.UI, 1.85f, ResourceRarity.Rare, new List<ResourceTag>() { ResourceTag.Mining, ResourceTag.Industrial }));
+            resources.Add(ResourceType.Tin_Ore, new Resource(ResourceType.Tin_Ore, "Tin Ore", "tin_ore", SpriteManager.SpriteType.UI, 0.75f, ResourceRarity.Uncommon, new List<ResourceTag>() { ResourceTag.Mining }));
+            resources.Add(ResourceType.Tin_Bars, new Resource(ResourceType.Tin_Bars, "Tin Bars", "tin_bars", SpriteManager.SpriteType.UI, 1.85f, ResourceRarity.Rare, new List<ResourceTag>() { ResourceTag.Mining, ResourceTag.Industrial }));
+            resources.Add(ResourceType.Pewter_Bars, new Resource(ResourceType.Pewter_Bars, "Pewter Bars", "pewter_bars", SpriteManager.SpriteType.UI, 3.00f, ResourceRarity.Very_Rare, new List<ResourceTag>() { ResourceTag.Mining, ResourceTag.Industrial, ResourceTag.Fine }));
 
             resources.Add(ResourceType.Herbs, new Resource(ResourceType.Herbs, "Herbs", null, SpriteManager.SpriteType.UI, 5.0f, ResourceRarity.Rare, new List<ResourceTag>() { ResourceTag.Foraging }));
             resources.Add(ResourceType.Salt, new Resource(ResourceType.Salt, "Salt", null, SpriteManager.SpriteType.UI, 0.75f, ResourceRarity.Uncommon, new List<ResourceTag>() { ResourceTag.Coastal, ResourceTag.Mining }));
@@ -153,7 +153,7 @@ public class Resource {
             resources.Add(ResourceType.Wool, new Resource(ResourceType.Wool, "Wool", null, SpriteManager.SpriteType.UI, 0.50f, ResourceRarity.Common, new List<ResourceTag>() { ResourceTag.Agricultural, ResourceTag.Archaic, ResourceTag.Livestock }));
             resources.Add(ResourceType.Thread, new Resource(ResourceType.Thread, "Thread", null, SpriteManager.SpriteType.UI, 0.75f, ResourceRarity.Rare, new List<ResourceTag>() { ResourceTag.Agricultural, ResourceTag.Archaic, ResourceTag.Livestock }));
             resources.Add(ResourceType.Cloth, new Resource(ResourceType.Cloth, "Cloth", null, SpriteManager.SpriteType.UI, 1.00f, ResourceRarity.Rare, new List<ResourceTag>() { ResourceTag.Agricultural, ResourceTag.Livestock }));
-            resources.Add(ResourceType.Barrels, new Resource(ResourceType.Barrels, "Barrels", null, SpriteManager.SpriteType.UI, 1.00f, ResourceRarity.Uncommon, new List<ResourceTag>() { ResourceTag.Forestry, ResourceTag.Coastal, ResourceTag.Agricultural }));
+            resources.Add(ResourceType.Barrels, new Resource(ResourceType.Barrels, "Barrels", "barrels", SpriteManager.SpriteType.UI, 1.00f, ResourceRarity.Uncommon, new List<ResourceTag>() { ResourceTag.Forestry, ResourceTag.Coastal, ResourceTag.Agricultural }));
             resources.Add(ResourceType.Simple_Clothes, new Resource(ResourceType.Simple_Clothes, "Simple Clothes", null, SpriteManager.SpriteType.UI, 5.00f, ResourceRarity.Rare, new List<ResourceTag>() { ResourceTag.Clothing }));
             resources.Add(ResourceType.Leather_Clothes, new Resource(ResourceType.Leather_Clothes, "Leather Clothes", null, SpriteManager.SpriteType.UI, 7.50f, ResourceRarity.Very_Rare, new List<ResourceTag>() { ResourceTag.Clothing, ResourceTag.Fine }));
             resources.Add(ResourceType.Wheat, new Resource(ResourceType.Wheat, "Wheat", null, SpriteManager.SpriteType.UI, 0.50f, ResourceRarity.Common, new List<ResourceTag>() { ResourceTag.Agricultural, ResourceTag.Food, ResourceTag.Crop }));
