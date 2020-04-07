@@ -421,13 +421,7 @@ public class BuildingPrototypes {
                     market.Update_Delta(fuel_type, (-fuel_for_residence / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f));
                     residence.Serve(Residence.ServiceType.Fuel, residence.Service_Needed(Residence.ServiceType.Fuel) * fuel_supply_ratio, efficency_multiplier);
                     income += fuel_for_residence * fuel_type.Value;
-                    if(market.Input_Storage[fuel_type] < 0.0f) {
-                        //Rounding errors?
-                        if (market.Input_Storage[fuel_type] < -0.00001f) {
-                            CustomLogger.Instance.Error(string.Format("Negative fuel: {0}", fuel_type.ToString()));
-                        }
-                        market.Input_Storage[fuel_type] = 0.0f;
-                    }
+                    market.Check_Input_Storage(fuel_type);
                 }
             }
 
@@ -491,13 +485,7 @@ public class BuildingPrototypes {
                         market.Input_Storage[pair.Key] -= pair.Value * food_used;
                         market.Update_Delta(pair.Key, (-(pair.Value * food_used) / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f), false);
                         income += pair.Key.Value * (pair.Value * food_used);
-                        if (market.Input_Storage[pair.Key] < 0.0f) {
-                            //Rounding errors?
-                            if (market.Input_Storage[pair.Key] < -0.00001f) {
-                                CustomLogger.Instance.Error(string.Format("Negative food: {0}", pair.Key.ToString()));
-                            }
-                            market.Input_Storage[pair.Key] = 0.0f;
-                        }
+                        market.Check_Input_Storage(pair.Key);
                     }
                 }
             }
@@ -512,13 +500,7 @@ public class BuildingPrototypes {
                     residence.Serve(Residence.ServiceType.Herbs, residence.Service_Needed(Residence.ServiceType.Herbs) * herb_ratio, efficency_multiplier);
                 }
                 market.Input_Storage[Resource.Herbs] -= herbs_used;
-                if (market.Input_Storage[Resource.Herbs] < 0.0f) {
-                    //Rounding errors?
-                    if (market.Input_Storage[Resource.Herbs] < -0.00001f) {
-                        CustomLogger.Instance.Error("Negative herbs: {0}");
-                    }
-                    market.Input_Storage[Resource.Herbs] = 0.0f;
-                }
+                market.Check_Input_Storage(Resource.Herbs);
                 income += herbs_used * Resource.Herbs.Value;
                 market.Update_Delta(Resource.Herbs, (-herbs_used / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f));
             }
@@ -533,13 +515,7 @@ public class BuildingPrototypes {
                     residence.Serve(Residence.ServiceType.Salt, residence.Service_Needed(Residence.ServiceType.Salt) * salt_ratio, efficency_multiplier);
                 }
                 market.Input_Storage[Resource.Salt] -= salt_used;
-                if (market.Input_Storage[Resource.Salt] < 0.0f) {
-                    //Rounding errors?
-                    if (market.Input_Storage[Resource.Salt] < -0.00001f) {
-                        CustomLogger.Instance.Error("Negative salt: {0}");
-                    }
-                    market.Input_Storage[Resource.Salt] = 0.0f;
-                }
+                market.Check_Input_Storage(Resource.Salt);
                 income += salt_used * Resource.Salt.Value;
                 market.Update_Delta(Resource.Salt, (-salt_used / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f));
             }
@@ -564,21 +540,8 @@ public class BuildingPrototypes {
                 market.Input_Storage[Resource.Leather_Clothes] -= leather_sold;
                 income += leather_sold * Resource.Leather_Clothes.Value;
                 market.Update_Delta(Resource.Leather_Clothes, (-leather_sold / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f));
-
-                if (market.Input_Storage[Resource.Simple_Clothes] < 0.0f) {
-                    //Rounding errors?
-                    if (market.Input_Storage[Resource.Simple_Clothes] < -0.00001f) {
-                        CustomLogger.Instance.Error("Negative simple clothes: {0}");
-                    }
-                    market.Input_Storage[Resource.Simple_Clothes] = 0.0f;
-                }
-                if (market.Input_Storage[Resource.Leather_Clothes] < 0.0f) {
-                    //Rounding errors?
-                    if (market.Input_Storage[Resource.Leather_Clothes] < -0.00001f) {
-                        CustomLogger.Instance.Error("Negative leather clothes: {0}");
-                    }
-                    market.Input_Storage[Resource.Leather_Clothes] = 0.0f;
-                }
+                market.Check_Input_Storage(Resource.Simple_Clothes);
+                market.Check_Input_Storage(Resource.Leather_Clothes);
             }
 
             if (income != 0.0f) {
@@ -990,8 +953,8 @@ public class BuildingPrototypes {
                                 }
                             }
                         }
-                        float disparity = (1.0f / unique_food_count) - min_food_ratio;
-                        food_quality = unique_food_count * (1.0f - disparity);
+                        float disparity = unique_food_count != 0.0f ? (1.0f / unique_food_count) - min_food_ratio : 1.0f;
+                        food_quality = Math.Max(unique_food_count * (1.0f - disparity), 0.0f);
                         food_quality = (Mathf.Pow(food_quality, 0.5f) + ((food_quality - 1.0f) * 0.1f)) / 4.0f;
                         food_quality *= ((tavern.Efficency + 2.0f) / 3.0f);
                         food_quality *= 1.5f;
@@ -1012,13 +975,7 @@ public class BuildingPrototypes {
                         tavern.Input_Storage[ratio.Key] -= type_used;
                         income += ratio.Key.Value * type_used;
                         tavern.Update_Delta(ratio.Key, (-type_used / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f), false);
-                        if (tavern.Input_Storage[ratio.Key] < 0.0f) {
-                            //Rounding errors?
-                            if (tavern.Input_Storage[ratio.Key] < -0.00001f) {
-                                CustomLogger.Instance.Error("Negative " + ratio.Key.Type.ToString());
-                            }
-                            tavern.Input_Storage[ratio.Key] = 0.0f;
-                        }
+                        tavern.Check_Input_Storage(ratio.Key);
                     }
 
                     if (food_ratios != null) {
@@ -1026,13 +983,7 @@ public class BuildingPrototypes {
                             tavern.Input_Storage[pair.Key] -= pair.Value * food_used;
                             tavern.Update_Delta(pair.Key, (-(pair.Value * food_used) / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f), false);
                             income += pair.Key.Value * (pair.Value * food_used);
-                            if (tavern.Input_Storage[pair.Key] < 0.0f) {
-                                //Rounding errors?
-                                if (tavern.Input_Storage[pair.Key] < -0.00001f) {
-                                    CustomLogger.Instance.Error(string.Format("Negative food: {0}", pair.Key.ToString()));
-                                }
-                                tavern.Input_Storage[pair.Key] = 0.0f;
-                            }
+                            tavern.Check_Input_Storage(pair.Key);
                         }
                     }
                 } else {
@@ -1805,13 +1756,7 @@ public class BuildingPrototypes {
                         residence.Serve(Residence.ServiceType.Coffeehouse, residence.Service_Needed(Residence.ServiceType.Coffeehouse) * coffee_ratio, (1.0f - max_pastry_bonus) + (max_pastry_bonus * pastry_bonus_multiplier));
                     }
                     building.Input_Storage[Resource.Coffee] -= coffee_used;
-                    if (building.Input_Storage[Resource.Coffee] < 0.0f) {
-                        //Rounding errors?
-                        if (building.Input_Storage[Resource.Coffee] < -0.00001f) {
-                            CustomLogger.Instance.Error("Negative coffee: {0}");
-                        }
-                        building.Input_Storage[Resource.Coffee] = 0.0f;
-                    }
+                    building.Check_Input_Storage(Resource.Coffee);
                     income += coffee_used * Resource.Coffee.Value;
                     building.Update_Delta(Resource.Coffee, (-coffee_used / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f));
 
@@ -1819,13 +1764,7 @@ public class BuildingPrototypes {
                         foreach (KeyValuePair<Resource, float> pair in pastry_ratios) {
                             float pastry_type_used = pasty_used * pair.Value;
                             building.Input_Storage[pair.Key] -= pastry_type_used;
-                            if (building.Input_Storage[pair.Key] < 0.0f) {
-                                //Rounding errors?
-                                if (building.Input_Storage[pair.Key] < -0.00001f) {
-                                    CustomLogger.Instance.Error(string.Format("Negative {0}: {1}", pair.Key.Type.ToString(), building.Input_Storage[pair.Key]));
-                                }
-                                building.Input_Storage[pair.Key] = 0.0f;
-                            }
+                            building.Check_Input_Storage(pair.Key);
                             income += pastry_type_used * pair.Key.Value;
                             building.Update_Delta(pair.Key, (-pastry_type_used / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f));
                         }

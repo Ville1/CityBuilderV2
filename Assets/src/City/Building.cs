@@ -1159,6 +1159,17 @@ public class Building {
         }
     }
 
+    public void Check_Input_Storage(Resource resource)
+    {
+        if (Input_Storage[resource] < 0.0f) {
+            //Rounding errors?
+            if (Input_Storage[resource] < -0.00001f) {
+                CustomLogger.Instance.Error(string.Format("Negative {0}: {1}", resource.Type.ToString(), Input_Storage[resource]));
+            }
+            Input_Storage[resource] = 0.0f;
+        }
+    }
+
     public void Delete()
     {
         GameObject.Destroy(GameObject);
