@@ -8,6 +8,7 @@ public class TileSaveData {
     public string Internal_Name;
     public List<WorkSaveData> Worked_By;
     public List<MineralSaveData> Minerals;
+    public List<int> Mineral_Spawns;
     public int Water_Flow;
 }
 

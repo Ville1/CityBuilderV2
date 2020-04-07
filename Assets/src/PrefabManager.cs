@@ -12,6 +12,7 @@ public class PrefabManager : MonoBehaviour {
     public GameObject Road;
     public GameObject Alert;
     public GameObject Entity;
+    public GameObject Mineral;
 
     /// <summary>
     /// Initialization

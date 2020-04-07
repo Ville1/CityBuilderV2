@@ -34,6 +34,7 @@ public class Tile
     public float Appeal { get; set; }
     public List<WorkData> Worked_By { get; private set; }
     public Dictionary<Mineral, float> Minerals { get; private set; }
+    public List<Mineral> Mineral_Spawns { get; private set; }
     public List<Entity> Entities { get; private set; }
     public bool Is_Water { get { return Internal_Name.StartsWith("water"); } }
     public Coordinates.Direction? Water_Flow { get; set; }
@@ -71,6 +72,7 @@ public class Tile
         text_game_object.SetActive(false);
         text_game_object.GetComponentInChildren<MeshRenderer>().sortingLayerName = "Text";
         Minerals = new Dictionary<Mineral, float>();
+        Mineral_Spawns = new List<Mineral>();
         Entities = new List<Entity>();
 
         Change_To(prototype);
@@ -87,6 +89,7 @@ public class Tile
         Base_Appeal_Range = appeal_range;
         Can_Have_Minerals = can_have_minerals;
         Minerals = new Dictionary<Mineral, float>();
+        Mineral_Spawns = new List<Mineral>();
         Animation_Sprites = new List<string>();
     }
 
@@ -101,6 +104,7 @@ public class Tile
         Base_Appeal_Range = appeal_range;
         Can_Have_Minerals = can_have_minerals;
         Minerals = new Dictionary<Mineral, float>();
+        Mineral_Spawns = new List<Mineral>();
         Animation_Sprites = Helper.Clone_List(animation_sprites);
         Sync_Animation = sync_animation;
         Animation_Framerate = animation_framerate;
@@ -285,6 +289,7 @@ public class Tile
             Internal_Name = Internal_Name,
             Worked_By = Worked_By.Select(x => new WorkSaveData() { Id = x.Building.Id, Type = (int)x.Type }).ToList(),
             Minerals = Minerals.Select(x => new MineralSaveData() { Mineral = (int)x.Key, Amount = x.Value }).ToList(),
+            Mineral_Spawns = Mineral_Spawns.Select(x => (int)x).ToList(),
             Water_Flow = Water_Flow.HasValue ? (int)Water_Flow : -1
         };
     }

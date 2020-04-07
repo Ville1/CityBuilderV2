@@ -11,7 +11,7 @@ public class Map : MonoBehaviour
     public enum MapView { None, Appeal, Minerals, Water_Flow }
 
     public static readonly float Z_LEVEL = 0.0f;
-    public static Dictionary<Mineral, int> MINERAL_BASE_SPAWN_CHANCE = new Dictionary<Mineral, int>() {
+    public static readonly Dictionary<Mineral, int> MINERAL_BASE_SPAWN_CHANCE = new Dictionary<Mineral, int>() {
         { Mineral.Iron, 8 },
         { Mineral.Coal, 6 },
         { Mineral.Salt, 5 },
@@ -20,7 +20,7 @@ public class Map : MonoBehaviour
         { Mineral.Copper, 7 },
         { Mineral.Tin, 7 }
     };
-    public static Dictionary<Mineral, float> MINERAL_VEIN_SIZE = new Dictionary<Mineral, float>() {
+    public static readonly Dictionary<Mineral, float> MINERAL_VEIN_SIZE = new Dictionary<Mineral, float>() {
         { Mineral.Iron, 3.0f },
         { Mineral.Coal, 3.0f },
         { Mineral.Salt, 2.0f },
@@ -29,7 +29,7 @@ public class Map : MonoBehaviour
         { Mineral.Copper, 3.0f },
         { Mineral.Tin, 3.0f }
     };
-    public static Dictionary<Mineral, float> MINERAL_VEIN_RICHNESS = new Dictionary<Mineral, float>() {
+    public static readonly Dictionary<Mineral, float> MINERAL_VEIN_RICHNESS = new Dictionary<Mineral, float>() {
         { Mineral.Iron, 0.90f },
         { Mineral.Coal, 0.65f },
         { Mineral.Salt, 0.65f },
@@ -38,7 +38,17 @@ public class Map : MonoBehaviour
         { Mineral.Copper, 0.75f },
         { Mineral.Tin, 0.75f }
     };
-    public static List<Mineral> IMPORTANT_MINERALS = new List<Mineral>() { Mineral.Iron, Mineral.Clay, Mineral.Copper, Mineral.Tin };
+    public static readonly Dictionary<Mineral, string> MINERAL_SPRITES = new Dictionary<Mineral, string>() {
+        { Mineral.Iron, "iron_ore" },
+        { Mineral.Coal, "coal" },
+        { Mineral.Salt, "placeholder" },
+        { Mineral.Clay, "clay" },
+        { Mineral.Marble, "placeholder" },
+        { Mineral.Copper, "copper_ore" },
+        { Mineral.Tin, "tin_ore" }
+    };
+    public static readonly SpriteManager.SpriteType MINERAL_SPRITE_TYPE = SpriteManager.SpriteType.UI;
+    public static readonly List<Mineral> IMPORTANT_MINERALS = new List<Mineral>() { Mineral.Iron, Mineral.Clay, Mineral.Copper, Mineral.Tin };
 
     public static Map Instance { get; private set; }
     
@@ -76,6 +86,7 @@ public class Map : MonoBehaviour
     private bool mineral_safety_spawn;
     private MapView view;
     private List<Entity> entities_to_be_deleted;
+    private List<GameObject> mineral_icons;
 
     /// <summary>
     /// Initializiation
@@ -88,6 +99,7 @@ public class Map : MonoBehaviour
         }
         Instance = this;
         State = MapState.Inactive;
+        mineral_icons = new List<GameObject>();
     }
 
     /// <summary>
@@ -436,6 +448,7 @@ public class Map : MonoBehaviour
                 }
                 float amount = 3.0f * (MINERAL_VEIN_RICHNESS[mineral] * (0.25f + (1.50f * RNG.Instance.Next_F())));
                 tile.Minerals.Add(mineral, amount);
+                tile.Mineral_Spawns.Add(mineral);
                 foreach (Tile t in Get_Tiles_In_Circle(tile.Coordinates, MINERAL_VEIN_SIZE[mineral])) {
                     if (!t.Can_Have_Minerals) {
                         continue;
@@ -536,6 +549,7 @@ public class Map : MonoBehaviour
                     }
                     float amount = 1.5f * (MINERAL_VEIN_RICHNESS[mineral] * (0.25f + (1.50f * RNG.Instance.Next_F())));
                     random_tile.Minerals.Add(mineral, amount);
+                    random_tile.Mineral_Spawns.Add(mineral);
                     foreach (Tile t in Get_Tiles_In_Circle(random_tile.Coordinates, MINERAL_VEIN_SIZE[mineral] * 0.5f)) {
                         float distance = t.Coordinates.Distance(random_tile.Coordinates);
                         int chance = Mathf.RoundToInt(((MINERAL_VEIN_RICHNESS[mineral] * 35.0f) + (MINERAL_BASE_SPAWN_CHANCE[mineral] * 0.5f)) * (((MINERAL_VEIN_SIZE[mineral] - distance) + 1) / (MINERAL_VEIN_SIZE[mineral]) + 1));
@@ -800,6 +814,9 @@ public class Map : MonoBehaviour
                 foreach(MineralSaveData mineral_data in save_data.Minerals) {
                     tiles[x][y].Minerals.Add((Mineral)mineral_data.Mineral, mineral_data.Amount);
                 }
+                foreach (int mineral_i in save_data.Mineral_Spawns) {
+                    tiles[x][y].Mineral_Spawns.Add((Mineral)mineral_i);
+                }
                 tiles[x][y].Water_Flow = save_data.Water_Flow != -1 ? (Coordinates.Direction)save_data.Water_Flow : (Coordinates.Direction?)null;
             }
         }
@@ -866,12 +883,49 @@ public class Map : MonoBehaviour
                             break;
                         case MapView.Minerals:
                             tiles[x][y].Show_Text(tiles[x][y].Mineral_String());
+                            int mineral_icon_index = 0;
+                            List<GameObject> new_icons = new List<GameObject>();
+                            float icon_spacing = 0.75f;
+                            foreach(Mineral mineral in tiles[x][y].Mineral_Spawns) {
+                                GameObject icon = GameObject.Instantiate(
+                                    PrefabManager.Instance.Mineral,
+                                    new Vector3(
+                                        tiles[x][y].GameObject.transform.position.x + (mineral_icon_index * icon_spacing),
+                                        tiles[x][y].GameObject.transform.position.y,
+                                        tiles[x][y].GameObject.transform.position.z
+                                    ),
+                                    Quaternion.identity,
+                                    Entity_Container.transform
+                                );
+                                icon.name = string.Format("{0}_{1}_{2}", x, y, mineral.ToString());
+                                icon.GetComponentInChildren<SpriteRenderer>().sprite = SpriteManager.Instance.Get(MINERAL_SPRITES[mineral], MINERAL_SPRITE_TYPE);
+                                icon.GetComponentInChildren<TextMesh>().text = "<b>" + Helper.Snake_Case_To_UI(mineral.ToString(), true) + "</b>";
+                                icon.GetComponentInChildren<TextMesh>().gameObject.GetComponentInChildren<MeshRenderer>().sortingLayerName = "Icon text";
+                                mineral_icons.Add(icon);
+                                new_icons.Add(icon);
+                                mineral_icon_index++;
+                            }
+                            if(new_icons.Count >= 2) {
+                                foreach(GameObject icon in new_icons) {
+                                    icon.transform.position = new Vector3(
+                                        icon.transform.position.x - (((new_icons.Count - 1) * 0.5f) * icon_spacing),
+                                        icon.transform.position.y,
+                                        icon.transform.position.z
+                                    );
+                                }
+                            }
                             break;
                         default:
                             tiles[x][y].Hide_Text();
                             break;
                     }
                 }
+            }
+            if(view != MapView.Minerals) {
+                foreach(GameObject icon in mineral_icons) {
+                    GameObject.Destroy(icon);
+                }
+                mineral_icons.Clear();
             }
         }
     }
@@ -1155,5 +1209,9 @@ public class Map : MonoBehaviour
             }
             Entities.Clear();
         }
+        foreach(GameObject icon in mineral_icons) {
+            GameObject.Destroy(icon);
+        }
+        mineral_icons.Clear();
     }
 }
