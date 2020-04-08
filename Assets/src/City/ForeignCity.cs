@@ -127,7 +127,7 @@ public class ForeignCity {
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Fine, Resource.ResourceTag.Exotic, Resource.ResourceTag.Opulent },
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Food, Resource.ResourceTag.Forestry, Resource.ResourceTag.Construction },
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Mining, Resource.ResourceTag.Opulent},
-                    new List<Resource.ResourceTag>());
+                    new List<Resource.ResourceTag>() { });
                 break;
             case CityType.Large_City:
                 Initialize_Exports_And_Imports(
@@ -136,7 +136,7 @@ public class ForeignCity {
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Archaic, Resource.ResourceTag.Exotic, Resource.ResourceTag.Crop, Resource.ResourceTag.Livestock },
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Food, Resource.ResourceTag.Industrial, Resource.ResourceTag.Opulent, Resource.ResourceTag.Exotic },
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Archaic, Resource.ResourceTag.Foraging },
-                    new List<Resource.ResourceTag>());
+                    new List<Resource.ResourceTag>() { });
                 break;
             default:
                 CustomLogger.Instance.Error(string.Format("Unimplemented city type: {0}", City_Type.ToString()));

@@ -663,8 +663,7 @@ public class Building {
             float amount_taken = City.Instance.Take_From_Storage(pair.Key, actual_amount);
             Update_Delta(pair.Key, -amount);
             if(amount_taken < actual_amount) {
-                //TODO: New icon?
-                Show_Alert("alert_no_resources");
+                Show_Alert("alert_disrepair");
                 HP -= DISREPAIR_SPEED * delta_days;
                 Losing_HP_From_No_Upkeep = true;
                 if(HP < 1.0f) {
