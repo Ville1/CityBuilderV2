@@ -232,7 +232,8 @@ public class BuildingPrototypes {
         prototypes.Add(new Building("Storehouse", "storehouse", Building.UI_Category.Infrastructure, "storehouse", Building.BuildingSize.s2x2, 200, new Dictionary<Resource, int>() {
             { Resource.Stone, 30 }, { Resource.Tools, 25 }, { Resource.Lumber, 275 }
         }, 225, new List<Resource>() { Resource.Lumber, Resource.Stone, Resource.Tools, Resource.Wood, Resource.Firewood, Resource.Hide, Resource.Leather, Resource.Salt, Resource.Coal, Resource.Charcoal, Resource.Iron_Ore, Resource.Iron_Bars, Resource.Wool, Resource.Thread, Resource.Cloth, Resource.Barrels,
-            Resource.Simple_Clothes, Resource.Leather_Clothes, Resource.Mechanisms, Resource.Clay, Resource.Bricks, Resource.Marble, Resource.Coffee, Resource.Copper_Ore, Resource.Copper_Bars, Resource.Tin_Ore, Resource.Tin_Bars, Resource.Bronze_Bars, Resource.Pewter_Bars, Resource.Pewterware },
+            Resource.Simple_Clothes, Resource.Leather_Clothes, Resource.Mechanisms, Resource.Clay, Resource.Bricks, Resource.Marble, Resource.Coffee, Resource.Copper_Ore, Resource.Copper_Bars, Resource.Tin_Ore, Resource.Tin_Bars, Resource.Bronze_Bars, Resource.Pewter_Bars, Resource.Pewterware,
+            Resource.Furniture },
         2000, 65.0f, 250, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f } }, 1.0f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 } }, 10, false, false, true, 0.0f, 16, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "storehouse").Sprites.Add(new SpriteData("storehouse_1"));
 
@@ -1349,24 +1350,29 @@ public class BuildingPrototypes {
                     outputs.Add(Resource.Barrels, 10.0f);
                     break;
                 case 1:
+                    inputs.Add(Resource.Lumber, 10.0f);
+                    inputs.Add(Resource.Leather, 1.0f);
+                    outputs.Add(Resource.Furniture, 2.0f);
+                    break;
+                case 2:
                     inputs.Add(Resource.Iron_Bars, 10.0f);
                     inputs.Add(selected_fuel, fuel_amount);
                     outputs.Add(Resource.Mechanisms, 5.0f);
                     break;
-                case 2:
+                case 3:
                     inputs.Add(Resource.Copper_Bars, 15.0f);
                     inputs.Add(selected_fuel, fuel_amount);
                     outputs.Add(Resource.Mechanisms, 5.0f);
                     break;
-                case 3:
+                case 4:
                     inputs.Add(Resource.Wood, 5.0f);
                     outputs.Add(Resource.Firewood, 5.0f);
                     break;
-                case 4:
+                case 5:
                     inputs.Add(Resource.Lumber, 5.0f);
                     outputs.Add(Resource.Firewood, 5.0f);
                     break;
-                case 5:
+                case 6:
                     inputs.Add(Resource.Wood, 5.0f);
                     outputs.Add(Resource.Lumber, 2.5f);
                     break;
@@ -1386,9 +1392,9 @@ public class BuildingPrototypes {
                 return;
             }
             building.Process(inputs, outputs, delta_time);
-        }, null, null, new List<Resource>() { Resource.Wood, Resource.Lumber, Resource.Iron_Bars, Resource.Copper_Bars, Resource.Firewood, Resource.Charcoal, Resource.Coal }, new List<Resource>() { Resource.Barrels, Resource.Lumber, Resource.Firewood, Resource.Mechanisms }, -0.10f, 4.0f));
+        }, null, null, new List<Resource>() { Resource.Wood, Resource.Lumber, Resource.Iron_Bars, Resource.Copper_Bars, Resource.Firewood, Resource.Charcoal, Resource.Coal, Resource.Leather }, new List<Resource>() { Resource.Barrels, Resource.Lumber, Resource.Firewood, Resource.Mechanisms }, -0.10f, 4.0f));
         prototypes.First(x => x.Internal_Name == "workshop").Special_Settings.Add(new SpecialSetting("production", "Production", SpecialSetting.SettingType.Dropdown, 0.0f, false, new List<string>() {
-            Resource.Barrels.UI_Name + " (10/day)", Resource.Mechanisms.UI_Name + " (i) (5/day)", Resource.Mechanisms.UI_Name + " (c) (5/day)", Resource.Firewood.UI_Name + " (w) (5/day)", Resource.Firewood.UI_Name + " (l) (5/day)", Resource.Lumber + " (2.5/day)" }, 0));
+            Resource.Barrels.UI_Name + " (10/day)", Resource.Furniture.UI_Name + " (2/day)", Resource.Mechanisms.UI_Name + " (i) (5/day)", Resource.Mechanisms.UI_Name + " (c) (5/day)", Resource.Firewood.UI_Name + " (w) (5/day)", Resource.Firewood.UI_Name + " (l) (5/day)", Resource.Lumber + " (2.5/day)" }, 0));
         prototypes.First(x => x.Internal_Name == "workshop").Special_Settings.Add(new SpecialSetting("fuel", "Fuel (" + Resource.Mechanisms.UI_Name.Substring(0, 4) + ")", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() { Resource.Firewood.UI_Name + " (2.5/day)", Resource.Charcoal.UI_Name + " (1.25/day)", Resource.Coal.UI_Name + " (1.25/day)" }, 0));
 
         prototypes.Add(new Building("Tailor's Shop", "tailors_shop", Building.UI_Category.Textile, "tailors_shop", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
@@ -1922,6 +1928,7 @@ public class BuildingPrototypes {
                     return;
                 }
                 float tableware_needed = 0.0f;
+                float furniture_needed = 0.0f;
                 List<Residence> residences = new List<Residence>();
                 foreach (Building building in shop.Get_Connected_Buildings(shop.Road_Range).Select(x => x.Key).ToArray()) {
                     if (!(building is Residence)) {
@@ -1929,9 +1936,11 @@ public class BuildingPrototypes {
                     }
                     Residence residence = building as Residence;
                     tableware_needed += residence.Service_Needed(Residence.ServiceType.Tableware) * Residence.RESOURCES_FOR_FULL_SERVICE;
+                    furniture_needed += residence.Service_Needed(Residence.ServiceType.Furniture) * Residence.RESOURCES_FOR_FULL_SERVICE;
                     residences.Add(residence);
                 }
                 float total_tableware = shop.Input_Storage[Resource.Pewterware];
+                float total_furniture = shop.Input_Storage[Resource.Furniture];
                 float income = 0.0f;
                 float efficency_multiplier = (shop.Efficency + 1.0f) / 2.0f;
                 if(tableware_needed != 0.0f && total_tableware != 0.0f) {
@@ -1947,11 +1956,24 @@ public class BuildingPrototypes {
                     income += tableware_used * Resource.Pewterware.Value;
                     shop.Update_Delta(Resource.Pewterware, (-tableware_used / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f));
                 }
+                if (furniture_needed != 0.0f && total_furniture != 0.0f) {
+                    float furniture_ratio = Math.Min(1.0f, total_furniture / furniture_needed);
+                    float furniture_used = 0.0f;
+                    foreach (Residence residence in residences) {
+                        float furniture_for_residence = (residence.Service_Needed(Residence.ServiceType.Furniture) * Residence.RESOURCES_FOR_FULL_SERVICE) * furniture_ratio;
+                        furniture_used += furniture_for_residence;
+                        residence.Serve(Residence.ServiceType.Furniture, residence.Service_Needed(Residence.ServiceType.Furniture) * furniture_ratio, 1.0f * efficency_multiplier);
+                    }
+                    shop.Input_Storage[Resource.Furniture] -= furniture_used;
+                    shop.Check_Input_Storage(Resource.Furniture);
+                    income += furniture_used * Resource.Furniture.Value;
+                    shop.Update_Delta(Resource.Furniture, (-furniture_used / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f));
+                }
                 if (income != 0.0f) {
                     shop.Per_Day_Cash_Delta += (income / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f);
                     City.Instance.Add_Cash(income);
                 }
-        }, null, null, new List<Resource>() { Resource.Pewterware }, new List<Resource>(), 0.0f, 0.0f));
+        }, null, null, new List<Resource>() { Resource.Pewterware, Resource.Furniture }, new List<Resource>(), 0.0f, 0.0f));
     }
 
     public static BuildingPrototypes Instance

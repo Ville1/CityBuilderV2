@@ -109,7 +109,7 @@ public class ForeignCity {
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Opulent, Resource.ResourceTag.Exotic },
                     new List<Resource.ResourceTag>() { },
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Forestry, Resource.ResourceTag.Foraging, Resource.ResourceTag.Hunting, Resource.ResourceTag.Opulent },
-                    new List<Resource.ResourceTag>() { Resource.ResourceTag.Fine });
+                    new List<Resource.ResourceTag>() { Resource.ResourceTag.Opulent });
                 break;
             case CityType.Industrial_City:
                 Initialize_Exports_And_Imports(

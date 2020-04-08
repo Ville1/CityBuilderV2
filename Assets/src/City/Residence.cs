@@ -24,7 +24,7 @@ public class Residence : Building {
     };
     public static readonly Dictionary<Resident, List<ServiceType>> SERVICES_CONSUMED = new Dictionary<Resident, List<ServiceType>>() {
         { Resident.Peasant, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Tavern, ServiceType.Chapel, ServiceType.Taxes, ServiceType.Clothes } },
-        { Resident.Citizen, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Tavern, ServiceType.Chapel, ServiceType.Taxes, ServiceType.Clothes, ServiceType.Coffeehouse, ServiceType.Tableware } },
+        { Resident.Citizen, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Tavern, ServiceType.Chapel, ServiceType.Taxes, ServiceType.Clothes, ServiceType.Coffeehouse, ServiceType.Tableware, ServiceType.Furniture } },
         { Resident.Noble, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Taxes } }//Jewelry, silverware, bath house, church, fine clothes, delicacies <-> wine, parks, theatre
     };
     public static readonly Dictionary<ServiceType, float> OTHER_SERVICE_CONSUMPTION = new Dictionary<ServiceType, float>() {
@@ -35,7 +35,8 @@ public class Residence : Building {
         { ServiceType.Taxes, 2.00f },
         { ServiceType.Clothes, 0.01f },
         { ServiceType.Coffeehouse, 0.025f },
-        { ServiceType.Tableware, 0.01f }
+        { ServiceType.Tableware, 0.01f },
+        { ServiceType.Furniture, 0.005f }
     };
     public static readonly float FUEL_CONSUMPTION_PER_TILE = 0.025f;//Per day
     public static readonly float FUEL_CONSUMPTION_PER_RESIDENT = 0.005f;//Per day
@@ -52,7 +53,7 @@ public class Residence : Building {
     public static readonly float DIRT_ROAD_RANGE = 3.0f;
     public static readonly float DIRT_ROAD_PENALTY = 0.2f;
 
-    public enum ServiceType { Food, Fuel, Herbs, Salt, Tavern, Chapel, Taxes, Clothes, Coffeehouse, Tableware }
+    public enum ServiceType { Food, Fuel, Herbs, Salt, Tavern, Chapel, Taxes, Clothes, Coffeehouse, Tableware, Furniture }
 
     public float Residence_Quality { get; private set; }
     public Dictionary<Resident, int> Resident_Space { get; private set; }
@@ -427,6 +428,7 @@ public class Residence : Building {
                 }
 
                 if (services[ServiceType.Tableware][AMOUNT] != 0.0f) {
+                    //TODO: Cheaper tableware from clay -> no happiness bonus
                     float base_tableware_bonus = 0.05f;
                     float tableware_bonus = base_tableware_bonus * services[ServiceType.Tableware][QUALITY];
                     Happiness[Resident.Citizen] += tableware_bonus;
@@ -435,6 +437,14 @@ public class Residence : Building {
                     float tableware_penalty = 0.05f;
                     Happiness[Resident.Citizen] -= tableware_penalty;
                     Happiness_Info[Resident.Citizen].Add(string.Format("Tableware: -{0}", UI_Happiness(tableware_penalty)));
+                }
+
+                if (services[ServiceType.Furniture][AMOUNT] != 0.0f) {
+                    //TODO: Better furniture for happiness boost?
+                } else {
+                    float furniture_penalty = 0.05f;
+                    Happiness[Resident.Citizen] -= furniture_penalty;
+                    Happiness_Info[Resident.Citizen].Add(string.Format("Furniture: -{0}", UI_Happiness(furniture_penalty)));
                 }
 
                 if (services[ServiceType.Tavern][AMOUNT] != 0.0f) {
