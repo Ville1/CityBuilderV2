@@ -23,7 +23,7 @@ public class Residence : Building {
         { Resident.Noble, new float[4] { -10.0f, 5.00f, 10.00f, 15.00f } }
     };
     public static readonly Dictionary<Resident, List<ServiceType>> SERVICES_CONSUMED = new Dictionary<Resident, List<ServiceType>>() {
-        { Resident.Peasant, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Tavern, ServiceType.Chapel, ServiceType.Taxes, ServiceType.Clothes } },
+        { Resident.Peasant, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Tavern, ServiceType.Chapel, ServiceType.Taxes, ServiceType.Clothes, ServiceType.Furniture } },
         { Resident.Citizen, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Tavern, ServiceType.Chapel, ServiceType.Taxes, ServiceType.Clothes, ServiceType.Coffeehouse, ServiceType.Tableware, ServiceType.Furniture } },
         { Resident.Noble, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Taxes } }//Jewelry, silverware, bath house, church, fine clothes, delicacies <-> wine, parks, theatre
     };
@@ -302,6 +302,13 @@ public class Residence : Building {
                         float clothing_penalty = 0.05f;
                         Happiness[Resident.Peasant] -= clothing_penalty;
                         Happiness_Info[Resident.Peasant].Add(string.Format("Clothing: -{0}", UI_Happiness(clothing_penalty)));
+                    }
+
+                    if (services[ServiceType.Furniture][AMOUNT] != 0.0f) {
+                        float base_furniture_bonus = 0.05f;
+                        float furniture_bonus = base_furniture_bonus * services[ServiceType.Furniture][QUALITY];
+                        Happiness[Resident.Peasant] += furniture_bonus;
+                        Happiness_Info[Resident.Peasant].Add(string.Format("Furniture: +{0}", UI_Happiness(furniture_bonus)));
                     }
 
                     if (services[ServiceType.Tavern][AMOUNT] != 0.0f) {
