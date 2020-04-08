@@ -1914,6 +1914,44 @@ public class BuildingPrototypes {
                 prototypes.First(x => x.Internal_Name == "coffeehouse").Special_Settings.Add(new SpecialSetting(resource.ToString().ToLower(), string.Format("Serve {0}", resource.UI_Name.ToLower()), SpecialSetting.SettingType.Toggle, 0.0f, true));
             }
         }
+
+        prototypes.Add(new Building("Homeware Shop", "homeware_shop", Building.UI_Category.Services, "homeware_shop", Building.BuildingSize.s2x2, 125, new Dictionary<Resource, int>() {
+            { Resource.Bricks, 80 }, { Resource.Lumber, 65 }, { Resource.Stone, 20 }, { Resource.Tools, 15 } }, 160, new List<Resource>(), 0, 0.0f, 165, new Dictionary<Resource, float>() {
+            { Resource.Bricks, 0.025f }, { Resource.Lumber, 0.025f } }, 1.25f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Citizen, 5 } }, 5, true, false, true, 0.0f, 8, null, delegate (Building shop, float delta_time) {
+                if (!shop.Is_Operational) {
+                    return;
+                }
+                float tableware_needed = 0.0f;
+                List<Residence> residences = new List<Residence>();
+                foreach (Building building in shop.Get_Connected_Buildings(shop.Road_Range).Select(x => x.Key).ToArray()) {
+                    if (!(building is Residence)) {
+                        continue;
+                    }
+                    Residence residence = building as Residence;
+                    tableware_needed += residence.Service_Needed(Residence.ServiceType.Tableware) * Residence.RESOURCES_FOR_FULL_SERVICE;
+                    residences.Add(residence);
+                }
+                float total_tableware = shop.Input_Storage[Resource.Pewterware];
+                float income = 0.0f;
+                float efficency_multiplier = (shop.Efficency + 1.0f) / 2.0f;
+                if(tableware_needed != 0.0f && total_tableware != 0.0f) {
+                    float tableware_ratio = Math.Min(1.0f, total_tableware / tableware_needed);
+                    float tableware_used = 0.0f;
+                    foreach (Residence residence in residences) {
+                        float tableware_for_residence = (residence.Service_Needed(Residence.ServiceType.Tableware) * Residence.RESOURCES_FOR_FULL_SERVICE) * tableware_ratio;
+                        tableware_used += tableware_for_residence;
+                        residence.Serve(Residence.ServiceType.Tableware, residence.Service_Needed(Residence.ServiceType.Tableware) * tableware_ratio, 1.0f * efficency_multiplier);
+                    }
+                    shop.Input_Storage[Resource.Pewterware] -= tableware_used;
+                    shop.Check_Input_Storage(Resource.Pewterware);
+                    income += tableware_used * Resource.Pewterware.Value;
+                    shop.Update_Delta(Resource.Pewterware, (-tableware_used / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f));
+                }
+                if (income != 0.0f) {
+                    shop.Per_Day_Cash_Delta += (income / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f);
+                    City.Instance.Add_Cash(income);
+                }
+        }, null, null, new List<Resource>() { Resource.Pewterware }, new List<Resource>(), 0.0f, 0.0f));
     }
 
     public static BuildingPrototypes Instance

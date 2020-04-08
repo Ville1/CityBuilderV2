@@ -34,7 +34,8 @@ public class Residence : Building {
         { ServiceType.Chapel, 0.05f },
         { ServiceType.Taxes, 2.00f },
         { ServiceType.Clothes, 0.01f },
-        { ServiceType.Coffeehouse, 0.025f }
+        { ServiceType.Coffeehouse, 0.025f },
+        { ServiceType.Tableware, 0.01f }
     };
     public static readonly float FUEL_CONSUMPTION_PER_TILE = 0.025f;//Per day
     public static readonly float FUEL_CONSUMPTION_PER_RESIDENT = 0.005f;//Per day
@@ -423,6 +424,17 @@ public class Residence : Building {
                     float clothing_penalty = 0.25f;
                     Happiness[Resident.Citizen] -= clothing_penalty;
                     Happiness_Info[Resident.Citizen].Add(string.Format("Clothing: -{0}", UI_Happiness(clothing_penalty)));
+                }
+
+                if (services[ServiceType.Tableware][AMOUNT] != 0.0f) {
+                    float base_tableware_bonus = 0.05f;
+                    float tableware_bonus = base_tableware_bonus * services[ServiceType.Tableware][QUALITY];
+                    Happiness[Resident.Citizen] += tableware_bonus;
+                    Happiness_Info[Resident.Citizen].Add(string.Format("Tableware: +{0}", UI_Happiness(tableware_bonus)));
+                } else {
+                    float tableware_penalty = 0.05f;
+                    Happiness[Resident.Citizen] -= tableware_penalty;
+                    Happiness_Info[Resident.Citizen].Add(string.Format("Tableware: -{0}", UI_Happiness(tableware_penalty)));
                 }
 
                 if (services[ServiceType.Tavern][AMOUNT] != 0.0f) {
