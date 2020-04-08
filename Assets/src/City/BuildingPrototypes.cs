@@ -746,7 +746,7 @@ public class BuildingPrototypes {
 
         prototypes.Add(new Building("Blast Furnace", "blast_furnace", Building.UI_Category.Industry, "blast_furnace", Building.BuildingSize.s3x3, 300, new Dictionary<Resource, int>() {
             { Resource.Lumber, 75 }, { Resource.Stone, 200 }, { Resource.Bricks, 50 }, { Resource.Mechanisms, 10 }, { Resource.Tools, 40 }
-        }, 275, new List<Resource>(), 0, 50.0f, 335, new Dictionary<Resource, float>() { { Resource.Stone, 0.05f }, { Resource.Lumber, 0.01f }, { Resource.Bricks, 0.01f } }, 3.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() {
+        }, 275, new List<Resource>(), 0, 50.0f, 335, new Dictionary<Resource, float>() { { Resource.Stone, 0.10f }, { Resource.Lumber, 0.01f }, { Resource.Bricks, 0.01f } }, 3.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() {
         { Building.Resident.Peasant, 15 }, { Building.Resident.Citizen, 5 } }, 15, true, false, true, 0.0f, 7, null, delegate (Building building, float delta_time) {
             List<Resource> fuel_types = new List<Resource>() { Resource.Firewood, Resource.Charcoal, Resource.Coal };
             Resource selected_fuel = fuel_types[building.Special_Settings.First(x => x.Name == "fuel").Dropdown_Selection];
