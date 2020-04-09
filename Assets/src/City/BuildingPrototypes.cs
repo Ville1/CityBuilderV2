@@ -783,13 +783,21 @@ public class BuildingPrototypes {
                     break;
                 case 5:
                     inputs.Add(Resource.Iron_Ore, 30.0f);
-                    inputs.Add(selected_carbon, 15.0f);
+                    if (inputs.ContainsKey(selected_carbon)) {
+                        inputs[selected_carbon] += 15.0f;
+                    } else {
+                        inputs.Add(selected_carbon, 15.0f);
+                    }
                     outputs.Add(Resource.Pig_Iron, 15.0f);
                     break;
                 case 6:
                     inputs.Add(Resource.Iron_Bars, 10.0f);
                     inputs.Add(Resource.Pig_Iron, 10.0f);
-                    inputs.Add(selected_carbon, 10.0f);
+                    if (inputs.ContainsKey(selected_carbon)) {
+                        inputs[selected_carbon] += 10.0f;
+                    } else {
+                        inputs.Add(selected_carbon, 10.0f);
+                    }
                     outputs.Add(Resource.Steel_Bars, 10.0f);
                     break;
             }
