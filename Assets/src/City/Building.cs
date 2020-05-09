@@ -601,6 +601,12 @@ public class Building {
             }
         }
 
+        foreach(KeyValuePair<Resource, float> output in Output_Storage) {
+            if (!Produces.Contains(output.Key)) {
+                Produces.Add(output.Key);
+            }
+        }
+
         Per_Day_Resource_Delta.Clear();
         Per_Day_Cash_Delta = 0.0f;
         Food_Production_Per_Day = 0.0f;
@@ -1263,6 +1269,21 @@ public class Building {
     {
         if (!active_alerts.Contains(sprite) && !Map.Instance.Hide_Alerts) {
             active_alerts.Add(sprite);
+        }
+    }
+
+    public void Update_Consumes_Produces(Dictionary<Resource, float> inputs, Dictionary<Resource, float> outputs)
+    {
+        Consumes.Clear();
+        Produces.Clear();
+        foreach (KeyValuePair<Resource, float> pair in inputs) {
+            Consumes.Add(pair.Key);
+        }
+        foreach (KeyValuePair<Resource, float> pair in outputs) {
+            Produces.Add(pair.Key);
+        }
+        foreach (KeyValuePair<Resource, float> pair in Output_Storage) {
+            Produces.Add(pair.Key);
         }
     }
 

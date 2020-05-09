@@ -240,7 +240,7 @@ public class BuildingPrototypes {
         prototypes.Add(new Building("Cellar", "cellar", Building.UI_Category.Infrastructure, "cellar", Building.BuildingSize.s1x1, 100, new Dictionary<Resource, int>() {
             { Resource.Wood, 15 }, { Resource.Stone, 50 }, { Resource.Tools, 10 }, { Resource.Lumber, 50 }
         }, 100, new List<Resource>() { Resource.Roots, Resource.Berries, Resource.Mushrooms, Resource.Herbs, Resource.Game, Resource.Potatoes, Resource.Bread, Resource.Ale, Resource.Mutton, Resource.Corn, Resource.Fish, Resource.Bananas, Resource.Oranges, Resource.Beer, Resource.Rum,
-            Resource.Wine, Resource.Pretzels, Resource.Cake },
+            Resource.Wine, Resource.Pretzels, Resource.Cake, Resource.Salted_Fish, Resource.Salted_Meat },
         1000, 50.0f, 110, new Dictionary<Resource, float>() { { Resource.Wood, 0.05f } }, 0.5f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 5 } }, 5, false, false, true, 0.0f, 14, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "cellar").Tags.Add(Building.Tag.Does_Not_Block_Wind);
 
@@ -1470,17 +1470,7 @@ public class BuildingPrototypes {
                     outputs.Add(Resource.Lumber, 2.5f);
                     break;
             }
-            building.Consumes.Clear();
-            building.Produces.Clear();
-            foreach(KeyValuePair<Resource, float> pair in inputs) {
-                building.Consumes.Add(pair.Key);
-            }
-            foreach (KeyValuePair<Resource, float> pair in outputs) {
-                building.Produces.Add(pair.Key);
-            }
-            foreach(KeyValuePair<Resource, float> pair in building.Output_Storage) {
-                building.Produces.Add(pair.Key);
-            }
+            building.Update_Consumes_Produces(inputs, outputs);
             if (!building.Is_Operational) {
                 return;
             }
@@ -1519,7 +1509,7 @@ public class BuildingPrototypes {
             building.Process(inputs, new Dictionary<Resource, float>() { { output, output_amount } }, delta_time);
         }, null, null, new List<Resource>() { Resource.Cloth, Resource.Thread, Resource.Leather }, new List<Resource>() { Resource.Simple_Clothes, Resource.Leather_Clothes }, 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "tailors_shop").Sprites.Add(new SpriteData("tailors_shop_1"));
-        prototypes.First(x => x.Internal_Name == "tailors_shop").Special_Settings.Add(new SpecialSetting("production", "Production", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() { "Simple clothes", "Leather clothes" }, 0));
+        prototypes.First(x => x.Internal_Name == "tailors_shop").Special_Settings.Add(new SpecialSetting("production", "Production", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() { Resource.Simple_Clothes.UI_Name + " (2.5/day)", Resource.Leather_Clothes.UI_Name + " (2.5/day)" }, 0));
 
         prototypes.Add(new Building("Farmhouse", "farmhouse", Building.UI_Category.Agriculture, "farmhouse", Building.BuildingSize.s3x3, 200, new Dictionary<Resource, int>() {
             { Resource.Lumber, 265 }, { Resource.Stone, 25 }, { Resource.Tools, 20 }
@@ -2067,6 +2057,38 @@ public class BuildingPrototypes {
                     City.Instance.Add_Cash(income);
                 }
         }, null, null, new List<Resource>() { Resource.Pewterware, Resource.Furniture }, new List<Resource>(), 0.0f, 0.0f));
+
+        prototypes.Add(new Building("Salting House", "salting_house", Building.UI_Category.Agriculture, "salting_house", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
+            { Resource.Lumber, 145 }, { Resource.Stone, 20 }, { Resource.Tools, 15 }
+        }, 165, new List<Resource>(), 0, 50.0f, 165, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f } }, 1.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() {
+        { Building.Resident.Peasant, 5 }, { Building.Resident.Citizen, 5 } }, 5, true, false, true, 0.0f, 6, null, delegate (Building building, float delta_time) {
+            int production_selection = building.Special_Settings.First(x => x.Name == "production").Dropdown_Selection;
+            Dictionary<Resource, float> inputs = new Dictionary<Resource, float>();
+            Dictionary<Resource, float> outputs = new Dictionary<Resource, float>();
+            inputs.Add(Resource.Salt, 5.0f);
+            inputs.Add(Resource.Barrels, 2.5f);
+            switch (production_selection) {
+                case 0:
+                    inputs.Add(Resource.Fish, 5.0f);
+                    outputs.Add(Resource.Salted_Fish, 5.0f);
+                    break;
+                case 1:
+                    inputs.Add(Resource.Game, 5.0f);
+                    outputs.Add(Resource.Salted_Meat, 5.0f);
+                    break;
+                case 2:
+                    inputs.Add(Resource.Mutton, 5.0f);
+                    outputs.Add(Resource.Salted_Meat, 5.0f);
+                    break;
+            }
+            building.Update_Consumes_Produces(inputs, outputs);
+            if (!building.Is_Operational) {
+                return;
+            }
+            building.Process(inputs, outputs, delta_time);
+        }, null, null, new List<Resource>() { Resource.Salt, Resource.Barrels, Resource.Fish, Resource.Game, Resource.Mutton }, new List<Resource>() { Resource.Salted_Fish, Resource.Salted_Meat }, 0.0f, 0.0f));
+        prototypes.First(x => x.Internal_Name == "salting_house").Special_Settings.Add(new SpecialSetting("production", "Production", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() {
+            Resource.Salted_Fish.UI_Name + " (5/day)", string.Format("{0} ({1}) (5/day)", Resource.Salted_Meat.UI_Name, Resource.Game.UI_Name), string.Format("{0} ({1}) (5/day)", Resource.Salted_Meat.UI_Name, Resource.Mutton.UI_Name) }, 0));
     }
 
     public static BuildingPrototypes Instance
