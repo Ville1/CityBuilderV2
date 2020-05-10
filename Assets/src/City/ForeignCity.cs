@@ -96,7 +96,7 @@ public class ForeignCity {
             case CityType.Coastal_Town:
                 Initialize_Exports_And_Imports(
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Coastal },
-                    new List<Resource.ResourceTag>() { Resource.ResourceTag.Industrial, Resource.ResourceTag.Exotic },
+                    new List<Resource.ResourceTag>() { Resource.ResourceTag.Industrial, Resource.ResourceTag.Exotic, Resource.ResourceTag.Jewelry },
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Mining },
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Forestry, Resource.ResourceTag.Foraging },
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Coastal },

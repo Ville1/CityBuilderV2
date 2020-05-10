@@ -233,7 +233,7 @@ public class BuildingPrototypes {
             { Resource.Stone, 30 }, { Resource.Tools, 25 }, { Resource.Lumber, 275 }
         }, 225, new List<Resource>() { Resource.Lumber, Resource.Stone, Resource.Tools, Resource.Wood, Resource.Firewood, Resource.Hide, Resource.Leather, Resource.Salt, Resource.Coal, Resource.Charcoal, Resource.Iron_Ore, Resource.Iron_Bars, Resource.Wool, Resource.Thread, Resource.Cloth, Resource.Barrels,
             Resource.Simple_Clothes, Resource.Leather_Clothes, Resource.Mechanisms, Resource.Clay, Resource.Bricks, Resource.Marble, Resource.Coffee, Resource.Copper_Ore, Resource.Copper_Bars, Resource.Tin_Ore, Resource.Tin_Bars, Resource.Bronze_Bars, Resource.Pewter_Bars, Resource.Pewterware,
-            Resource.Furniture, Resource.Pig_Iron, Resource.Steel_Bars },
+            Resource.Furniture, Resource.Pig_Iron, Resource.Steel_Bars, Resource.Jewelry, Resource.Opulent_Jewelry },
         2000, 65.0f, 250, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f } }, 1.0f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 } }, 10, false, false, true, 0.0f, 16, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "storehouse").Sprites.Add(new SpriteData("storehouse_1"));
 
@@ -2089,6 +2089,113 @@ public class BuildingPrototypes {
         }, null, null, new List<Resource>() { Resource.Salt, Resource.Barrels, Resource.Fish, Resource.Game, Resource.Mutton }, new List<Resource>() { Resource.Salted_Fish, Resource.Salted_Meat }, 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "salting_house").Special_Settings.Add(new SpecialSetting("production", "Production", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() {
             Resource.Salted_Fish.UI_Name + " (5/day)", string.Format("{0} ({1}) (5/day)", Resource.Salted_Meat.UI_Name, Resource.Game.UI_Name), string.Format("{0} ({1}) (5/day)", Resource.Salted_Meat.UI_Name, Resource.Mutton.UI_Name) }, 0));
+
+        prototypes.Add(new Residence("Manor", "manor", Building.UI_Category.Housing, "manor", Building.BuildingSize.s3x3, 150, new Dictionary<Resource, int>() {
+            { Resource.Lumber, 290 }, { Resource.Marble, 50 }, { Resource.Stone, 25 }, { Resource.Tools, 15 }
+        }, 300, new List<Resource>(), 0, 365, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f }, { Resource.Marble, 0.01f } }, 1.00f, 0.0f, 0.0f, +0.25f, new Dictionary<Building.Resident, int>() { { Building.Resident.Noble, 5 } }, 0.0f, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.025f, 5.0f));
+
+        prototypes.Add(new Building("Luxury Goods Market", "luxury_goods_market", Building.UI_Category.Services, "luxury_goods_market", Building.BuildingSize.s3x3, 150, new Dictionary<Resource, int>() {
+            { Resource.Lumber, 20 }, { Resource.Stone, 45 }, { Resource.Marble, 45 }, { Resource.Tools, 10 }
+        }, 250, new List<Resource>(), 0, 0.0f, 110, new Dictionary<Resource, float>() { { Resource.Stone, 0.02f }, { Resource.Marble, 0.02f } }, 3.00f, 0.0f, 0.0f,
+        new Dictionary<Building.Resident, int>() { { Building.Resident.Citizen, 10 }, { Building.Resident.Noble, 5 } }, 10, true, true, true, 0.0f, 10, null, delegate(Building market, float delta_time) {
+            market.Consumes.Clear();
+            foreach (SpecialSetting setting in market.Special_Settings) {
+                if (setting.Toggle_Value) {
+                    market.Consumes.Add(Resource.All.First(x => x.ToString().ToLower() == setting.Name));
+                }
+            }
+            if (!market.Is_Operational) {
+                return;
+            }
+            float wine_needed = 0.0f;
+            float delicacies_needed = 0.0f;
+            float jewelry_needed = 0.0f;
+            List<Residence> residences = new List<Residence>();
+            foreach (Building building in market.Get_Connected_Buildings(market.Road_Range).Select(x => x.Key).ToArray()) {
+                if (!(building is Residence)) {
+                    continue;
+                }
+                Residence residence = building as Residence;
+                wine_needed += residence.Service_Needed(Residence.ServiceType.Wine) * Residence.RESOURCES_FOR_FULL_SERVICE;
+                delicacies_needed += residence.Service_Needed(Residence.ServiceType.Delicacies) * Residence.RESOURCES_FOR_FULL_SERVICE;
+                jewelry_needed += residence.Service_Needed(Residence.ServiceType.Jewelry) * Residence.RESOURCES_FOR_FULL_SERVICE;
+                residences.Add(residence);
+            }
+
+            float income = 0.0f;
+            float total_wine = market.Input_Storage[Resource.Wine];
+            float efficency_multiplier = (market.Efficency + 1.0f) / 2.0f;
+            if (wine_needed != 0.0f && total_wine != 0.0f) {
+                float wine_ratio = Math.Min(1.0f, total_wine / wine_needed);
+                float wine_used = 0.0f;
+                foreach (Residence residence in residences) {
+                    float wine_for_residence = (residence.Service_Needed(Residence.ServiceType.Wine) * Residence.RESOURCES_FOR_FULL_SERVICE) * wine_ratio;
+                    wine_used += wine_for_residence;
+                    residence.Serve(Residence.ServiceType.Wine, residence.Service_Needed(Residence.ServiceType.Wine) * wine_ratio, 1.0f * efficency_multiplier);
+                }
+                market.Input_Storage[Resource.Wine] -= wine_used;
+                market.Check_Input_Storage(Resource.Wine);
+                income += wine_used * Resource.Wine.Value;
+                market.Update_Delta(Resource.Wine, (-wine_used / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f));
+            }
+
+            float total_jewelry = market.Input_Storage[Resource.Jewelry] + market.Input_Storage[Resource.Opulent_Jewelry];
+            if (jewelry_needed != 0.0f && total_jewelry != 0.0f) {
+                float jewelry_ratio = Math.Min(total_jewelry / jewelry_needed, 1.0f);
+                float normal_ratio = market.Input_Storage[Resource.Jewelry] / total_jewelry;
+                float opulent_ratio = market.Input_Storage[Resource.Opulent_Jewelry] / total_jewelry;
+                float jewelry_quality = (normal_ratio * 0.5f) + (opulent_ratio * 1.0f);
+                float jewelry_used = 0.0f;
+                foreach (Residence residence in residences) {
+                    float jewelry_for_residence = (residence.Service_Needed(Residence.ServiceType.Jewelry) * Residence.RESOURCES_FOR_FULL_SERVICE) * jewelry_ratio;
+                    jewelry_used += jewelry_for_residence;
+                    residence.Serve(Residence.ServiceType.Jewelry, residence.Service_Needed(Residence.ServiceType.Jewelry) * jewelry_ratio, jewelry_quality * efficency_multiplier);
+                }
+                float normal_sold = normal_ratio * jewelry_used;
+                market.Input_Storage[Resource.Jewelry] -= normal_sold;
+                income += normal_sold * Resource.Jewelry.Value;
+                market.Update_Delta(Resource.Jewelry, (-normal_sold / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f));
+                float opulent_sold = opulent_ratio * jewelry_used;
+                market.Input_Storage[Resource.Opulent_Jewelry] -= opulent_sold;
+                income += opulent_sold * Resource.Opulent_Jewelry.Value;
+                market.Update_Delta(Resource.Opulent_Jewelry, (-opulent_sold / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f));
+                market.Check_Input_Storage(Resource.Jewelry);
+                market.Check_Input_Storage(Resource.Opulent_Jewelry);
+            }
+
+            float total_delicacies = market.Input_Storage[Resource.Pretzels] + market.Input_Storage[Resource.Cake];
+            if (delicacies_needed != 0.0f && total_delicacies != 0.0f) {
+                float delicacies_ratio = Math.Min(total_delicacies / delicacies_needed, 1.0f);
+                float prezel_ratio = market.Input_Storage[Resource.Pretzels] / total_delicacies;
+                float cake_ratio = market.Input_Storage[Resource.Cake] / total_delicacies;
+                float delicacy_quality = (prezel_ratio * 0.5f) + (cake_ratio * 1.0f);
+                float delicacies_used = 0.0f;
+                foreach (Residence residence in residences) {
+                    float delicacies_for_residence = (residence.Service_Needed(Residence.ServiceType.Delicacies) * Residence.RESOURCES_FOR_FULL_SERVICE) * delicacies_ratio;
+                    delicacies_used += delicacies_for_residence;
+                    residence.Serve(Residence.ServiceType.Delicacies, residence.Service_Needed(Residence.ServiceType.Delicacies) * delicacies_ratio, delicacy_quality * efficency_multiplier);
+                }
+                float prezels_sold = prezel_ratio * delicacies_used;
+                market.Input_Storage[Resource.Pretzels] -= prezels_sold;
+                income += prezels_sold * Resource.Pretzels.Value;
+                market.Update_Delta(Resource.Pretzels, (-prezels_sold / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f));
+                float cake_sold = cake_ratio * delicacies_used;
+                market.Input_Storage[Resource.Cake] -= cake_sold;
+                income += cake_sold * Resource.Cake.Value;
+                market.Update_Delta(Resource.Cake, (-cake_sold / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f));
+                market.Check_Input_Storage(Resource.Pretzels);
+                market.Check_Input_Storage(Resource.Cake);
+            }
+
+            if (income != 0.0f) {
+                market.Per_Day_Cash_Delta += (income / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f);
+                City.Instance.Add_Cash(income);
+            }
+        }, null, null, new List<Resource>(), new List<Resource>(), 0.05f, 7.0f));
+        foreach(Resource resource in new List<Resource>() { Resource.Wine, Resource.Pretzels, Resource.Cake, Resource.Jewelry, Resource.Opulent_Jewelry }) {
+            prototypes.First(x => x.Internal_Name == "luxury_goods_market").Consumes.Add(resource);
+            prototypes.First(x => x.Internal_Name == "luxury_goods_market").Special_Settings.Add(new SpecialSetting(resource.ToString().ToLower(), resource.UI_Name, SpecialSetting.SettingType.Toggle, 0.0f, true));
+        }
     }
 
     public static BuildingPrototypes Instance

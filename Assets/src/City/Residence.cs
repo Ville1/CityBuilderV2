@@ -25,7 +25,7 @@ public class Residence : Building {
     public static readonly Dictionary<Resident, List<ServiceType>> SERVICES_CONSUMED = new Dictionary<Resident, List<ServiceType>>() {
         { Resident.Peasant, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Tavern, ServiceType.Chapel, ServiceType.Taxes, ServiceType.Clothes, ServiceType.Furniture } },
         { Resident.Citizen, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Tavern, ServiceType.Chapel, ServiceType.Taxes, ServiceType.Clothes, ServiceType.Coffeehouse, ServiceType.Tableware, ServiceType.Furniture } },
-        { Resident.Noble, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Taxes } }//Jewelry, silverware, bath house, church, fine clothes, delicacies <-> wine, parks, theatre
+        { Resident.Noble, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Taxes, ServiceType.Clothes, ServiceType.Tableware, ServiceType.Wine, ServiceType.Delicacies, ServiceType.Jewelry } }//Jewelry, silverware, bath house, church, fine clothes, delicacies <-> wine, parks, theatre
     };
     public static readonly Dictionary<ServiceType, float> OTHER_SERVICE_CONSUMPTION = new Dictionary<ServiceType, float>() {
         { ServiceType.Herbs, 0.0025f },
@@ -36,7 +36,10 @@ public class Residence : Building {
         { ServiceType.Clothes, 0.01f },
         { ServiceType.Coffeehouse, 0.025f },
         { ServiceType.Tableware, 0.01f },
-        { ServiceType.Furniture, 0.005f }
+        { ServiceType.Furniture, 0.005f },
+        { ServiceType.Wine, 0.025f },
+        { ServiceType.Delicacies, 0.025f },
+        { ServiceType.Jewelry, 0.0025f }
     };
     public static readonly float FUEL_CONSUMPTION_PER_TILE = 0.025f;//Per day
     public static readonly float FUEL_CONSUMPTION_PER_RESIDENT = 0.005f;//Per day
@@ -53,7 +56,7 @@ public class Residence : Building {
     public static readonly float DIRT_ROAD_RANGE = 3.0f;
     public static readonly float DIRT_ROAD_PENALTY = 0.2f;
 
-    public enum ServiceType { Food, Fuel, Herbs, Salt, Tavern, Chapel, Taxes, Clothes, Coffeehouse, Tableware, Furniture }
+    public enum ServiceType { Food, Fuel, Herbs, Salt, Tavern, Chapel, Taxes, Clothes, Coffeehouse, Tableware, Furniture, Wine, Delicacies, Jewelry }
 
     public float Residence_Quality { get; private set; }
     public Dictionary<Resident, int> Resident_Space { get; private set; }
@@ -559,19 +562,95 @@ public class Residence : Building {
                     Happiness[Resident.Noble] -= dirt_roads_penalty;
                     Happiness_Info[Resident.Noble].Add(string.Format("Dirt roads: -{0}", UI_Happiness(dirt_roads_penalty)));
                 }
-
-                if (services[ServiceType.Herbs][AMOUNT] != 0.0f) {
-                    float base_herb_bonus = 0.025f;
-                    float herb_bonus = base_herb_bonus * Mathf.Clamp(services[ServiceType.Herbs][QUALITY], 0.75f, 1.1f);
-                    Happiness[Resident.Noble] += herb_bonus;
-                    Happiness_Info[Resident.Noble].Add(string.Format("Herbs: +{0}", UI_Happiness(herb_bonus)));
+                
+                if (services[ServiceType.Herbs][AMOUNT] == 0.0f) {
+                    float herb_penalty = 0.10f;
+                    Happiness[Resident.Noble] -= herb_penalty;
+                    Happiness_Info[Resident.Noble].Add(string.Format("No herbs: -{0}", UI_Happiness(herb_penalty)));
+                } else if (services[ServiceType.Herbs][QUALITY] < 1.0f) {
+                    float base_herbs_service_penalty = 0.05f;
+                    float herbs_service_penalty = base_herbs_service_penalty * (1.0f - services[ServiceType.Herbs][QUALITY]);
+                    Happiness[Resident.Noble] -= herbs_service_penalty;
+                    Happiness_Info[Resident.Noble].Add(string.Format("Bad herb service: -{0}", UI_Happiness(herbs_service_penalty)));
                 }
 
-                if (services[ServiceType.Salt][AMOUNT] != 0.0f) {
-                    float base_salt_bonus = 0.05f;
-                    float salt_bonus = base_salt_bonus * Mathf.Clamp(services[ServiceType.Salt][QUALITY], 0.9f, 1.1f);
-                    Happiness[Resident.Noble] += salt_bonus;
-                    Happiness_Info[Resident.Noble].Add(string.Format("Salt: +{0}", UI_Happiness(salt_bonus)));
+                if (services[ServiceType.Salt][AMOUNT] == 0.0f) {
+                    float salt_penalty = 0.10f;
+                    Happiness[Resident.Noble] -= salt_penalty;
+                    Happiness_Info[Resident.Noble].Add(string.Format("No salt: -{0}", UI_Happiness(salt_penalty)));
+                } else if(services[ServiceType.Salt][QUALITY] < 1.0f) {
+                    float base_salt_service_penalty = 0.05f;
+                    float salt_service_penalty = base_salt_service_penalty * (1.0f - services[ServiceType.Salt][QUALITY]);
+                    Happiness[Resident.Noble] -= salt_service_penalty;
+                    Happiness_Info[Resident.Noble].Add(string.Format("Bad salt service: -{0}", UI_Happiness(salt_service_penalty)));
+                }
+
+                if (services[ServiceType.Wine][AMOUNT] == 0.0f) {
+                    float wine_penalty = 0.10f;
+                    Happiness[Resident.Noble] -= wine_penalty;
+                    Happiness_Info[Resident.Noble].Add(string.Format("No wine: -{0}", UI_Happiness(wine_penalty)));
+                } else if (services[ServiceType.Wine][QUALITY] < 1.0f) {
+                    float base_wine_service_penalty = 0.05f;
+                    float wine_service_penalty = base_wine_service_penalty * (1.0f - services[ServiceType.Wine][QUALITY]);
+                    Happiness[Resident.Noble] -= wine_service_penalty;
+                    Happiness_Info[Resident.Noble].Add(string.Format("Bad wine service: -{0}", UI_Happiness(wine_service_penalty)));
+                }
+
+                if (services[ServiceType.Clothes][AMOUNT] != 0.0f) {
+                    //Simple clothes = 0.5f quality, Leather clothes = 1.0f quality
+                    if (services[ServiceType.Clothes][QUALITY] < 1.0f) {
+                        float base_clothing_penalty = 0.10f;
+                        float clothing_penalty = base_clothing_penalty * (1.0f - services[ServiceType.Clothes][QUALITY]);
+                        Happiness[Resident.Noble] -= clothing_penalty;
+                        Happiness_Info[Resident.Noble].Add(string.Format("Clothing: -{0}", UI_Happiness(clothing_penalty)));
+                    }
+                } else {
+                    float clothing_penalty = 0.50f;
+                    Happiness[Resident.Noble] -= clothing_penalty;
+                    Happiness_Info[Resident.Noble].Add(string.Format("No clothing: -{0}", UI_Happiness(clothing_penalty)));
+                }
+
+                if (services[ServiceType.Tableware][AMOUNT] == 0.0f) {
+                    float tableware_penalty = 0.20f;
+                    Happiness[Resident.Noble] -= tableware_penalty;
+                    Happiness_Info[Resident.Noble].Add(string.Format("No tableware: -{0}", UI_Happiness(tableware_penalty)));
+                } else if (services[ServiceType.Tableware][QUALITY] < 1.0f) {
+                    float base_tableware_penalty = 0.05f;
+                    float tableware_penalty = base_tableware_penalty * (1.0f - services[ServiceType.Tableware][QUALITY]);
+                    Happiness[Resident.Noble] -= tableware_penalty;
+                    Happiness_Info[Resident.Noble].Add(string.Format("Tableware: -{0}", UI_Happiness(tableware_penalty)));
+                }
+                
+                if (services[ServiceType.Jewelry][AMOUNT] == 0.0f) {
+                    float jewelry_penalty = 0.05f;
+                    Happiness[Resident.Noble] -= jewelry_penalty;
+                    Happiness_Info[Resident.Noble].Add(string.Format("No jewelry: -{0}", UI_Happiness(jewelry_penalty)));
+                } else if (services[ServiceType.Jewelry][QUALITY] < 0.5f) {
+                    float base_jewelry_service_penalty = 0.05f;
+                    float jewelry_service_penalty = base_jewelry_service_penalty * (2.0f * (0.5f - services[ServiceType.Jewelry][QUALITY]));
+                    Happiness[Resident.Noble] -= jewelry_service_penalty;
+                    Happiness_Info[Resident.Noble].Add(string.Format("Bad jewelry service: -{0}", UI_Happiness(jewelry_service_penalty)));
+                } else if (services[ServiceType.Jewelry][QUALITY] > 0.5f) {
+                    float base_opulent_jewelry_bonus = 0.10f;
+                    float opulent_jewelry_bonus = base_opulent_jewelry_bonus * (2.0f * (services[ServiceType.Jewelry][QUALITY] - 0.5f));
+                    Happiness[Resident.Noble] += opulent_jewelry_bonus;
+                    Happiness_Info[Resident.Noble].Add(string.Format("Jewelry: +{0}", UI_Happiness(opulent_jewelry_bonus)));
+                }
+
+                if (services[ServiceType.Delicacies][AMOUNT] == 0.0f) {
+                    float delicacy_penalty = 0.05f;
+                    Happiness[Resident.Noble] -= delicacy_penalty;
+                    Happiness_Info[Resident.Noble].Add(string.Format("No delicacies: -{0}", UI_Happiness(delicacy_penalty)));
+                } else if (services[ServiceType.Delicacies][QUALITY] < 0.5f) {
+                    float base_delicacy_service_penalty = 0.05f;
+                    float delicacy_service_penalty = base_delicacy_service_penalty * (2.0f * (0.5f - services[ServiceType.Delicacies][QUALITY]));
+                    Happiness[Resident.Noble] -= delicacy_service_penalty;
+                    Happiness_Info[Resident.Noble].Add(string.Format("Bad delicacy service: -{0}", UI_Happiness(delicacy_service_penalty)));
+                } else if (services[ServiceType.Delicacies][QUALITY] > 0.5f) {
+                    float base_delicacy_bonus = 0.10f;
+                    float delicacy_bonus = base_delicacy_bonus * (2.0f * (services[ServiceType.Delicacies][QUALITY] - 0.5f));
+                    Happiness[Resident.Noble] += delicacy_bonus;
+                    Happiness_Info[Resident.Noble].Add(string.Format("Delicacies: +{0}", UI_Happiness(delicacy_bonus)));
                 }
 
                 if (services[ServiceType.Taxes][AMOUNT] != 0.0f) {
@@ -594,7 +673,7 @@ public class Residence : Building {
         float migration_threshold = 0.35f;
         float emigration_threshold = 0.20f;
         foreach (Resident resident in Enum.GetValues(typeof(Resident))) {
-            if(Happiness[resident] >= migration_threshold && Resident_Space[resident] - Current_Residents[resident] > 0) {
+            if((Happiness[resident] >= migration_threshold || Current_Residents[resident] == 0) && Resident_Space[resident] - Current_Residents[resident] > 0) {
                 migration_progress[resident] += (delta_time / (float)((int)resident + 2));
                 if(migration_progress[resident] >= 1.0f) {
                     migration_progress[resident] -= 1.0f;
