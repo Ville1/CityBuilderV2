@@ -7,7 +7,7 @@ public class Tile
 {
     public static readonly string GAME_OBJECT_NAME_PREFIX = "Tile_";
     public enum Fog_Of_War_Status { Visible, Not_Visible, Not_Explored }
-    public enum Work_Type { Forage, Hunt, Fish, Farm, Cut_Wood, Mine }
+    public enum Work_Type { Forage, Hunt, Fish, Farm, Cut_Wood, Mine, Trap }
 
     private static long current_id = 0;
     

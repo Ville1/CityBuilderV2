@@ -8,7 +8,7 @@ public class ForeignCity {
     public enum TradeRouteType { Land, Water, Both }
     public enum CityType { Farming_Town, Rural_Town, Industrial_City, Forest_Village, Remote_Village, Coastal_Town, Mining_Town, Large_City }
 
-    public static readonly List<Resource> IMPORTANT_EXPORTS = new List<Resource>() { Resource.Coffee };
+    public static readonly List<Resource> IMPORTANT_EXPORTS = new List<Resource>() { Resource.Coffee, Resource.Silk };
     public static readonly float EXPORT_BASE_PRICE_MULTIPLIER = 2.0f;
     public static readonly float EXPORT_CHEAP_PRICE_MULTIPLIER = 1.25f;
     public static readonly float EXPORT_EXPENSIVE_PRICE_MULTIPLIER = 5.0f;
