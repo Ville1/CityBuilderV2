@@ -25,7 +25,7 @@ public class Building {
     public enum UI_Category { Admin, Infrastructure, Housing, Services, Forestry, Agriculture, Textile, Industry, Unbuildable }
     public enum Resident { Peasant, Citizen, Noble }
     public enum BuildingSize { s1x1, s2x2, s3x3 }
-    public enum Tag { Undeletable, Does_Not_Block_Wind, Bridge, Land_Trade, Water_Trade, Unique, Does_Not_Disrupt_Hunting }
+    public enum Tag { Undeletable, Does_Not_Block_Wind, Bridge, Land_Trade, Water_Trade, Unique, Does_Not_Disrupt_Hunting, No_Notification_On_Build }
 
     public long Id { get; protected set; }
     public string Name { get; private set; }
@@ -700,7 +700,8 @@ public class Building {
                                     b.Update_Connectivity();
                                 }
                             }
-                        } else {
+                        }
+                        if(!building.Tags.Contains(Building.Tag.No_Notification_On_Build)) {
                             NotificationManager.Instance.Add_Notification(new Notification(string.Format("Building completed: {0}", building.Name), building.Sprite.Name, building.Sprite.Type, delegate() {
                                 CameraManager.Instance.Set_Camera_Location(building.Tile.Coordinates.Vector);
                             }));

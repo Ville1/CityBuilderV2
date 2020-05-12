@@ -135,6 +135,7 @@ public class BuildingPrototypes {
         });
         prototypes.First(x => x.Internal_Name == "dirt_road").Tags.Add(Building.Tag.Does_Not_Block_Wind);
         prototypes.First(x => x.Internal_Name == "dirt_road").Tags.Add(Building.Tag.Does_Not_Disrupt_Hunting);
+        prototypes.First(x => x.Internal_Name == "dirt_road").Tags.Add(Building.Tag.No_Notification_On_Build);
 
         prototypes.Add(new Building("Cobblestone Road", "cobblestone_road", Building.UI_Category.Infrastructure, "road_nesw", Building.BuildingSize.s1x1, 10, new Dictionary<Resource, int>() { { Resource.Stone, 10 }, { Resource.Tools, 1 } }, 10,
             new List<Resource>(), 0, 0.0f, 10, new Dictionary<Resource, float>() { { Resource.Stone, 0.01f } }, 0.01f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, true, true, 0.0f, 0, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
@@ -173,12 +174,14 @@ public class BuildingPrototypes {
             return builder.ToString();
         });
         prototypes.First(x => x.Internal_Name == "cobblestone_road").Tags.Add(Building.Tag.Does_Not_Block_Wind);
+        prototypes.First(x => x.Internal_Name == "cobblestone_road").Tags.Add(Building.Tag.No_Notification_On_Build);
 
         prototypes.Add(new Building("Wooden Bridge", "wooden_bridge", Building.UI_Category.Infrastructure, "bridge_ew", Building.BuildingSize.s1x1, 10, new Dictionary<Resource, int>() { { Resource.Lumber, 10 }, { Resource.Wood, 10 }, { Resource.Stone, 1 }, { Resource.Tools, 1 } }, 25,
             new List<Resource>(), 0, 0.0f, 50, new Dictionary<Resource, float>() { { Resource.Lumber, 0.01f }, { Resource.Wood, 0.01f } }, 0.01f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, true, true, 0.0f, 0, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "wooden_bridge").Tags.Add(Building.Tag.Does_Not_Block_Wind);
         prototypes.First(x => x.Internal_Name == "wooden_bridge").Tags.Add(Building.Tag.Bridge);
         prototypes.First(x => x.Internal_Name == "wooden_bridge").Tags.Add(Building.Tag.Does_Not_Disrupt_Hunting);
+        prototypes.First(x => x.Internal_Name == "wooden_bridge").Tags.Add(Building.Tag.No_Notification_On_Build);
         prototypes.First(x => x.Internal_Name == "wooden_bridge").Sprites.Add(new SpriteData("bridge_ns"));
         prototypes.First(x => x.Internal_Name == "wooden_bridge").Sprites.Add(new SpriteData("bridge_e"));
         prototypes.First(x => x.Internal_Name == "wooden_bridge").Sprites.Add(new SpriteData("bridge_w"));
@@ -243,7 +246,7 @@ public class BuildingPrototypes {
         prototypes.Add(new Building("Cellar", "cellar", Building.UI_Category.Infrastructure, "cellar", Building.BuildingSize.s1x1, 100, new Dictionary<Resource, int>() {
             { Resource.Wood, 15 }, { Resource.Stone, 50 }, { Resource.Tools, 10 }, { Resource.Lumber, 50 }
         }, 100, new List<Resource>() { Resource.Roots, Resource.Berries, Resource.Mushrooms, Resource.Herbs, Resource.Game, Resource.Potatoes, Resource.Bread, Resource.Ale, Resource.Mutton, Resource.Corn, Resource.Fish, Resource.Bananas, Resource.Oranges, Resource.Beer, Resource.Rum,
-            Resource.Wine, Resource.Pretzels, Resource.Cake, Resource.Salted_Fish, Resource.Salted_Meat },
+            Resource.Wine, Resource.Pretzels, Resource.Cake, Resource.Salted_Fish, Resource.Salted_Meat, Resource.Grapes },
         1000, 50.0f, 110, new Dictionary<Resource, float>() { { Resource.Wood, 0.05f } }, 0.5f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 5 } }, 5, false, false, true, 0.0f, 14, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "cellar").Tags.Add(Building.Tag.Does_Not_Block_Wind);
 
@@ -555,7 +558,7 @@ public class BuildingPrototypes {
                 City.Instance.Add_Cash(income);
             }//                                  v unnecessary list v special settings adds and removes stuff from consumption list MIGHT ACTUALLY BE NECESSARY, DONT REMOVE
         }, null, null, new List<Resource>() { Resource.Berries, Resource.Roots, Resource.Mushrooms, Resource.Herbs, Resource.Firewood, Resource.Charcoal, Resource.Coal, Resource.Game, Resource.Bread, Resource.Potatoes, Resource.Salt, Resource.Mutton, Resource.Corn, Resource.Fish, Resource.Bananas,
-            Resource.Oranges, Resource.Pretzels, Resource.Cake, Resource.Simple_Clothes, Resource.Leather_Clothes }, new List<Resource>(), 0.05f, 5.0f));
+            Resource.Oranges, Resource.Grapes, Resource.Pretzels, Resource.Cake, Resource.Simple_Clothes, Resource.Leather_Clothes }, new List<Resource>(), 0.05f, 5.0f));
         Resource prefered_fuel = Resource.All.Where(x => x.Is_Fuel).OrderByDescending(x => x.Value / x.Fuel_Value).FirstOrDefault();
         foreach(Resource resource in Resource.All) {
             if (resource.Is_Food) {
@@ -1068,6 +1071,7 @@ public class BuildingPrototypes {
         }, 10, new List<Resource>(), 0, 0.0f, 20, new Dictionary<Resource, float>(), 0.0f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 0, null, null, null, null,
         new List<Resource>(), new List<Resource>(), -0.05f, 3.0f));
         prototypes.First(x => x.Internal_Name == "potato_field").Tags.Add(Building.Tag.Does_Not_Block_Wind);
+        prototypes.First(x => x.Internal_Name == "potato_field").Tags.Add(Building.Tag.No_Notification_On_Build);
 
         prototypes.Add(new Building("Brewery", "brewery", Building.UI_Category.Agriculture, "brewery", Building.BuildingSize.s2x2, 90, new Dictionary<Resource, int>() {
             { Resource.Lumber, 120 }, { Resource.Stone, 15 }, { Resource.Tools, 15 }
@@ -1258,7 +1262,7 @@ public class BuildingPrototypes {
                 tavern.Per_Day_Cash_Delta += (income / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f);
                 City.Instance.Add_Cash(income);
             }
-        }, null, null, new List<Resource>() { Resource.Berries, Resource.Roots, Resource.Mushrooms, Resource.Firewood, Resource.Charcoal, Resource.Coal, Resource.Game, Resource.Bread, Resource.Potatoes, Resource.Ale, Resource.Mutton, Resource.Corn, Resource.Fish, Resource.Bananas, Resource.Oranges, Resource.Beer, Resource.Rum, Resource.Wine }, new List<Resource>(), 0.05f, 3.0f));
+        }, null, null, new List<Resource>() { Resource.Berries, Resource.Roots, Resource.Mushrooms, Resource.Firewood, Resource.Charcoal, Resource.Coal, Resource.Game, Resource.Bread, Resource.Potatoes, Resource.Ale, Resource.Mutton, Resource.Corn, Resource.Fish, Resource.Bananas, Resource.Oranges, Resource.Grapes, Resource.Beer, Resource.Rum, Resource.Wine }, new List<Resource>(), 0.05f, 3.0f));
         prototypes.First(x => x.Internal_Name == "tavern").Special_Settings.Add(new SpecialSetting("fuel", "Fuel", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() { Resource.Firewood.UI_Name + " (0.5/day)", Resource.Charcoal.UI_Name +  " (0.25/day)", Resource.Coal.UI_Name + " (0.25/day)" }, 0));
         foreach (Resource resource in Resource.All.OrderByDescending(x => x.Tags.Contains(Resource.ResourceTag.Alcohol) ? 1.0f : 0.0f).ToArray()) {
             if (resource.Is_Food || resource.Tags.Contains(Resource.ResourceTag.Alcohol)) {
@@ -1598,12 +1602,14 @@ public class BuildingPrototypes {
         }, 10, new List<Resource>(), 0, 0.0f, 25, new Dictionary<Resource, float>(), 0.0f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 0, null, null, null, null,
         new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "wheat_field").Tags.Add(Building.Tag.Does_Not_Block_Wind);
+        prototypes.First(x => x.Internal_Name == "wheat_field").Tags.Add(Building.Tag.No_Notification_On_Build);
 
         prototypes.Add(new Building("Corn Field", "corn_field", Building.UI_Category.Agriculture, "corn_field", Building.BuildingSize.s1x1, 50, new Dictionary<Resource, int>() {
             { Resource.Tools, 1 }
         }, 10, new List<Resource>(), 0, 0.0f, 25, new Dictionary<Resource, float>(), 0.0f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 0, null, null, null, null,
         new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "corn_field").Tags.Add(Building.Tag.Does_Not_Block_Wind);
+        prototypes.First(x => x.Internal_Name == "corn_field").Tags.Add(Building.Tag.No_Notification_On_Build);
 
         prototypes.Add(new Building("Silo", "silo", Building.UI_Category.Infrastructure, "silo", Building.BuildingSize.s2x2, 150, new Dictionary<Resource, int>() {
             { Resource.Lumber, 75 }, { Resource.Stone, 110 }, { Resource.Tools, 15 }
@@ -2313,6 +2319,34 @@ public class BuildingPrototypes {
             Resource.Fine_Clothes.UI_Name + " (2.5/day)",
             Resource.Luxury_Clothes.UI_Name + " (2.5/day)"
         }, 0));
+
+        prototypes.Add(new Building("Vineyard", "vineyard", Building.UI_Category.Agriculture, "vineyard", Building.BuildingSize.s3x3, 150, new Dictionary<Resource, int>() {
+            { Resource.Lumber, 75 }, { Resource.Stone, 10 }, { Resource.Bricks, 90 }, { Resource.Tools, 20 }
+        }, 200, new List<Resource>(), 0, 0.0f, 175, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f }, { Resource.Bricks, 0.05f } }, 1.10f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 }, { Building.Resident.Citizen, 5 } }, 10, true, false, true, 3.75f, 0, Reserve_Tiles(Tile.Work_Type.Farm),
+        delegate (Building building, float delta_time) {
+            if (!building.Is_Operational) {
+                return;
+            }
+            float grapes = 0.0f;
+            foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
+                if (tile.Building != null && tile.Building.Internal_Name == "grape_trellis" && tile.Can_Work(building, Tile.Work_Type.Farm)) {
+                    if (tile.Internal_Name == "grass") {
+                        grapes += 0.10f;
+                    } else if (tile.Internal_Name == "fertile_ground") {
+                        grapes += 0.15f;
+                    }
+                }
+            }
+            float multiplier = 0.735294f;
+            building.Produce(Resource.Grapes, grapes * multiplier, delta_time);
+        }, unreserve_tiles, Highlight_Tiles(Tile.Work_Type.Farm), new List<Resource>(), new List<Resource>() { Resource.Grapes }, 0.0f, 0.0f));
+
+        prototypes.Add(new Building("Grape Trellis", "grape_trellis", Building.UI_Category.Agriculture, "grape_trellis", Building.BuildingSize.s1x1, 50, new Dictionary<Resource, int>() {
+            { Resource.Wood, 1 }, { Resource.Tools, 1 }
+        }, 15, new List<Resource>(), 0, 0.0f, 20, new Dictionary<Resource, float>(), 0.0f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 0, null, null, null, null,
+        new List<Resource>(), new List<Resource>(), 0.05f, 3.0f));
+        prototypes.First(x => x.Internal_Name == "grape_trellis").Tags.Add(Building.Tag.Does_Not_Block_Wind);
+        prototypes.First(x => x.Internal_Name == "grape_trellis").Tags.Add(Building.Tag.No_Notification_On_Build);
     }
 
     public static BuildingPrototypes Instance

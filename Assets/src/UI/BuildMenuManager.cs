@@ -13,7 +13,7 @@ public class BuildMenuManager : MonoBehaviour
 
     public GameObject Tab_Button_Container;
     public Button Tab_Button_Prototype;
-
+    public GameObject Scroll_Content;
     public GameObject Tab_Prototype;
     public GameObject Building_Container_Prototype;
 
@@ -22,6 +22,7 @@ public class BuildMenuManager : MonoBehaviour
     private Vector3 tab_button_container_original_position;
     private Dictionary<Building.UI_Category, Button> tab_buttons;
     private Dictionary<Building.UI_Category, GameObject> tabs;
+    private Dictionary<Building.UI_Category, float> tab_sizes;
 
     private Building preview_building;
     private List<Tile> highlighted_tiles;
@@ -43,6 +44,7 @@ public class BuildMenuManager : MonoBehaviour
         Active = false;
         tab_buttons = new Dictionary<Building.UI_Category, Button>();
         tabs = new Dictionary<Building.UI_Category, GameObject>();
+        tab_sizes = new Dictionary<Building.UI_Category, float>();
         Initialize();
         Interactable = false;
         highlighted_tiles = new List<Tile>();
@@ -233,6 +235,7 @@ public class BuildMenuManager : MonoBehaviour
             GameObject.Destroy(pair.Value);
         }
         tabs.Clear();
+        tab_sizes.Clear();
 
         foreach(Building.UI_Category category in Enum.GetValues(typeof(Building.UI_Category))) {
             GameObject tab = GameObject.Instantiate(
@@ -243,17 +246,18 @@ public class BuildMenuManager : MonoBehaviour
                     Tab_Prototype.transform.position.z
                 ),
                 Quaternion.identity,
-                Panel.transform
+                Scroll_Content.transform
             );
             tab.name = string.Format("{0}_tab", category.ToString());
             tabs.Add(category, tab);
 
             int index = 0;
+            float building_width = 100.0f;
             foreach(Building building in BuildingPrototypes.Instance.Get(category)) {
                 GameObject container = GameObject.Instantiate(
                     Building_Container_Prototype,
                     new Vector3(
-                        Building_Container_Prototype.transform.position.x + (index * 100.0f),
+                        Building_Container_Prototype.transform.position.x + (index * building_width),
                         Building_Container_Prototype.transform.position.y,
                         Building_Container_Prototype.transform.position.z
                     ),
@@ -261,7 +265,7 @@ public class BuildMenuManager : MonoBehaviour
                     tab.transform
                 );
                 container.SetActive(true);
-                container.name = string.Format("{0}_container", category.ToString());
+                container.name = string.Format("{0}_container", building.Internal_Name);
 
                 container.GetComponentInChildren<Text>().text = building.Name;
                 container.GetComponentInChildren<Image>().sprite = SpriteManager.Instance.Get(building.Sprite.Name, building.Sprite.Type);
@@ -272,6 +276,7 @@ public class BuildMenuManager : MonoBehaviour
 
                 index++;
             }
+            tab_sizes.Add(category, 10.0f + (index * building_width));
         }
     }
 
@@ -286,6 +291,7 @@ public class BuildMenuManager : MonoBehaviour
         foreach(KeyValuePair<Building.UI_Category, GameObject> pair in tabs) {
             pair.Value.SetActive(pair.Key == tab);
         }
+        Scroll_Content.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, tab_sizes[tab]);
     }
 
     private void Select_Building(Building building)
