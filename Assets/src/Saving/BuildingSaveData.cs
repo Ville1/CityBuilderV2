@@ -14,6 +14,7 @@ public class BuildingSaveData {
     public List<ResidentSaveData> Residents;
     public List<ResidentSaveData> Recently_Moved_Residents;
     public List<ResidentSaveData> Worker_Allocation;
+    public long Taxed_By;
     public bool Is_Deconstructing;
     public bool Is_Paused;
     public bool Is_Connected;

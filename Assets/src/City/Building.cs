@@ -1013,6 +1013,7 @@ public class Building {
                     });
                 }
             }
+            data.Taxed_By = (this as Residence).Taxed_By;
         }
         foreach(SpecialSetting setting in Special_Settings) {
             data.Settings.Add(new SpecialSettingSaveData() {

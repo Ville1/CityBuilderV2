@@ -32,7 +32,7 @@ public class Residence : Building {
         { ServiceType.Salt, 0.1f },
         { ServiceType.Tavern, 0.025f }, //100 people consume 2.5 ale per day
         { ServiceType.Chapel, 0.05f },
-        { ServiceType.Taxes, 2.00f },
+        { ServiceType.Taxes, 1.00f },
         { ServiceType.Clothes, 0.01f },
         { ServiceType.Coffeehouse, 0.025f },
         { ServiceType.Tableware, 0.01f },
@@ -67,6 +67,7 @@ public class Residence : Building {
     public Dictionary<Resident, List<string>> Happiness_Info { get; private set; }
     public float Food_Consumed { get; private set; }
     public bool Peasants_Only { get { return (!Resident_Space.ContainsKey(Resident.Citizen) || Resident_Space[Resident.Citizen] == 0) && (!Resident_Space.ContainsKey(Resident.Noble) || Resident_Space[Resident.Noble] == 0); } }
+    public long Taxed_By { get; set; }
 
     private Dictionary<Resident, float> migration_progress;
     private Dictionary<ServiceType, float[]> services;
@@ -95,6 +96,7 @@ public class Residence : Building {
         foreach (ServiceType service in Enum.GetValues(typeof(ServiceType))) {
             services.Add(service, new float[2] { 0.0f, 0.0f });
         }
+        Taxed_By = -1;
     }
 
     public Residence(string name, string internal_name, UI_Category category, string sprite, BuildingSize size, int hp, Dictionary<Resource, int> cost, int cash_cost, List<Resource> allowed_resources, int storage_limit, int construction_time,
@@ -114,6 +116,7 @@ public class Residence : Building {
         Recently_Moved = new Dictionary<Resident, int>();
         Happiness = new Dictionary<Resident, float>();
         migration_progress = new Dictionary<Resident, float>();
+        Taxed_By = -1;
     }
 
     public Residence(BuildingSaveData data) : base(data)
@@ -152,6 +155,7 @@ public class Residence : Building {
                 services.Add(service, new float[2] { 0.0f, 0.0f });
             }
         }
+        Taxed_By = data.Taxed_By;
     }
 
     public float Current_Appeal
@@ -205,6 +209,9 @@ public class Residence : Building {
         }
         if(services[ServiceType.Taxes][AMOUNT] != 0.0f && Current_Residents[Resident.Peasant] + Current_Residents[Resident.Citizen] + Current_Residents[Resident.Noble] == 0) {
             services[ServiceType.Taxes][AMOUNT] = 0.0f;
+        }
+        if(services[ServiceType.Taxes][AMOUNT] == 0.0f) {
+            Taxed_By = -1;
         }
 
         bool dirt_roads = false;

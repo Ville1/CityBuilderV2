@@ -1434,14 +1434,19 @@ public class BuildingPrototypes {
             };
             foreach (Building building in office.Get_Connected_Buildings(office.Road_Range).Select(x => x.Key).ToArray()) {
                 if (building is Residence) {
-                    (building as Residence).Serve(Residence.ServiceType.Taxes, 1.0f, tax_rate_multiplier);
+                    Residence residence = building as Residence;
+                    if(residence.Taxed_By != -1 && residence.Taxed_By != office.Id) {
+                        continue;
+                    }
+                    residence.Serve(Residence.ServiceType.Taxes, 1.0f, tax_rate_multiplier);
+                    residence.Taxed_By = office.Id;
                     foreach(Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
-                        income += (building as Residence).Current_Residents[resident] * base_tax_income[resident] * tax_rate_multiplier;
+                        income += residence.Current_Residents[resident] * base_tax_income[resident] * tax_rate_multiplier;
                     }
                 }
             }
+            income *= office.Efficency;
             if (income != 0.0f) {
-                income *= office.Efficency;
                 office.Per_Day_Cash_Delta += (income / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f);
                 City.Instance.Add_Cash(income);
             }
@@ -2358,7 +2363,7 @@ public class BuildingPrototypes {
                 building.Process(new Dictionary<Resource, float>() { { Resource.Grapes, 5.0f }, { Resource.Barrels, 2.5f } }, new Dictionary<Resource, float>() { { Resource.Wine, 5.0f } }, delta_time);
             }, null, null, new List<Resource>() { Resource.Barrels, Resource.Grapes }, new List<Resource>() { Resource.Wine }, 0.0f, 0.0f));
     }
-
+    
     public static BuildingPrototypes Instance
     {
         get {

@@ -19,6 +19,7 @@ public class InspectorManager : MonoBehaviour {
     public Text HP_Text;
     public Text Status_Text;
     public Text Efficency_Text;
+    public Text Taxed_By_Text;
     public Text Storage_Text;
     public GameObject Delta_Content;
     public GameObject Delta_Row_Prototype;
@@ -339,6 +340,7 @@ public class InspectorManager : MonoBehaviour {
             if (building.Is_Built && !building.Is_Deconstructing && building.Max_Workers_Total != 0) {
                 Workers_Container.SetActive(true);
                 Residents_Container.SetActive(false);
+                Taxed_By_Text.gameObject.SetActive(false);
                 Worker_Peasant_Current.text = building.Current_Workers[Building.Resident.Peasant].ToString();
                 Worker_Peasant_Max.text = building.Worker_Settings[Building.Resident.Peasant].ToString();
                 Worker_Citizen_Current.text = building.Current_Workers[Building.Resident.Citizen].ToString();
@@ -357,6 +359,7 @@ public class InspectorManager : MonoBehaviour {
             } else if(building is Residence) {
                 Workers_Container.SetActive(false);
                 Residents_Container.SetActive(true);
+                Taxed_By_Text.gameObject.SetActive(true);
                 Residence residence = (Building as Residence);
                 Residents_Peasant_Current.text = residence.Current_Residents[Building.Resident.Peasant].ToString();
                 Residents_Peasant_Max.text = residence.Resident_Space[Building.Resident.Peasant].ToString();
@@ -382,9 +385,21 @@ public class InspectorManager : MonoBehaviour {
                 } else {
                     TooltipManager.Instance.Unregister_Tooltip(Residents_Noble_Happiness.gameObject);
                 }
+                if(residence.Taxed_By == -1) {
+                    Taxed_By_Text.text = "Taxed by: none";
+                } else {
+                    Building tax_office = City.Instance.Buildings.FirstOrDefault(x => x.Id == residence.Taxed_By);
+                    if(tax_office != null) {
+                        Taxed_By_Text.text = string.Format("Taxed by:{0}{1} #{2}", Environment.NewLine, tax_office.Name, tax_office.Id);
+                    } else {
+                        CustomLogger.Instance.Error(string.Format("Building not found #{0}", residence.Taxed_By));
+                        Taxed_By_Text.text = "Taxed by: ERROR";
+                    }
+                }
             } else {
                 Workers_Container.SetActive(false);
                 Residents_Container.SetActive(false);
+                Taxed_By_Text.gameObject.SetActive(false);
             }
 
             //Delta
