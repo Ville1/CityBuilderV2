@@ -2322,7 +2322,7 @@ public class BuildingPrototypes {
 
         prototypes.Add(new Building("Vineyard", "vineyard", Building.UI_Category.Agriculture, "vineyard", Building.BuildingSize.s3x3, 150, new Dictionary<Resource, int>() {
             { Resource.Lumber, 75 }, { Resource.Stone, 10 }, { Resource.Bricks, 90 }, { Resource.Tools, 20 }
-        }, 200, new List<Resource>(), 0, 0.0f, 175, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f }, { Resource.Bricks, 0.05f } }, 1.10f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 }, { Building.Resident.Citizen, 5 } }, 10, true, false, true, 3.75f, 0, Reserve_Tiles(Tile.Work_Type.Farm),
+        }, 200, new List<Resource>(), 0, 0.0f, 175, new Dictionary<Resource, float>() { { Resource.Lumber, 0.02f }, { Resource.Bricks, 0.02f } }, 1.10f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 }, { Building.Resident.Citizen, 5 } }, 10, true, false, true, 3.75f, 0, Reserve_Tiles(Tile.Work_Type.Farm),
         delegate (Building building, float delta_time) {
             if (!building.Is_Operational) {
                 return;
@@ -2347,6 +2347,16 @@ public class BuildingPrototypes {
         new List<Resource>(), new List<Resource>(), 0.05f, 3.0f));
         prototypes.First(x => x.Internal_Name == "grape_trellis").Tags.Add(Building.Tag.Does_Not_Block_Wind);
         prototypes.First(x => x.Internal_Name == "grape_trellis").Tags.Add(Building.Tag.No_Notification_On_Build);
+
+        prototypes.Add(new Building("Winery", "winery", Building.UI_Category.Agriculture, "winery", Building.BuildingSize.s2x2, 150, new Dictionary<Resource, int>() {
+            { Resource.Lumber, 75 }, { Resource.Stone, 20 }, { Resource.Bricks, 95 }, { Resource.Tools, 20 }
+        }, 250, new List<Resource>(), 0, 50.0f, 190, new Dictionary<Resource, float>() { { Resource.Lumber, 0.025f }, { Resource.Bricks, 0.025f } }, 1.75f, 0.0f, 0, new Dictionary<Building.Resident, int>() {
+            { Building.Resident.Peasant, 10 }, { Building.Resident.Citizen, 5 } }, 10, true, false, true, 0.0f, 6, null, delegate (Building building, float delta_time) {
+                if (!building.Is_Operational) {
+                    return;
+                }
+                building.Process(new Dictionary<Resource, float>() { { Resource.Grapes, 5.0f }, { Resource.Barrels, 2.5f } }, new Dictionary<Resource, float>() { { Resource.Wine, 5.0f } }, delta_time);
+            }, null, null, new List<Resource>() { Resource.Barrels, Resource.Grapes }, new List<Resource>() { Resource.Wine }, 0.0f, 0.0f));
     }
 
     public static BuildingPrototypes Instance

@@ -205,7 +205,7 @@ public class Resource {
         }
         return resources[type];
     }
-    
+
     public static List<Resource> All
     {
         get {
