@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-public enum Mineral { Iron, Coal, Salt, Clay, Marble, Copper, Tin } // silver, gold, gems
+public enum Mineral { Iron, Coal, Salt, Clay, Marble, Copper, Tin, Silver, Gold, Gems }
 public class Map : MonoBehaviour
 {
     public enum MapState { Inactive, Normal, Generating, Loading, Saving }
@@ -18,7 +18,10 @@ public class Map : MonoBehaviour
         { Mineral.Clay, 8 },
         { Mineral.Marble, 4 },
         { Mineral.Copper, 7 },
-        { Mineral.Tin, 7 }
+        { Mineral.Tin, 7 },
+        { Mineral.Silver, 4 },
+        { Mineral.Gold, 2 },
+        { Mineral.Gems, 1 }
     };
     public static readonly Dictionary<Mineral, float> MINERAL_VEIN_SIZE = new Dictionary<Mineral, float>() {
         { Mineral.Iron, 3.0f },
@@ -27,7 +30,10 @@ public class Map : MonoBehaviour
         { Mineral.Clay, 4.0f },
         { Mineral.Marble, 2.0f },
         { Mineral.Copper, 3.0f },
-        { Mineral.Tin, 3.0f }
+        { Mineral.Tin, 3.0f },
+        { Mineral.Silver, 1.5f },
+        { Mineral.Gold, 1.5f },
+        { Mineral.Gems, 0.5f }
     };
     public static readonly Dictionary<Mineral, float> MINERAL_VEIN_RICHNESS = new Dictionary<Mineral, float>() {
         { Mineral.Iron, 0.90f },
@@ -36,16 +42,22 @@ public class Map : MonoBehaviour
         { Mineral.Clay, 0.75f },
         { Mineral.Marble, 0.65f },
         { Mineral.Copper, 0.75f },
-        { Mineral.Tin, 0.75f }
+        { Mineral.Tin, 0.75f },
+        { Mineral.Silver, 0.65f },
+        { Mineral.Gold, 0.60f },
+        { Mineral.Gems, 0.50f }
     };
     public static readonly Dictionary<Mineral, string> MINERAL_SPRITES = new Dictionary<Mineral, string>() {
         { Mineral.Iron, "iron_ore" },
         { Mineral.Coal, "coal" },
-        { Mineral.Salt, "placeholder" },
+        { Mineral.Salt, "salt" },
         { Mineral.Clay, "clay" },
         { Mineral.Marble, "placeholder" },
         { Mineral.Copper, "copper_ore" },
-        { Mineral.Tin, "tin_ore" }
+        { Mineral.Tin, "tin_ore" },
+        { Mineral.Silver, "silver_ore" },
+        { Mineral.Gold, "gold_ore" },
+        { Mineral.Gems, "gems" }
     };
     public static readonly SpriteManager.SpriteType MINERAL_SPRITE_TYPE = SpriteManager.SpriteType.UI;
     public static readonly List<Mineral> IMPORTANT_MINERALS = new List<Mineral>() { Mineral.Iron, Mineral.Clay, Mineral.Copper, Mineral.Tin };

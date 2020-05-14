@@ -504,7 +504,7 @@ public class InspectorManager : MonoBehaviour {
                     );
                     service_row.name = string.Format("{0}_service_row", service.ToString().ToLower());
                     service_row.SetActive(true);
-                    service_row.GetComponentInChildren<Text>().text = string.Format("{0} {1} / 100 {2}%", service.ToString(), Helper.Float_To_String(100.0f * residence.Service_Level(service), 0), Helper.Float_To_String(100.0f * residence.Service_Quality(service), 0));
+                    service_row.GetComponentInChildren<Text>().text = string.Format("{0} {1} / 100 {2}%", Helper.Snake_Case_To_UI(service.ToString(), true), Helper.Float_To_String(100.0f * residence.Service_Level(service), 0), Helper.Float_To_String(100.0f * residence.Service_Quality(service), 0));
                     service_rows.Add(service_row);
                 }
                 Services_Content.GetComponentInChildren<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, (15.0f * service_rows.Count) + 5.0f);
