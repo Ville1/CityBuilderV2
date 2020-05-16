@@ -4,8 +4,8 @@ using System.Linq;
 public class Contacts {
     private static Contacts instance;
 
-    public static readonly int MIN_CONTACTS = 8;
-    public static readonly int MAX_CONTACTS = 12;
+    public static readonly int MIN_CONTACTS = 9;
+    public static readonly int MAX_CONTACTS = 14;
 
     public List<ForeignCity> Cities { get; private set; }
 

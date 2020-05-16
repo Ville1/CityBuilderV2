@@ -6,7 +6,7 @@ using UnityEngine;
 public class ForeignCity {
     private static long current_id;
     public enum TradeRouteType { Land, Water, Both }
-    public enum CityType { Farming_Town, Rural_Town, Industrial_City, Forest_Village, Remote_Village, Coastal_Town, Mining_Town, Large_City }
+    public enum CityType { Farming_Town, Rural_Town, Industrial_City, Forest_Village, Remote_Village, Maritime_Town, Mining_Town, Large_City }
 
     public static readonly List<Resource> IMPORTANT_EXPORTS = new List<Resource>() { Resource.Coffee, Resource.Silk };
     public static readonly float EXPORT_BASE_PRICE_MULTIPLIER = 2.0f;
@@ -54,7 +54,7 @@ public class ForeignCity {
         Opinion_Resting_Point = -1.0f;
         Update_Opinion_Resting_Point();
         City_Type = RNG.Instance.Item(Enum.GetValues(typeof(CityType)).Cast<CityType>().ToList());
-        Trade_Route_Type = RNG.Instance.Item(Enum.GetValues(typeof(TradeRouteType)).Cast<TradeRouteType>().ToList());
+        Dictionary<TradeRouteType, int> trade_route_chances = new Dictionary<TradeRouteType, int>() { { TradeRouteType.Land, 40 }, { TradeRouteType.Water, 40 }, { TradeRouteType.Both, 20 } };
 
         Preferred_Imports = new List<Resource>();
         Disliked_Imports = new List<Resource>();
@@ -74,6 +74,9 @@ public class ForeignCity {
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Hunting, Resource.ResourceTag.Coastal },
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Archaic, Resource.ResourceTag.Opulent, Resource.ResourceTag.Foraging, Resource.ResourceTag.Food },
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Opulent });
+                trade_route_chances[TradeRouteType.Land] = 70;
+                trade_route_chances[TradeRouteType.Water] = 15;
+                trade_route_chances[TradeRouteType.Both] = 15;
                 break;
             case CityType.Rural_Town:
                 Initialize_Exports_And_Imports(
@@ -83,6 +86,9 @@ public class ForeignCity {
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Construction, Resource.ResourceTag.Coastal },
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Agricultural, Resource.ResourceTag.Livestock, Resource.ResourceTag.Archaic, Resource.ResourceTag.Opulent, Resource.ResourceTag.Foraging },
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Opulent });
+                trade_route_chances[TradeRouteType.Land] = 80;
+                trade_route_chances[TradeRouteType.Water] = 10;
+                trade_route_chances[TradeRouteType.Both] = 10;
                 break;
             case CityType.Remote_Village:
                 Initialize_Exports_And_Imports(
@@ -92,8 +98,11 @@ public class ForeignCity {
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Construction, Resource.ResourceTag.Clothing, Resource.ResourceTag.Food },
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Archaic, Resource.ResourceTag.Foraging, Resource.ResourceTag.Hunting, Resource.ResourceTag.Exotic },
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Opulent });
+                trade_route_chances[TradeRouteType.Land] = 90;
+                trade_route_chances[TradeRouteType.Water] = 5;
+                trade_route_chances[TradeRouteType.Both] = 5;
                 break;
-            case CityType.Coastal_Town:
+            case CityType.Maritime_Town:
                 Initialize_Exports_And_Imports(
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Coastal },
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Industrial, Resource.ResourceTag.Exotic, Resource.ResourceTag.Jewelry },
@@ -101,6 +110,9 @@ public class ForeignCity {
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Forestry, Resource.ResourceTag.Foraging },
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Coastal },
                     new List<Resource.ResourceTag>() { });
+                trade_route_chances[TradeRouteType.Land] = 5;
+                trade_route_chances[TradeRouteType.Water] = 90;
+                trade_route_chances[TradeRouteType.Both] = 5;
                 break;
             case CityType.Forest_Village:
                 Initialize_Exports_And_Imports(
@@ -110,6 +122,9 @@ public class ForeignCity {
                     new List<Resource.ResourceTag>() { },
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Forestry, Resource.ResourceTag.Foraging, Resource.ResourceTag.Hunting, Resource.ResourceTag.Opulent },
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Opulent });
+                trade_route_chances[TradeRouteType.Land] = 90;
+                trade_route_chances[TradeRouteType.Water] = 5;
+                trade_route_chances[TradeRouteType.Both] = 5;
                 break;
             case CityType.Industrial_City:
                 Initialize_Exports_And_Imports(
@@ -119,6 +134,9 @@ public class ForeignCity {
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Mining, Resource.ResourceTag.Industrial, Resource.ResourceTag.Food },
                     new List<Resource.ResourceTag>() { },
                     new List<Resource.ResourceTag>() { });
+                trade_route_chances[TradeRouteType.Land] = 45;
+                trade_route_chances[TradeRouteType.Water] = 30;
+                trade_route_chances[TradeRouteType.Both] = 35;
                 break;
             case CityType.Mining_Town:
                 Initialize_Exports_And_Imports(
@@ -128,6 +146,9 @@ public class ForeignCity {
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Food, Resource.ResourceTag.Forestry, Resource.ResourceTag.Construction },
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Mining, Resource.ResourceTag.Opulent},
                     new List<Resource.ResourceTag>() { });
+                trade_route_chances[TradeRouteType.Land] = 90;
+                trade_route_chances[TradeRouteType.Water] = 5;
+                trade_route_chances[TradeRouteType.Both] = 5;
                 break;
             case CityType.Large_City:
                 Initialize_Exports_And_Imports(
@@ -137,10 +158,29 @@ public class ForeignCity {
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Food, Resource.ResourceTag.Industrial, Resource.ResourceTag.Opulent, Resource.ResourceTag.Exotic },
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Archaic, Resource.ResourceTag.Foraging },
                     new List<Resource.ResourceTag>() { });
+                trade_route_chances[TradeRouteType.Land] = 40;
+                trade_route_chances[TradeRouteType.Water] = 40;
+                trade_route_chances[TradeRouteType.Both] = 10;
                 break;
             default:
                 CustomLogger.Instance.Error(string.Format("Unimplemented city type: {0}", City_Type.ToString()));
                 break;
+        }
+        int check_total = 0;
+        int random = RNG.Instance.Next(0, 100);
+        foreach(TradeRouteType type in Enum.GetValues(typeof(TradeRouteType))) {
+            check_total += trade_route_chances[type];
+        }
+        if(random <= trade_route_chances[TradeRouteType.Land]) {
+            Trade_Route_Type = TradeRouteType.Land;
+        } else if(random > trade_route_chances[TradeRouteType.Land] && random <= trade_route_chances[TradeRouteType.Land] + trade_route_chances[TradeRouteType.Water]) {
+            Trade_Route_Type = TradeRouteType.Water;
+        } else {
+            Trade_Route_Type = TradeRouteType.Both;
+        }
+
+        if(check_total != 100) {
+            CustomLogger.Instance.Error(string.Format("Chance total is not 100 for type: {0}", City_Type.ToString()));
         }
     }
 
