@@ -38,6 +38,7 @@ public class Tile
     public List<Entity> Entities { get; private set; }
     public bool Is_Water { get { return Internal_Name.StartsWith("water"); } }
     public Coordinates.Direction? Water_Flow { get; set; }
+    public bool Has_Ship_Access { get; set; }
 
     protected Color highlight_color;
     protected bool show_coordinates;
@@ -74,6 +75,8 @@ public class Tile
         Minerals = new Dictionary<Mineral, float>();
         Mineral_Spawns = new List<Mineral>();
         Entities = new List<Entity>();
+
+        Has_Ship_Access = true;
 
         Change_To(prototype);
     }

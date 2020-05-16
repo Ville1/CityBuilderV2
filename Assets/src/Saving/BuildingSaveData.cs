@@ -26,6 +26,7 @@ public class BuildingSaveData {
     public List<StorageSettingSaveData> Storage_Settings;
     public int Selected_Sprite;
     public TradeRouteSettingsSaveData Trade_Route_Settings;
+    public List<BuildingDictionaryData> Data;
 }
 
 [Serializable]
@@ -52,4 +53,11 @@ public class TradeRouteSettingsSaveData
     public int Resource;
     public float Amount;
     public float Caravan_Cooldown;
+}
+
+[Serializable]
+public class BuildingDictionaryData
+{
+    public string Key;
+    public string Value;
 }

@@ -216,12 +216,12 @@ public class BuildingPrototypes {
                     return;
                 }
                 float required_progress = building.Tile.Internal_Name == "forest" ? 5.0f : 2.5f;
-                float progress = building.Data.ContainsKey("chop_progress") ? (float)building.Data["chop_progress"] : 0.0f;
+                float progress = building.Data.ContainsKey("chop_progress") ? float.Parse(building.Data["chop_progress"]) : 0.0f;
                 progress += delta_time;
                 if (building.Data.ContainsKey("chop_progress")) {
-                    building.Data["chop_progress"] = progress;
+                    building.Data["chop_progress"] = progress.ToString();
                 } else {
-                    building.Data.Add("chop_progress", progress);
+                    building.Data.Add("chop_progress", progress.ToString());
                 }
                 if (progress >= required_progress) {
                     building.Storage.Add(Resource.Wood, building.Tile.Internal_Name == "forest" ? 5.0f : 2.5f);
@@ -1914,6 +1914,151 @@ public class BuildingPrototypes {
             }
         }, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "trading_post").Tags.Add(Building.Tag.Land_Trade);
+
+        prototypes.Add(new Building("Trade Harbor", "trade_harbor", Building.UI_Category.Admin, "trade_harbor", Building.BuildingSize.s3x3, 175, new Dictionary<Resource, int>() {
+             { Resource.Lumber, 225 }, { Resource.Stone, 95 }, { Resource.Wood, 20 }, { Resource.Tools, 15 }, { Resource.Mechanisms, 5 }
+        }, 475, new List<Resource>(), 0, 0.0f, 345, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f }, { Resource.Stone, 0.01f } }, 3.00f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Citizen, 10 }, { Building.Resident.Noble, 5 } }, 10,
+        true, false, true, 0.0f, 0, delegate(Building building) {
+            Dictionary<Coordinates.Direction, int> docks = new Dictionary<Coordinates.Direction, int>() {
+                { Coordinates.Direction.North, 2 },
+                { Coordinates.Direction.East, 3 },
+                { Coordinates.Direction.South, 0 },
+                { Coordinates.Direction.West, 1 }
+            };
+            Tile center_tile = Map.Instance.Get_Tile_At(building.Tile.Coordinates.Shift(new Coordinates(1, 1)));
+            foreach (KeyValuePair<Coordinates.Direction, int> dock_data in docks) {
+                Coordinates c = new Coordinates(center_tile.Coordinates);
+                c.Shift(dock_data.Key);
+                c.Shift(dock_data.Key);
+                Tile tile = Map.Instance.Get_Tile_At(c);
+                if(tile != null && tile.Is_Water && tile.Has_Ship_Access && tile.Building == null) {
+                    Building dock = new Building(Instance.Get("dock"), tile, new List<Tile>() { tile }, false);
+                    dock.Selected_Sprite = dock_data.Value;
+                    City.Instance.Buildings.Add(dock);
+                    building.Data.Add("dock_id", dock.Id.ToString());
+                    break;
+                }
+            }
+        },
+        delegate (Building building, float delta_time) {
+            building.Trade_Route_Settings.Caravan_Cooldown -= TimeManager.Instance.Seconds_To_Days(delta_time, 1.0f);
+            bool trade = false;
+            if (building.Trade_Route_Settings.Caravan_Cooldown <= 0.0f) {
+                building.Trade_Route_Settings.Caravan_Cooldown += TradeRouteSettings.CARAVAN_INTERVAL;
+                trade = true;
+            }
+            building.Consumes.Clear();
+            building.Produces.Clear();
+            if (building.Trade_Route_Settings.Set) {
+                if (building.Trade_Route_Settings.Action == TradeRouteSettings.TradeAction.Buy) {
+                    building.Produces.Add(building.Trade_Route_Settings.Resource);
+                } else {
+                    building.Consumes.Add(building.Trade_Route_Settings.Resource);
+                }
+            }
+            if (!building.Is_Operational) {
+                return;
+            }
+
+            bool has_functional_dock = false;
+            Building dock = City.Instance.Buildings.FirstOrDefault(x => x.Id == int.Parse(building.Data["dock_id"]));
+            if(dock != null) {
+                foreach(Tile t in Map.Instance.Get_Tiles_Around(dock)) {
+                    if(t.Building == null && t.Is_Water && t.Has_Ship_Access) {
+                        has_functional_dock = true;
+                        break;
+                    }
+                }
+            }
+            if (!has_functional_dock) {
+                building.Show_Alert("alert_general");
+                return;
+            }
+
+            if (building.Trade_Route_Settings.Set && trade) {
+                building.Trade_Route_Settings.Validate();
+                if (building.Trade_Route_Settings.Set) {
+                    float amount = building.Trade_Route_Settings.Effective_Amount;//TODO:? * (building.Trade_Route_Settings.Caravan_Cooldown / TradeRouteSettings.CARAVAN_INTERVAL);
+                    if (building.Trade_Route_Settings.Action == TradeRouteSettings.TradeAction.Buy) {
+                        if (!building.Output_Storage.ContainsKey(building.Trade_Route_Settings.Resource)) {
+                            building.Output_Storage.Add(building.Trade_Route_Settings.Resource, 0.0f);
+                        }
+                        amount = Math.Min(amount, Building.INPUT_OUTPUT_STORAGE_LIMIT - building.Output_Storage[building.Trade_Route_Settings.Resource]);
+                        building.Output_Storage[building.Trade_Route_Settings.Resource] += amount;
+                        City.Instance.Take_Cash(amount * building.Trade_Route_Settings.Partner.Get_Export_Price(building.Trade_Route_Settings.Resource));
+                        float opinion_boost = (amount * building.Trade_Route_Settings.Resource.Value) / 10000.0f;
+                        if (building.Trade_Route_Settings.Partner.Opinion > 0.5f && building.Trade_Route_Settings.Partner.Opinion <= 0.75f) {
+                            opinion_boost *= 0.5f;
+                        } else if (building.Trade_Route_Settings.Partner.Opinion > 0.75f) {
+                            opinion_boost *= 0.1f;
+                        }
+                        building.Trade_Route_Settings.Partner.Improve_Opinion(opinion_boost);
+                    } else {
+                        if (!building.Input_Storage.ContainsKey(building.Trade_Route_Settings.Resource)) {
+                            building.Input_Storage.Add(building.Trade_Route_Settings.Resource, 0.0f);
+                        }
+                        amount = Math.Min(amount, building.Input_Storage[building.Trade_Route_Settings.Resource]);
+                        building.Input_Storage[building.Trade_Route_Settings.Resource] -= amount;
+                        City.Instance.Add_Cash(amount * building.Trade_Route_Settings.Partner.Get_Import_Price(building.Trade_Route_Settings.Resource));
+                        float opinion_boost = (amount * building.Trade_Route_Settings.Resource.Value) / 10000.0f;
+                        if (building.Trade_Route_Settings.Partner.Opinion > 0.5f && building.Trade_Route_Settings.Partner.Opinion <= 0.75f) {
+                            opinion_boost *= 0.5f;
+                        } else if (building.Trade_Route_Settings.Partner.Opinion > 0.75f) {
+                            opinion_boost *= 0.1f;
+                        }
+                        building.Trade_Route_Settings.Partner.Improve_Opinion(opinion_boost);
+                    }
+                }
+            }
+        },
+        delegate(Building building) {
+            Building dock = City.Instance.Buildings.FirstOrDefault(x => x.Id == int.Parse(building.Data["dock_id"]));
+            if(dock != null) {
+                dock.Deconstruct(true, false);
+            }
+        }, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
+        prototypes.First(x => x.Internal_Name == "trade_harbor").Tags.Add(Building.Tag.Water_Trade);
+        prototypes.First(x => x.Internal_Name == "trade_harbor").On_Build_Check = delegate (Building building, Tile tile, out string message) {
+            Tile center_tile = Map.Instance.Get_Tile_At(tile.Coordinates.Shift(new Coordinates(1, 1)));
+            foreach (Coordinates.Direction direction in Coordinates.Directly_Adjacent_Directions) {
+                Coordinates c = new Coordinates(center_tile.Coordinates);
+                Coordinates.Direction opposite = Helper.Rotate(direction, 4);
+                c.Shift(direction);
+                c.Shift(direction);
+                List<Tile> waterfront = new List<Tile>() { Map.Instance.Get_Tile_At(c) };
+                foreach (Coordinates.Direction shift_direction in Coordinates.Directly_Adjacent_Directions) {
+                    if(shift_direction == direction || shift_direction == opposite) {
+                        continue;
+                    }
+                    waterfront.Add(Map.Instance.Get_Tile_At(c, shift_direction));
+                }
+                bool valid = true;
+                foreach(Tile t in waterfront) {
+                    if(!t.Is_Water || !t.Has_Ship_Access || t.Building != null) {
+                        valid = false;
+                        break;
+                    }
+                }
+                if (valid) {
+                    message = null;
+                    return true;
+                }
+            }
+            message = "Requires straight waterfront with space for dock and ship access.";
+            return false;
+        };
+
+        prototypes.Add(new Building("Dock", "dock", Building.UI_Category.Unbuildable, "dock_n", Building.BuildingSize.s1x1, 10, new Dictionary<Resource, int>() {
+            { Resource.Lumber, 10 }, { Resource.Wood, 10 }, { Resource.Stone, 1 }
+        }, 50, new List<Resource>(), 0, 0.0f, 0, new Dictionary<Resource, float>(), 0.0f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 0, null, null, null, null,
+        new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
+        prototypes.First(x => x.Internal_Name == "dock").Sprites.Add(new SpriteData("dock_e"));
+        prototypes.First(x => x.Internal_Name == "dock").Sprites.Add(new SpriteData("dock_s"));
+        prototypes.First(x => x.Internal_Name == "dock").Sprites.Add(new SpriteData("dock_w"));
+        prototypes.First(x => x.Internal_Name == "dock").Tags.Add(Building.Tag.Does_Not_Block_Wind);
+        prototypes.First(x => x.Internal_Name == "dock").Tags.Add(Building.Tag.Does_Not_Disrupt_Hunting);
+        prototypes.First(x => x.Internal_Name == "dock").Tags.Add(Building.Tag.No_Notification_On_Build);
+        prototypes.First(x => x.Internal_Name == "dock").Tags.Add(Building.Tag.Undeletable);
 
         prototypes.Add(new Building("Embassy", "embassy", Building.UI_Category.Admin, "embassy", Building.BuildingSize.s2x2, 225, new Dictionary<Resource, int>() {
             { Resource.Lumber, 75 }, { Resource.Bricks, 160 }, { Resource.Marble, 75 }, { Resource.Tools, 20 }

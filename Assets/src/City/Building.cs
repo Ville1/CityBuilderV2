@@ -78,7 +78,6 @@ public class Building {
     public bool Requires_Workers { get { return Max_Workers_Total != 0; } }
     public float Range { get; private set; }
     public int Road_Range { get; private set; }
-    public Dictionary<string, object> Data { get; private set; }
     public OnBuiltDelegate On_Built { get; private set; }
     public OnUpdateDelegate On_Update { get; private set; }
     public OnDeconstructDelegate On_Deconstruct { get; private set; }
@@ -95,6 +94,7 @@ public class Building {
     public float Appeal_Range { get; private set; }
     public List<Entity> Entities_Spawned { get; private set; }
     public TradeRouteSettings Trade_Route_Settings { get; set; }
+    public Dictionary<string, string> Data { get; private set; }
 
     public GameObject GameObject { get; private set; }
     public SpriteRenderer Renderer { get { return GameObject != null ? GameObject.GetComponent<SpriteRenderer>() : null; } }
@@ -185,7 +185,6 @@ public class Building {
         Is_Connected = !Is_Preview && Is_Town_Hall;
         Range = prototype.Range;
         Road_Range = prototype.Road_Range;
-        Data = new Dictionary<string, object>();
         On_Built = prototype.On_Built;
         On_Update = prototype.On_Update;
         On_Deconstruct = prototype.On_Deconstruct;
@@ -215,6 +214,7 @@ public class Building {
         if(Tags.Contains(Tag.Land_Trade) || Tags.Contains(Tag.Water_Trade)) {
             Trade_Route_Settings = new TradeRouteSettings(this);
         }
+        Data = new Dictionary<string, string>();
 
         animation_index = 0;
         animation_cooldown = Sprite.Animation_Frame_Time;
@@ -297,6 +297,7 @@ public class Building {
         Special_Settings = new List<SpecialSetting>();
         Appeal = appeal;
         Appeal_Range = appeal_range;
+        Data = new Dictionary<string, string>();
     }
 
     public Building(BuildingSaveData data) : this(BuildingPrototypes.Instance.Get(data.Internal_Name), Map.Instance.Get_Tile_At(data.X, data.Y),
@@ -372,6 +373,11 @@ public class Building {
             } else {
                 Trade_Route_Settings = new TradeRouteSettings(this, data.Trade_Route_Settings);
             }
+        }
+
+        Data = new Dictionary<string, string>();
+        foreach(BuildingDictionaryData d in data.Data) {
+            Data.Add(d.Key, d.Value);
         }
 
         if(Special_Settings.Count != 0 && On_Update != null) {
@@ -983,7 +989,8 @@ public class Building {
             Settings = new List<SpecialSettingSaveData>(),
             Services = new List<ServiceSaveData>(),
             Storage_Settings = new List<StorageSettingSaveData>(),
-            Selected_Sprite = Selected_Sprite
+            Selected_Sprite = Selected_Sprite,
+            Data = new List<BuildingDictionaryData>()
         };
         foreach(KeyValuePair<Resource, float> pair in Storage) {
             data.Storage.Add(new ResourceSaveData() { Resource = pair.Key.Id, Amount = pair.Value });
@@ -996,6 +1003,9 @@ public class Building {
         }
         foreach (KeyValuePair<Resident, int> pair in Worker_Settings) {
             data.Worker_Allocation.Add(new ResidentSaveData() { Resident = (int)pair.Key, Count = pair.Value });
+        }
+        foreach(KeyValuePair<string, string> pair in Data) {
+            data.Data.Add(new BuildingDictionaryData() { Key = pair.Key, Value = pair.Value });
         }
         if(this is Residence) {
             foreach (KeyValuePair<Resident, int> pair in (this as Residence).Current_Residents) {
