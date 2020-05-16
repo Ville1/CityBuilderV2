@@ -75,8 +75,7 @@ public class Tile
         Minerals = new Dictionary<Mineral, float>();
         Mineral_Spawns = new List<Mineral>();
         Entities = new List<Entity>();
-
-        Has_Ship_Access = true;
+        Has_Ship_Access = false;
 
         Change_To(prototype);
     }

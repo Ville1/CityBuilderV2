@@ -238,10 +238,7 @@ public class Building {
         alert_change_cooldown = ALERT_CHANGE_INTERVAL;
 
         if (Is_Built && !Is_Preview) {
-            Update_Appeal();
-            if(On_Built != null) {
-                On_Built(this);
-            }
+            Build_Completed();
         }
         Update_Sprite();
     }
@@ -409,10 +406,7 @@ public class Building {
         Construction_Progress = Construction_Time;
         //TODO: Duplicate code
         Update_Connectivity();
-        Update_Appeal();
-        if (On_Built != null) {
-            On_Built(this);
-        }
+        Build_Completed();
         if (Is_Road) {
             foreach (Building b in Map.Instance.Get_Buildings_Around(this)) {
                 if (b.Is_Connected && b.Is_Built && !b.Is_Deconstructing) {
@@ -695,11 +689,8 @@ public class Building {
                     building.Construction_Progress = Mathf.Clamp(building.Construction_Progress + (range_multiplier * construction_progress), 0.0f, building.Construction_Time);
                     building.Update_Sprite();
                     if (building.Is_Built) {
-                        building.Update_Appeal();
                         building.Update_Connectivity();
-                        if (building.On_Built != null) {
-                            building.On_Built(building);
-                        }
+                        building.Build_Completed();
                         if (building.Is_Road) {
                             foreach (Building b in Map.Instance.Get_Buildings_Around(building)) {
                                 if (b.Is_Connected && b.Is_Built && !b.Is_Deconstructing) {
@@ -935,6 +926,12 @@ public class Building {
         }
         if(On_Deconstruct != null) {
             On_Deconstruct(this);
+        }
+        foreach (Tile t in Tiles) {
+            if (t.Is_Water) {
+                Map.Instance.Update_Ship_Access();
+                break;
+            }
         }
         Dictionary<Resource, float> added = new Dictionary<Resource, float>();
         foreach(KeyValuePair<Resource, float> pair in Storage) {
@@ -1412,6 +1409,20 @@ public class Building {
             }
         }
         return dictionary;
+    }
+
+    private void Build_Completed()
+    {
+        Update_Appeal();
+        if (On_Built != null) {
+            On_Built(this);
+        }
+        foreach (Tile t in Tiles) {
+            if (t.Is_Water) {
+                Map.Instance.Update_Ship_Access();
+                break;
+            }
+        }
     }
 
     private void Update_Sprite(bool ignore_adjacent = false)

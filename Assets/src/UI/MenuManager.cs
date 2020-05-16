@@ -13,6 +13,7 @@ public class MenuManager : MonoBehaviour {
     public Button Appeal_Button;
     public Button Minerals_Button;
     public Button Water_Flow_Button;
+    public Button Ship_Access_Button;
     public Button Alerts_Button;
 
     /// <summary>
@@ -40,6 +41,7 @@ public class MenuManager : MonoBehaviour {
         Appeal_Button.interactable = Map.Instance != null && Map.Instance.View != Map.MapView.Appeal;
         Minerals_Button.interactable = Map.Instance != null && Map.Instance.View != Map.MapView.Minerals;
         Water_Flow_Button.interactable = Map.Instance != null && Map.Instance.View != Map.MapView.Water_Flow;
+        Ship_Access_Button.interactable = Map.Instance != null && Map.Instance.View != Map.MapView.Ship_Access;
         Alerts_Button.GetComponentInChildren<Text>().text = string.Format("Alerts ({0})", Map.Instance != null && !Map.Instance.Hide_Alerts ? "y" : "n");
     }
 
@@ -81,6 +83,11 @@ public class MenuManager : MonoBehaviour {
     public void Water_Flow_On_Click()
     {
         Map.Instance.View = Map.MapView.Water_Flow;
+    }
+
+    public void Ship_Access_On_Click()
+    {
+        Map.Instance.View = Map.MapView.Ship_Access;
     }
 
     public void Alerts_On_Click()

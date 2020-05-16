@@ -8,7 +8,7 @@ public enum Mineral { Iron, Coal, Salt, Clay, Marble, Copper, Tin, Silver, Gold,
 public class Map : MonoBehaviour
 {
     public enum MapState { Inactive, Normal, Generating, Loading, Saving }
-    public enum MapView { None, Appeal, Minerals, Water_Flow }
+    public enum MapView { None, Appeal, Minerals, Water_Flow, Ship_Access }
 
     public static readonly float Z_LEVEL = 0.0f;
     public static readonly Dictionary<Mineral, int> MINERAL_BASE_SPAWN_CHANCE = new Dictionary<Mineral, int>() {
@@ -73,6 +73,7 @@ public class Map : MonoBehaviour
     public MapState State { get; private set; }
     public List<Entity> Entities { get; private set; }
     public bool Hide_Alerts { get; set; }
+    public List<Tile> Ship_Spawns { get; private set; }
 
     private float forest_count_setting;
     private float forest_size_setting;
@@ -174,6 +175,14 @@ public class Map : MonoBehaviour
                                 tiles[x][y].Show_Text("None");
                             }
                         }
+                    } else if (View == MapView.Ship_Access && tiles[x][y].Is_Water && tiles[x][y].Building == null) {
+                        if (Ship_Spawns.Contains(tiles[x][y])) {
+                            tiles[x][y].Show_Text("Spawn");
+                        } else if (tiles[x][y].Has_Ship_Access) {
+                            tiles[x][y].Show_Text("Yes");
+                        } else {
+                            tiles[x][y].Show_Text("No");
+                        }
                     }
                 }
             }
@@ -218,6 +227,7 @@ public class Map : MonoBehaviour
         rivers_generated = false;
         minerals_spawned = new List<Mineral>();
         mineral_safety_spawn = false;
+        Ship_Spawns = new List<Tile>();
 
         tiles = new List<List<Tile>>();
         for(int x = 0; x < width; x++) {
@@ -270,6 +280,7 @@ public class Map : MonoBehaviour
             for (int i = 0; i < river_count; i++) {
                 Coordinates.Direction starting_side = RNG.Instance.Item(Coordinates.Directly_Adjacent_Directions);
                 Tile starting_tile = null;
+                bool ship_spawn_created = false;
                 int length = Mathf.RoundToInt((RNG.Instance.Next_F() + 0.5f) * Mathf.Sqrt(Mathf.Pow(Width, 2) + Mathf.Pow(Height, 2)));
                 //TODO:? If river does not end at the adge of the map it will be flowing in the wrong direction. Unless there is suppoused to be a cave instead of a spring
                 switch (starting_side) {
@@ -294,6 +305,11 @@ public class Map : MonoBehaviour
                     next_tile.Change_To(TilePrototypes.Instance.Get("water_nesw"));
                     next_tile.Water_Flow = direction;
                     last_direction = direction;
+                    if (Is_Edge_Tile(next_tile) && !ship_spawn_created) {
+                        Ship_Spawns.Add(next_tile);
+                        next_tile.Has_Ship_Access = true;
+                        ship_spawn_created = true;
+                    }
                     if (RNG.Instance.Next(0, 100) <= 60) {
                         direction = Helper.Rotate(direction, -1 + RNG.Instance.Next(0, 2));
                     }
@@ -626,6 +642,7 @@ public class Map : MonoBehaviour
 
     public void Finish_Generation()
     {
+        Update_Ship_Access();
         fine_tuned_tiles.Clear();
         lake_spawns.Clear();
         Update_Appeal();
@@ -832,6 +849,13 @@ public class Map : MonoBehaviour
                 tiles[x][y].Water_Flow = save_data.Water_Flow != -1 ? (Coordinates.Direction)save_data.Water_Flow : (Coordinates.Direction?)null;
             }
         }
+
+        Ship_Spawns = new List<Tile>();
+        foreach(CoordinateSaveData spawn in SaveManager.Instance.Data.Map.Ship_Spawns) {
+            Ship_Spawns.Add(tiles[spawn.X][spawn.Y]);
+        }
+        Update_Ship_Access();
+
         Update_Appeal();
         TimeManager.Instance.Set_Time(SaveManager.Instance.Data.Days);
         SaveManager.Instance.Finish_Loading();
@@ -924,6 +948,17 @@ public class Map : MonoBehaviour
                                         icon.transform.position.y,
                                         icon.transform.position.z
                                     );
+                                }
+                            }
+                            break;
+                        case MapView.Ship_Access:
+                            if (tiles[x][y].Is_Water && tiles[x][y].Building == null) {
+                                if (Ship_Spawns.Contains(tiles[x][y])) {
+                                    tiles[x][y].Show_Text("Spawn");
+                                } else if (tiles[x][y].Has_Ship_Access) {
+                                    tiles[x][y].Show_Text("Yes");
+                                } else {
+                                    tiles[x][y].Show_Text("No");
                                 }
                             }
                             break;
@@ -1184,6 +1219,29 @@ public class Map : MonoBehaviour
             line.Add(Get_Tile_At(c));
         }
         return line;
+    }
+
+    public void Update_Ship_Access()
+    {
+        for(int x = 0; x < Width; x++) {
+            for (int y = 0; y < Height; y++) {
+                tiles[x][y].Has_Ship_Access = false;
+            }
+        }
+        foreach(Tile spawn in Ship_Spawns) {
+            Update_Ship_Access_Recursive(spawn);
+        }
+    }
+
+    private void Update_Ship_Access_Recursive(Tile tile)
+    {
+        if(!tile.Is_Water || (tile.Building != null && !tile.Building.Is_Deconstructing) || tile.Has_Ship_Access) {
+            return;
+        }
+        tile.Has_Ship_Access = true;
+        foreach(Tile t in Get_Adjanced_Tiles(tile).Select(x => x.Value).ToArray()) {
+            Update_Ship_Access_Recursive(t);
+        }
     }
 
     /// <summary>

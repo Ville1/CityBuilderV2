@@ -110,9 +110,9 @@ public class ForeignCity {
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Forestry, Resource.ResourceTag.Foraging },
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Coastal },
                     new List<Resource.ResourceTag>() { });
-                trade_route_chances[TradeRouteType.Land] = 5;
+                trade_route_chances[TradeRouteType.Land] = 0;
                 trade_route_chances[TradeRouteType.Water] = 90;
-                trade_route_chances[TradeRouteType.Both] = 5;
+                trade_route_chances[TradeRouteType.Both] = 10;
                 break;
             case CityType.Forest_Village:
                 Initialize_Exports_And_Imports(

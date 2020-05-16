@@ -37,6 +37,10 @@ public class SaveManager
             data.Map.Tiles = new List<TileSaveData>();
             data.Map.Width = Map.Instance.Width;
             data.Map.Height = Map.Instance.Height;
+            data.Map.Ship_Spawns = new List<CoordinateSaveData>();
+            foreach(Tile spawn in Map.Instance.Ship_Spawns) {
+                data.Map.Ship_Spawns.Add(new CoordinateSaveData() { X = spawn.Coordinates.X, Y = spawn.Coordinates.Y });
+            }
             return true;
         } catch (Exception exception) {
             CustomLogger.Instance.Error(exception.ToString());
