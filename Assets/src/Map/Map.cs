@@ -642,12 +642,12 @@ public class Map : MonoBehaviour
 
     public void Finish_Generation()
     {
-        Update_Ship_Access();
         fine_tuned_tiles.Clear();
         lake_spawns.Clear();
         Update_Appeal();
         Contacts.Instance.Generate_New();
         State = MapState.Normal;
+        Update_Ship_Access();
         ProgressBarManager.Instance.Active = false;
         City.Instance.Start_New("PLACEHOLDER");
         Active = true;
@@ -854,12 +854,12 @@ public class Map : MonoBehaviour
         foreach(CoordinateSaveData spawn in SaveManager.Instance.Data.Map.Ship_Spawns) {
             Ship_Spawns.Add(tiles[spawn.X][spawn.Y]);
         }
-        Update_Ship_Access();
 
         Update_Appeal();
         TimeManager.Instance.Set_Time(SaveManager.Instance.Data.Days);
         SaveManager.Instance.Finish_Loading();
         State = MapState.Normal;
+        Update_Ship_Access();
         View = MapView.None;
         ProgressBarManager.Instance.Active = false;
         Active = true;
@@ -1223,6 +1223,9 @@ public class Map : MonoBehaviour
 
     public void Update_Ship_Access()
     {
+        if(State != MapState.Normal) {
+            return;
+        }
         for(int x = 0; x < Width; x++) {
             for (int y = 0; y < Height; y++) {
                 tiles[x][y].Has_Ship_Access = false;

@@ -8,6 +8,7 @@ public class Building {
 
     public delegate void OnUpdateDelegate(Building building, float delta_time);
     public delegate void OnBuiltDelegate(Building building);
+    public delegate void OnBuildingStartDelegate(Building building);
     public delegate void OnDeconstructDelegate(Building building);
     public delegate List<Tile> OnHighlightDelegate(Building building);
     public delegate bool OnBuildCheckDelegate(Building building, Tile tile, out string message);
@@ -79,6 +80,7 @@ public class Building {
     public float Range { get; private set; }
     public int Road_Range { get; private set; }
     public OnBuiltDelegate On_Built { get; private set; }
+    public OnBuiltDelegate On_Building_Start { get; set; }
     public OnUpdateDelegate On_Update { get; private set; }
     public OnDeconstructDelegate On_Deconstruct { get; private set; }
     public OnHighlightDelegate On_Highlight { get; private set; }
@@ -188,6 +190,7 @@ public class Building {
         Range = prototype.Range;
         Road_Range = prototype.Road_Range;
         On_Built = prototype.On_Built;
+        On_Building_Start = prototype.On_Building_Start;
         On_Update = prototype.On_Update;
         On_Deconstruct = prototype.On_Deconstruct;
         On_Highlight = prototype.On_Highlight;
@@ -244,6 +247,9 @@ public class Building {
         if (Is_Built && !Is_Preview) {
             Build_Completed();
         }
+        if(On_Building_Start != null && !Is_Preview) {
+            On_Building_Start(this);
+        }
         Update_Sprite();
     }
 
@@ -287,6 +293,7 @@ public class Building {
         Requires_Connection = p_requires_connection;
         Range = range;
         Road_Range = road_range;
+        On_Building_Start = null;
         On_Built = on_built;
         On_Update = on_update;
         On_Deconstruct = on_deconstruct;
@@ -1188,6 +1195,24 @@ public class Building {
             }
             Input_Storage[resource] = 0.0f;
         }
+    }
+
+    public bool Has_Functional_Dock()
+    {
+        if (!Data.ContainsKey("dock_id")) {
+            return false;
+        }
+        bool has_functional_dock = false;
+        Building dock = City.Instance.Buildings.FirstOrDefault(x => x.Id == int.Parse(Data["dock_id"]));
+        if (dock != null) {
+            foreach (Tile t in Map.Instance.Get_Tiles_Around(dock)) {
+                if (t.Building == null && t.Is_Water && t.Has_Ship_Access) {
+                    has_functional_dock = true;
+                    break;
+                }
+            }
+        }
+        return has_functional_dock;
     }
 
     public void Delete()

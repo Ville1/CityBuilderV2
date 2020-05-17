@@ -136,7 +136,7 @@ public class ForeignCity {
                     new List<Resource.ResourceTag>() { });
                 trade_route_chances[TradeRouteType.Land] = 45;
                 trade_route_chances[TradeRouteType.Water] = 30;
-                trade_route_chances[TradeRouteType.Both] = 35;
+                trade_route_chances[TradeRouteType.Both] = 25;
                 break;
             case CityType.Mining_Town:
                 Initialize_Exports_And_Imports(

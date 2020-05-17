@@ -31,6 +31,93 @@ public class BuildingPrototypes {
         };
     }
 
+    private void On_Harbor_Built(Building building) {
+        Dictionary<Coordinates.Direction, int> docks = new Dictionary<Coordinates.Direction, int>() {
+            { Coordinates.Direction.North, 2 },
+            { Coordinates.Direction.East, 3 },
+            { Coordinates.Direction.South, 0 },
+            { Coordinates.Direction.West, 1 }
+        };
+        Tile center_tile = Map.Instance.Get_Tile_At(building.Tile.Coordinates.Shift(new Coordinates(1, 1)));
+        foreach (KeyValuePair<Coordinates.Direction, int> dock_data in docks) {
+            Coordinates c = new Coordinates(center_tile.Coordinates);
+            c.Shift(dock_data.Key);
+            c.Shift(dock_data.Key);
+            Tile tile = Map.Instance.Get_Tile_At(c);
+            if (tile != null && tile.Is_Water && tile.Has_Ship_Access && tile.Building == null) {
+                Building dock = new Building(Instance.Get("dock"), tile, new List<Tile>() { tile }, false);
+                dock.Selected_Sprite = dock_data.Value;
+                City.Instance.Add_Building(dock);
+                building.Data.Add("dock_id", dock.Id.ToString());
+                break;
+            }
+        }
+    }
+
+    //TODO: Refund ship is this harbor has one?
+    private void On_Harbor_Deconstruct(Building building) {
+        Building dock = City.Instance.Buildings.FirstOrDefault(x => x.Id == int.Parse(building.Data["dock_id"]));
+        if (dock != null) {
+            dock.Deconstruct(true, false);
+        }
+    }
+
+    private bool On_Harbor_Build_Check(Building building, Tile tile, out string message)
+    {
+        Tile center_tile = Map.Instance.Get_Tile_At(tile.Coordinates.Shift(new Coordinates(1, 1)));
+        foreach (Coordinates.Direction direction in Coordinates.Directly_Adjacent_Directions) {
+            Coordinates c = new Coordinates(center_tile.Coordinates);
+            Coordinates.Direction opposite = Helper.Rotate(direction, 4);
+            c.Shift(direction);
+            c.Shift(direction);
+            List<Tile> waterfront = new List<Tile>() { Map.Instance.Get_Tile_At(c) };
+            foreach (Coordinates.Direction shift_direction in Coordinates.Directly_Adjacent_Directions) {
+                if (shift_direction == direction || shift_direction == opposite) {
+                    continue;
+                }
+                waterfront.Add(Map.Instance.Get_Tile_At(c, shift_direction));
+            }
+            bool valid = true;
+            foreach (Tile t in waterfront) {
+                if (!t.Is_Water || !t.Has_Ship_Access || t.Building != null) {
+                    valid = false;
+                    break;
+                }
+            }
+            if (valid) {
+                message = null;
+                return true;
+            }
+        }
+        message = "Requires straight waterfront with space for dock and ship access.";
+        return false;
+    }
+
+    private bool On_Harbor_Ship_Build_Check(Building building, Tile tile, out string message)
+    {
+        if(!On_Harbor_Build_Check(building, tile, out message)) {
+            return false;
+        }
+        foreach(Building b in City.Instance.Buildings) {
+            if(b.Internal_Name == "shipyard" && b.Data.ContainsKey("ship_count") && b.Data.ContainsKey("has_ship_access") && int.Parse(b.Data["ship_count"]) > 0) {
+                message = null;
+                return true;
+            }
+        }
+        message = "Ship required";
+        return false;
+    }
+
+    private void On_Harbor_Ship_Building_Start(Building building)
+    {
+        foreach (Building b in City.Instance.Buildings) {
+            if (b.Internal_Name == "shipyard" && b.Data.ContainsKey("ship_count") && b.Data.ContainsKey("has_ship_access") && int.Parse(b.Data["ship_count"]) > 0) {
+                b.Data["ship_count"] = (int.Parse(b.Data["ship_count"]) - 1).ToString();
+                return;
+            }
+        }
+    }
+
     private BuildingPrototypes()
     {
         Building.OnDeconstructDelegate unreserve_tiles = delegate (Building building) {
@@ -246,7 +333,7 @@ public class BuildingPrototypes {
         prototypes.Add(new Building("Cellar", "cellar", Building.UI_Category.Infrastructure, "cellar", Building.BuildingSize.s1x1, 100, new Dictionary<Resource, int>() {
             { Resource.Wood, 15 }, { Resource.Stone, 50 }, { Resource.Tools, 10 }, { Resource.Lumber, 50 }
         }, 100, new List<Resource>() { Resource.Roots, Resource.Berries, Resource.Mushrooms, Resource.Herbs, Resource.Game, Resource.Potatoes, Resource.Bread, Resource.Ale, Resource.Mutton, Resource.Corn, Resource.Fish, Resource.Bananas, Resource.Oranges, Resource.Beer, Resource.Rum,
-            Resource.Wine, Resource.Pretzels, Resource.Cake, Resource.Salted_Fish, Resource.Salted_Meat, Resource.Grapes },
+            Resource.Wine, Resource.Pretzels, Resource.Cake, Resource.Salted_Fish, Resource.Salted_Meat, Resource.Grapes, Resource.Lobsters },
         1000, 50.0f, 110, new Dictionary<Resource, float>() { { Resource.Wood, 0.05f } }, 0.5f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 5 } }, 5, false, false, true, 0.0f, 14, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "cellar").Tags.Add(Building.Tag.Does_Not_Block_Wind);
 
@@ -558,7 +645,7 @@ public class BuildingPrototypes {
                 City.Instance.Add_Cash(income);
             }//                                  v unnecessary list v special settings adds and removes stuff from consumption list MIGHT ACTUALLY BE NECESSARY, DONT REMOVE
         }, null, null, new List<Resource>() { Resource.Berries, Resource.Roots, Resource.Mushrooms, Resource.Herbs, Resource.Firewood, Resource.Charcoal, Resource.Coal, Resource.Game, Resource.Bread, Resource.Potatoes, Resource.Salt, Resource.Mutton, Resource.Corn, Resource.Fish, Resource.Bananas,
-            Resource.Oranges, Resource.Grapes, Resource.Pretzels, Resource.Cake, Resource.Simple_Clothes, Resource.Leather_Clothes }, new List<Resource>(), 0.05f, 5.0f));
+            Resource.Oranges, Resource.Grapes, Resource.Pretzels, Resource.Cake, Resource.Simple_Clothes, Resource.Leather_Clothes, Resource.Salted_Fish, Resource.Salted_Meat, Resource.Lobsters }, new List<Resource>(), 0.05f, 5.0f));
         Resource prefered_fuel = Resource.All.Where(x => x.Is_Fuel).OrderByDescending(x => x.Value / x.Fuel_Value).FirstOrDefault();
         foreach(Resource resource in Resource.All) {
             if (resource.Is_Food) {
@@ -1285,7 +1372,7 @@ public class BuildingPrototypes {
                 tavern.Per_Day_Cash_Delta += (income / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f);
                 City.Instance.Add_Cash(income);
             }
-        }, null, null, new List<Resource>() { Resource.Berries, Resource.Roots, Resource.Mushrooms, Resource.Firewood, Resource.Charcoal, Resource.Coal, Resource.Game, Resource.Bread, Resource.Potatoes, Resource.Ale, Resource.Mutton, Resource.Corn, Resource.Fish, Resource.Bananas, Resource.Oranges, Resource.Grapes, Resource.Beer, Resource.Rum, Resource.Wine }, new List<Resource>(), 0.05f, 3.0f));
+        }, null, null, new List<Resource>() { Resource.Berries, Resource.Roots, Resource.Mushrooms, Resource.Firewood, Resource.Charcoal, Resource.Coal, Resource.Game, Resource.Bread, Resource.Potatoes, Resource.Ale, Resource.Mutton, Resource.Corn, Resource.Fish, Resource.Bananas, Resource.Oranges, Resource.Grapes, Resource.Beer, Resource.Rum, Resource.Wine, Resource.Salted_Fish, Resource.Salted_Meat, Resource.Lobsters }, new List<Resource>(), 0.05f, 3.0f));
         prototypes.First(x => x.Internal_Name == "tavern").Special_Settings.Add(new SpecialSetting("fuel", "Fuel", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() { Resource.Firewood.UI_Name + " (0.5/day)", Resource.Charcoal.UI_Name +  " (0.25/day)", Resource.Coal.UI_Name + " (0.25/day)" }, 0));
         foreach (Resource resource in Resource.All.OrderByDescending(x => x.Tags.Contains(Resource.ResourceTag.Alcohol) ? 1.0f : 0.0f).ToArray()) {
             if (resource.Is_Food || resource.Tags.Contains(Resource.ResourceTag.Alcohol)) {
@@ -1916,30 +2003,9 @@ public class BuildingPrototypes {
         prototypes.First(x => x.Internal_Name == "trading_post").Tags.Add(Building.Tag.Land_Trade);
 
         prototypes.Add(new Building("Trade Harbor", "trade_harbor", Building.UI_Category.Admin, "trade_harbor", Building.BuildingSize.s3x3, 175, new Dictionary<Resource, int>() {
-             { Resource.Lumber, 225 }, { Resource.Stone, 95 }, { Resource.Wood, 20 }, { Resource.Tools, 15 }, { Resource.Mechanisms, 5 }
-        }, 475, new List<Resource>(), 0, 0.0f, 345, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f }, { Resource.Stone, 0.01f } }, 3.00f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Citizen, 10 }, { Building.Resident.Noble, 5 } }, 10,
-        true, false, true, 0.0f, 0, delegate(Building building) {
-            Dictionary<Coordinates.Direction, int> docks = new Dictionary<Coordinates.Direction, int>() {
-                { Coordinates.Direction.North, 2 },
-                { Coordinates.Direction.East, 3 },
-                { Coordinates.Direction.South, 0 },
-                { Coordinates.Direction.West, 1 }
-            };
-            Tile center_tile = Map.Instance.Get_Tile_At(building.Tile.Coordinates.Shift(new Coordinates(1, 1)));
-            foreach (KeyValuePair<Coordinates.Direction, int> dock_data in docks) {
-                Coordinates c = new Coordinates(center_tile.Coordinates);
-                c.Shift(dock_data.Key);
-                c.Shift(dock_data.Key);
-                Tile tile = Map.Instance.Get_Tile_At(c);
-                if(tile != null && tile.Is_Water && tile.Has_Ship_Access && tile.Building == null) {
-                    Building dock = new Building(Instance.Get("dock"), tile, new List<Tile>() { tile }, false);
-                    dock.Selected_Sprite = dock_data.Value;
-                    City.Instance.Buildings.Add(dock);
-                    building.Data.Add("dock_id", dock.Id.ToString());
-                    break;
-                }
-            }
-        },
+             { Resource.Lumber, 225 }, { Resource.Stone, 95 }, { Resource.Wood, 40 }, { Resource.Tools, 15 }, { Resource.Mechanisms, 5 }
+        }, 475, new List<Resource>(), 0, 0.0f, 365, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f }, { Resource.Stone, 0.01f } }, 3.00f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Citizen, 10 }, { Building.Resident.Noble, 5 } }, 10,
+        true, false, true, 0.0f, 0, On_Harbor_Built,
         delegate (Building building, float delta_time) {
             building.Trade_Route_Settings.Caravan_Cooldown -= TimeManager.Instance.Seconds_To_Days(delta_time, 1.0f);
             bool trade = false;
@@ -1959,18 +2025,8 @@ public class BuildingPrototypes {
             if (!building.Is_Operational) {
                 return;
             }
-
-            bool has_functional_dock = false;
-            Building dock = City.Instance.Buildings.FirstOrDefault(x => x.Id == int.Parse(building.Data["dock_id"]));
-            if(dock != null) {
-                foreach(Tile t in Map.Instance.Get_Tiles_Around(dock)) {
-                    if(t.Building == null && t.Is_Water && t.Has_Ship_Access) {
-                        has_functional_dock = true;
-                        break;
-                    }
-                }
-            }
-            if (!has_functional_dock) {
+            
+            if (!building.Has_Functional_Dock()) {
                 building.Show_Alert("alert_general");
                 return;
             }
@@ -2010,43 +2066,27 @@ public class BuildingPrototypes {
                     }
                 }
             }
-        },
-        delegate(Building building) {
-            Building dock = City.Instance.Buildings.FirstOrDefault(x => x.Id == int.Parse(building.Data["dock_id"]));
-            if(dock != null) {
-                dock.Deconstruct(true, false);
-            }
-        }, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
+        }, On_Harbor_Deconstruct, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "trade_harbor").Tags.Add(Building.Tag.Water_Trade);
-        prototypes.First(x => x.Internal_Name == "trade_harbor").On_Build_Check = delegate (Building building, Tile tile, out string message) {
-            Tile center_tile = Map.Instance.Get_Tile_At(tile.Coordinates.Shift(new Coordinates(1, 1)));
-            foreach (Coordinates.Direction direction in Coordinates.Directly_Adjacent_Directions) {
-                Coordinates c = new Coordinates(center_tile.Coordinates);
-                Coordinates.Direction opposite = Helper.Rotate(direction, 4);
-                c.Shift(direction);
-                c.Shift(direction);
-                List<Tile> waterfront = new List<Tile>() { Map.Instance.Get_Tile_At(c) };
-                foreach (Coordinates.Direction shift_direction in Coordinates.Directly_Adjacent_Directions) {
-                    if(shift_direction == direction || shift_direction == opposite) {
-                        continue;
-                    }
-                    waterfront.Add(Map.Instance.Get_Tile_At(c, shift_direction));
-                }
-                bool valid = true;
-                foreach(Tile t in waterfront) {
-                    if(!t.Is_Water || !t.Has_Ship_Access || t.Building != null) {
-                        valid = false;
-                        break;
-                    }
-                }
-                if (valid) {
-                    message = null;
-                    return true;
-                }
+        prototypes.First(x => x.Internal_Name == "trade_harbor").On_Build_Check = On_Harbor_Build_Check;
+
+        prototypes.Add(new Building("Fishing Harbor", "fishing_harbor", Building.UI_Category.Agriculture, "fishing_harbor", Building.BuildingSize.s3x3, 175, new Dictionary<Resource, int>() {
+             { Resource.Lumber, 240 }, { Resource.Stone, 95 }, { Resource.Wood, 20 }, { Resource.Tools, 15 }
+        }, 250, new List<Resource>(), 0, 0.0f, 355, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f }, { Resource.Stone, 0.01f } }, 4.50f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 15 }, { Building.Resident.Citizen, 20 } }, 20,
+        true, false, true, 0.0f, 0, On_Harbor_Built,
+        delegate (Building building, float delta_time) {
+            if (!building.Is_Operational) {
+                return;
             }
-            message = "Requires straight waterfront with space for dock and ship access.";
-            return false;
-        };
+            if (!building.Has_Functional_Dock()) {
+                building.Show_Alert("alert_general");
+                return;
+            }
+            building.Produce(Resource.Fish, 12.0f, delta_time);
+            building.Produce(Resource.Lobsters, 4.0f, delta_time);
+        }, On_Harbor_Deconstruct, null, new List<Resource>(), new List<Resource>() { Resource.Fish, Resource.Lobsters }, 0.0f, 0.0f));
+        prototypes.First(x => x.Internal_Name == "fishing_harbor").On_Build_Check = On_Harbor_Ship_Build_Check;
+        prototypes.First(x => x.Internal_Name == "fishing_harbor").On_Building_Start = On_Harbor_Ship_Building_Start;
 
         prototypes.Add(new Building("Dock", "dock", Building.UI_Category.Unbuildable, "dock_n", Building.BuildingSize.s1x1, 10, new Dictionary<Resource, int>() {
             { Resource.Lumber, 10 }, { Resource.Wood, 10 }, { Resource.Stone, 1 }
@@ -2590,14 +2630,14 @@ public class BuildingPrototypes {
             { Resource.Wood, 20 }, { Resource.Lumber, 50 }, { Resource.Stone, 25 }, { Resource.Tools, 25 }, { Resource.Mechanisms, 5 }
         }, 200, new List<Resource>(), 0, 0.0f, 100, new Dictionary<Resource, float>() { { Resource.Lumber, 0.01f } }, 3.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 }, { Building.Resident.Citizen, 20 } }, 20, true, false, true, 0.0f, 7, null,
         delegate (Building building, float delta_time) {
-            if (!building.Is_Operational) {
-                return;
-            }
             int max_ships = 5;
             int ship_count = building.Data.ContainsKey("ship_count") ? int.Parse(building.Data["ship_count"]) : 0;
             building.Special_Status_Text_1 = string.Format("Ships: {0} / {1}", ship_count, max_ships);
             building.Special_Status_Text_2 = null;
             bool ship_access = false;
+            if (building.Data.ContainsKey("has_ship_access")) {
+                building.Data.Remove("has_ship_access");
+            }
             foreach (Tile t in Map.Instance.Get_Tiles_Around(building)) {
                 if (t.Is_Water && t.Has_Ship_Access && t.Building == null) {
                     ship_access = true;
@@ -2608,7 +2648,11 @@ public class BuildingPrototypes {
                 building.Show_Alert("alert_general");
                 return;
             }
+            building.Data.Add("has_ship_access", true.ToString());
             if (ship_count >= max_ships) {
+                return;
+            }
+            if (!building.Is_Operational) {
                 return;
             }
             bool button_was_pressed = building.Special_Settings.First(x => x.Name == "build_ship_button").Button_Was_Pressed;
