@@ -95,6 +95,8 @@ public class Building {
     public List<Entity> Entities_Spawned { get; private set; }
     public TradeRouteSettings Trade_Route_Settings { get; set; }
     public Dictionary<string, string> Data { get; private set; }
+    public string Special_Status_Text_1 { get; set; }
+    public string Special_Status_Text_2 { get; set; }
 
     public GameObject GameObject { get; private set; }
     public SpriteRenderer Renderer { get { return GameObject != null ? GameObject.GetComponent<SpriteRenderer>() : null; } }
@@ -215,6 +217,8 @@ public class Building {
             Trade_Route_Settings = new TradeRouteSettings(this);
         }
         Data = new Dictionary<string, string>();
+        Special_Status_Text_1 = null;
+        Special_Status_Text_2 = null;
 
         animation_index = 0;
         animation_cooldown = Sprite.Animation_Frame_Time;
@@ -353,6 +357,7 @@ public class Building {
                 setting.Slider_Value = saved_setting.Slider_Value;
                 setting.Toggle_Value = saved_setting.Toggle_Value;
                 setting.Dropdown_Selection = saved_setting.Dropdown_Selection;
+                setting.Button_Was_Pressed = saved_setting.Button_Was_Pressed;
             }
         }
         if(Is_Storehouse && data.Storage_Settings != null) {
@@ -376,8 +381,10 @@ public class Building {
         foreach(BuildingDictionaryData d in data.Data) {
             Data.Add(d.Key, d.Value);
         }
+        Special_Status_Text_1 = null;
+        Special_Status_Text_2 = null;
 
-        if(Special_Settings.Count != 0 && On_Update != null) {
+        if (Special_Settings.Count != 0 && On_Update != null) {
             On_Update(this, 0.0f);
         }
 
@@ -803,8 +810,6 @@ public class Building {
             }
         }
         
-        //TODO if non-cash upkeep is not provided, deteriorate HP (can't be destroyed this way)
-
         Refresh_Alerts(realtime_delta_time);
     }
 
@@ -1027,7 +1032,8 @@ public class Building {
                 Name = setting.Name,
                 Slider_Value = setting.Slider_Value,
                 Toggle_Value = setting.Toggle_Value,
-                Dropdown_Selection = setting.Dropdown_Selection
+                Dropdown_Selection = setting.Dropdown_Selection,
+                Button_Was_Pressed = setting.Button_Was_Pressed
             });
         }
         if (Is_Storehouse) {

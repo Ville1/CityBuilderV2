@@ -2585,6 +2585,86 @@ public class BuildingPrototypes {
             Resource.Fine_Jewelry.UI_Name + " (20/day)",
             Resource.Opulent_Jewelry.UI_Name + " (5/day)"
         }, 0));
+
+        prototypes.Add(new Building("Shipyard", "shipyard", Building.UI_Category.Industry, "shipyard", Building.BuildingSize.s3x3, 100, new Dictionary<Resource, int>() {
+            { Resource.Wood, 20 }, { Resource.Lumber, 50 }, { Resource.Stone, 25 }, { Resource.Tools, 25 }, { Resource.Mechanisms, 5 }
+        }, 200, new List<Resource>(), 0, 0.0f, 100, new Dictionary<Resource, float>() { { Resource.Lumber, 0.01f } }, 3.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 }, { Building.Resident.Citizen, 20 } }, 20, true, false, true, 0.0f, 7, null,
+        delegate (Building building, float delta_time) {
+            if (!building.Is_Operational) {
+                return;
+            }
+            int max_ships = 5;
+            int ship_count = building.Data.ContainsKey("ship_count") ? int.Parse(building.Data["ship_count"]) : 0;
+            building.Special_Status_Text_1 = string.Format("Ships: {0} / {1}", ship_count, max_ships);
+            building.Special_Status_Text_2 = null;
+            bool ship_access = false;
+            foreach (Tile t in Map.Instance.Get_Tiles_Around(building)) {
+                if (t.Is_Water && t.Has_Ship_Access && t.Building == null) {
+                    ship_access = true;
+                    break;
+                }
+            }
+            if (!ship_access) {
+                building.Show_Alert("alert_general");
+                return;
+            }
+            if (ship_count >= max_ships) {
+                return;
+            }
+            bool button_was_pressed = building.Special_Settings.First(x => x.Name == "build_ship_button").Button_Was_Pressed;
+            float ship_progress = building.Data.ContainsKey("ship_progress") ? float.Parse(building.Data["ship_progress"]) : -1.0f;
+            building.Special_Settings.First(x => x.Name == "build_ship_button").Label = string.Format("Build ship ({0})", ship_count);
+            if (!button_was_pressed && ship_progress == -1.0f) {
+                //Ship is not being built and a new ship is not ordered
+                return;
+            }
+            if (ship_progress >= 1.0f) {
+                //Ship ready
+                ship_count++;
+                if (building.Data.ContainsKey("ship_count")) {
+                    building.Data["ship_count"] = ship_count.ToString();
+                } else {
+                    building.Data.Add("ship_count", ship_count.ToString());
+                }
+                building.Data["ship_progress"] = (-1.0f).ToString();
+                building.Special_Settings.First(x => x.Name == "build_ship_button").Button_Was_Pressed = false;
+                building.Output_Storage[Resource.Ship_Parts] = 0.0f;
+                return;
+            }
+            if (button_was_pressed && ship_progress == -1.0f) {
+                //Start a new ship
+                ship_progress = 0.0f;
+            }
+
+            building.Process(new Dictionary<Resource, float>() { { Resource.Lumber, 10.0f }, { Resource.Cloth, 0.05f }, { Resource.Mechanisms, 0.025f }, { Resource.Tools, 0.025f } },
+                new Dictionary<Resource, float>() { { Resource.Ship_Parts, 0.05f } }, delta_time);
+            ship_progress = Mathf.Clamp01(building.Output_Storage[Resource.Ship_Parts]);
+            building.Special_Status_Text_2 = string.Format("Building: {0}%", Helper.Float_To_String(ship_progress * 100.0f, 0));
+
+            building.Special_Settings.First(x => x.Name == "build_ship_button").Label = string.Format("Building ship {0}% ({1})", Helper.Float_To_String(ship_progress * 100.0f, 0), ship_count);
+
+            if (building.Data.ContainsKey("ship_progress")) {
+                building.Data["ship_progress"] = ship_progress.ToString();
+            } else {
+                building.Data.Add("ship_progress", ship_progress.ToString());
+            }
+        }, null, null, new List<Resource>() { Resource.Lumber, Resource.Cloth, Resource.Tools, Resource.Mechanisms }, new List<Resource>() { Resource.Ship_Parts }, 0.0f, 0.0f));
+        prototypes.First(x => x.Internal_Name == "shipyard").On_Build_Check = delegate (Building building, Tile tile, out string message) {
+            message = string.Empty;
+            bool ship_access = false;
+            foreach (Tile t in Map.Instance.Get_Tiles_Around(building)) {
+                if (t.Is_Water && t.Has_Ship_Access && t.Building == null) {
+                    ship_access = true;
+                    break;
+                }
+            }
+            if (!ship_access) {
+                message = "Must be placed on a waterfront with ship access.";
+                return false;
+            }
+            return ship_access;
+        };
+        prototypes.First(x => x.Internal_Name == "shipyard").Special_Settings.Add(new SpecialSetting("build_ship_button", "Build ship", SpecialSetting.SettingType.Button));
     }
 
     public static BuildingPrototypes Instance

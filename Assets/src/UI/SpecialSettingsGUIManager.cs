@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 public class SpecialSettingsGUIManager : MonoBehaviour {
@@ -12,6 +13,7 @@ public class SpecialSettingsGUIManager : MonoBehaviour {
     public GameObject Input_Field_Row_Prototype;
     public GameObject Toggle_Row_Prototype;
     public GameObject Dropdown_Row_Prototype;
+    public GameObject Button_Row_Prototype;
 
     private Building building;
     private Dictionary<SpecialSetting, GameObject> rows;
@@ -32,6 +34,7 @@ public class SpecialSettingsGUIManager : MonoBehaviour {
         Input_Field_Row_Prototype.SetActive(false);
         Toggle_Row_Prototype.SetActive(false);
         Dropdown_Row_Prototype.SetActive(false);
+        Button_Row_Prototype.SetActive(false);
         rows = new Dictionary<SpecialSetting, GameObject>();
         row_id = 0;
     }
@@ -90,6 +93,9 @@ public class SpecialSettingsGUIManager : MonoBehaviour {
                 case SpecialSetting.SettingType.Dropdown:
                     prototype = Dropdown_Row_Prototype;
                     break;
+                case SpecialSetting.SettingType.Button:
+                    prototype = Button_Row_Prototype;
+                    break;
             }
             GameObject row = GameObject.Instantiate(
                 prototype,
@@ -108,6 +114,7 @@ public class SpecialSettingsGUIManager : MonoBehaviour {
                 row_id = 0;
             }
 
+            //TODO: Use switch/case
             if (setting.Type == SpecialSetting.SettingType.Slider) {
                 GameObject.Find(string.Format("{0}/LabelText", row.name)).GetComponent<Text>().text = setting.Label;
                 GameObject.Find(string.Format("{0}/PercentText", row.name)).GetComponent<Text>().text = Helper.Float_To_String(setting.Slider_Value * 100.0f, 0) + "%";
@@ -123,6 +130,12 @@ public class SpecialSettingsGUIManager : MonoBehaviour {
                 List<Dropdown.OptionData> options = setting.Dropdown_Options.Select(x => new Dropdown.OptionData(x)).ToList();
                 dropdown.options = options;
                 dropdown.value = setting.Dropdown_Selection;
+            } else if(setting.Type == SpecialSetting.SettingType.Button) {
+                GameObject.Find(string.Format("{0}/Button", row.name)).GetComponentInChildren<Text>().text = setting.Label;
+                GameObject.Find(string.Format("{0}/Button", row.name)).GetComponent<Button>().interactable = !setting.Button_Was_Pressed;
+                Button.ButtonClickedEvent click = new Button.ButtonClickedEvent();
+                click.AddListener(new UnityAction(delegate () { On_Click(setting, row.name); }));
+                GameObject.Find(string.Format("{0}/Button", row.name)).GetComponent<Button>().onClick = click;
             }
 
             rows.Add(setting, row);
@@ -153,5 +166,11 @@ public class SpecialSettingsGUIManager : MonoBehaviour {
     public void Cancel()
     {
         Active = false;
+    }
+
+    private void On_Click(SpecialSetting setting, string row_name)
+    {
+        setting.Button_Was_Pressed = true;
+        GameObject.Find(string.Format("{0}/Button", row_name)).GetComponent<Button>().interactable = false;
     }
 }

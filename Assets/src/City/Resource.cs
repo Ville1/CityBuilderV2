@@ -4,10 +4,10 @@ using System.Collections.Generic;
 public class Resource {
     public enum ResourceType { Wood, Stone, Lumber, Tools, Roots, Berries, Mushrooms, Herbs, Firewood, Charcoal, Game, Hide, Leather, Potatoes, Corn, Bread, Iron_Ore, Coal, Salt, Iron_Bars, Ale, Wool, Cloth, Thread, Mutton,
         Barrels, Simple_Clothes, Leather_Clothes, Wheat, Flour, Mechanisms, Clay, Bricks, Fish, Marble, Bananas, Oranges, Beer, Rum, Wine, Coffee, Pretzels, Cakes, Copper_Ore, Copper_Bars, Tin_Ore, Tin_Bars, Pewter_Bars, Pewterware,
-        Bronze_Bars, Furniture, Pig_Iron, Steel_Bars, Salted_Fish, Salted_Meat, Simple_Jewelry, Opulent_Jewelry, Furs, Silk, Fine_Clothes, Luxury_Clothes, Grapes, Gold_Ore, Gold_Bars, Silver_Ore, Silver_Bars, Gems, Fine_Jewelry }
+        Bronze_Bars, Furniture, Pig_Iron, Steel_Bars, Salted_Fish, Salted_Meat, Simple_Jewelry, Opulent_Jewelry, Furs, Silk, Fine_Clothes, Luxury_Clothes, Grapes, Gold_Ore, Gold_Bars, Silver_Ore, Silver_Bars, Gems, Fine_Jewelry, Ship_Parts }
     public enum FoodType { None, Meat, Vegetable, Delicacy }
-    public enum ResourceTag { Agricultural, Industrial, Forestry, Archaic, Coastal, Mining, Opulent, Foraging, Hunting, Construction, Livestock, Food, Crop, Clothing, Fine, Exotic, Alcohol, Pastry, Jewelry }
-    public enum ResourceRarity { Very_Rare, Rare, Uncommon, Common }
+    public enum ResourceTag { Agricultural, Industrial, Forestry, Archaic, Coastal, Mining, Opulent, Foraging, Hunting, Construction, Livestock, Food, Crop, Clothing, Fine, Exotic, Alcohol, Pastry, Jewelry, Non_Tradeable }
+    public enum ResourceRarity { Very_Rare, Rare, Uncommon, Common, Non_Tradeable }
 
     public static Resource Wood { get { return Get(ResourceType.Wood); } }
     public static Resource Stone { get { return Get(ResourceType.Stone); } }
@@ -77,6 +77,7 @@ public class Resource {
     public static Resource Gold_Ore { get { return Get(ResourceType.Gold_Ore); } }
     public static Resource Gold_Bars { get { return Get(ResourceType.Gold_Bars); } }
     public static Resource Gems { get { return Get(ResourceType.Gems); } }
+    public static Resource Ship_Parts { get { return Get(ResourceType.Ship_Parts); } }
     private static Dictionary<ResourceType, Resource> resources;
 
     public int Id { get { return (int)Type; } }
@@ -197,6 +198,7 @@ public class Resource {
             resources.Add(ResourceType.Marble, new Resource(ResourceType.Marble, "Marble", null, SpriteManager.SpriteType.UI, 2.50f, ResourceRarity.Rare, new List<ResourceTag>() { ResourceTag.Mining, ResourceTag.Opulent, ResourceTag.Construction, ResourceTag.Fine }));
             resources.Add(ResourceType.Furs, new Resource(ResourceType.Furs, "Furs", "furs", SpriteManager.SpriteType.UI, 2.60f, ResourceRarity.Rare, new List<ResourceTag>() { ResourceTag.Archaic, ResourceTag.Hunting }));
             resources.Add(ResourceType.Silk, new Resource(ResourceType.Silk, "Silk", "silk", SpriteManager.SpriteType.UI, 3.00f, ResourceRarity.Very_Rare, new List<ResourceTag>() { ResourceTag.Exotic, ResourceTag.Opulent, ResourceTag.Agricultural }));
+            resources.Add(ResourceType.Ship_Parts, new Resource(ResourceType.Ship_Parts, "Ship parts", null, SpriteManager.SpriteType.UI, 5.00f, ResourceRarity.Non_Tradeable, new List<ResourceTag>() { ResourceTag.Non_Tradeable }));
 
             resources.Add(ResourceType.Game, new Resource(ResourceType.Game, "Game", "game", SpriteManager.SpriteType.UI, FoodType.Meat, 1.05f, 1.10f, ResourceRarity.Common, new List<ResourceTag>() { ResourceTag.Hunting, ResourceTag.Archaic, ResourceTag.Food }));
             resources.Add(ResourceType.Roots, new Resource(ResourceType.Roots, "Roots", "roots", SpriteManager.SpriteType.UI, FoodType.Vegetable, 0.15f, 0.65f, ResourceRarity.Common, new List<ResourceTag>() { ResourceTag.Foraging, ResourceTag.Archaic, ResourceTag.Food }));

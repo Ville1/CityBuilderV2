@@ -158,8 +158,8 @@ public class ForeignCity {
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Food, Resource.ResourceTag.Industrial, Resource.ResourceTag.Opulent, Resource.ResourceTag.Exotic },
                     new List<Resource.ResourceTag>() { Resource.ResourceTag.Archaic, Resource.ResourceTag.Foraging },
                     new List<Resource.ResourceTag>() { });
-                trade_route_chances[TradeRouteType.Land] = 40;
-                trade_route_chances[TradeRouteType.Water] = 40;
+                trade_route_chances[TradeRouteType.Land] = 45;
+                trade_route_chances[TradeRouteType.Water] = 45;
                 trade_route_chances[TradeRouteType.Both] = 10;
                 break;
             default:
@@ -344,6 +344,9 @@ public class ForeignCity {
             Initialize_Exports(main_exports, rare_exports, never_export);
         }
         foreach (Resource resource in Resource.All) {
+            if(resource.Rarity == Resource.ResourceRarity.Non_Tradeable) {
+                continue;
+            }
             bool is_main_import = false;
             bool is_disliked_import = false;
             bool is_unacceped_import = false;
@@ -409,7 +412,7 @@ public class ForeignCity {
             { Resource.ResourceRarity.Very_Rare, 5 }
         };
         foreach (Resource resource in Resource.All) {
-            if(Exports.Contains(resource) || Cheap_Exports.Contains(resource) || Expensive_Exports.Contains(resource)) {
+            if(Exports.Contains(resource) || Cheap_Exports.Contains(resource) || Expensive_Exports.Contains(resource) || resource.Rarity == Resource.ResourceRarity.Non_Tradeable) {
                 continue;
             }
             int export_chance = base_export_chance[resource.Rarity];

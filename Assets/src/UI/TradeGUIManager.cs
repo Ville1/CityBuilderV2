@@ -182,7 +182,7 @@ public class TradeGUIManager : MonoBehaviour {
                         option_resource_list.Add(import);
                     }
                     foreach (Resource resource in Resource.All) {
-                        if (!(settings.Partner.Preferred_Imports.Contains(resource) || settings.Partner.Disliked_Imports.Contains(resource) || settings.Partner.Unaccepted_Imports.Contains(resource))) {
+                        if (!(settings.Partner.Preferred_Imports.Contains(resource) || settings.Partner.Disliked_Imports.Contains(resource) || settings.Partner.Unaccepted_Imports.Contains(resource) || resource.Rarity == Resource.ResourceRarity.Non_Tradeable)) {
                             string option_text = string.Format("{0} {1} (normal)", resource.UI_Name, Helper.Float_To_String(settings.Partner.Get_Import_Price(resource), 2));
                             resource_options.Add(resource.Has_Sprite ? new Dropdown.OptionData(option_text, SpriteManager.Instance.Get(resource.Sprite_Name, resource.Sprite_Type)) : new Dropdown.OptionData(option_text));
                             option_resource_list.Add(resource);

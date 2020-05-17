@@ -20,6 +20,8 @@ public class InspectorManager : MonoBehaviour {
     public Text Status_Text;
     public Text Efficency_Text;
     public Text Taxed_By_Text;
+    public Text Special_Status_1_Text;
+    public Text Special_Status_2_Text;
     public Text Storage_Text;
     public GameObject Delta_Content;
     public GameObject Delta_Row_Prototype;
@@ -335,7 +337,20 @@ public class InspectorManager : MonoBehaviour {
                 Status_Text.text = "ERROR";
             }
             Efficency_Text.text = string.Format("Efficency: {0}%", Helper.Float_To_String(100.0f * building.Efficency, 0));
-            
+
+            if (!string.IsNullOrEmpty(building.Special_Status_Text_1)) {
+                Special_Status_1_Text.gameObject.SetActive(true);
+                Special_Status_1_Text.text = building.Special_Status_Text_1;
+            } else {
+                Special_Status_1_Text.gameObject.SetActive(false);
+            }
+            if (!string.IsNullOrEmpty(building.Special_Status_Text_2)) {
+                Special_Status_2_Text.gameObject.SetActive(true);
+                Special_Status_2_Text.text = building.Special_Status_Text_2;
+            } else {
+                Special_Status_2_Text.gameObject.SetActive(false);
+            }
+
             //Workers
             if (building.Is_Built && !building.Is_Deconstructing && building.Max_Workers_Total != 0) {
                 Workers_Container.SetActive(true);
