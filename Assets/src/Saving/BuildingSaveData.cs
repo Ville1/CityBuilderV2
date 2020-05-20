@@ -27,6 +27,7 @@ public class BuildingSaveData {
     public int Selected_Sprite;
     public TradeRouteSettingsSaveData Trade_Route_Settings;
     public List<BuildingDictionaryData> Data;
+    public bool Lock_Workers;
 }
 
 [Serializable]

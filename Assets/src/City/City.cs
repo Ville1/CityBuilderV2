@@ -28,12 +28,16 @@ public class City {
     public float Food_Produced { get; private set; }
     public float Food_Consumed { get; private set; }
     public float Food_Delta { get; private set; }
+    public List<Expedition> Expeditions { get; private set; }
 
     public bool Ignore_Citizen_Needs { get; set; }
+    public bool Ignore_All_Needs { get; set; }
 
     private float grace_time_remaining;
     private List<Building> removed_buildings;
     private List<Building> added_buildings;
+    private List<Expedition> removed_expeditions;
+    private List<Expedition> added_expeditions;
 
     private City()
     {
@@ -54,6 +58,7 @@ public class City {
             Happiness.Add(resident, 0.0f);
         }
         Cash_Delta = 0.0f;
+        Expeditions = new List<Expedition>();
     }
 
     public void Start_New(string name)
@@ -64,6 +69,8 @@ public class City {
         grace_time_remaining = GRACE_TIME;
         removed_buildings = new List<Building>();
         added_buildings = new List<Building>();
+        removed_expeditions = new List<Expedition>();
+        added_expeditions = new List<Expedition>();
         foreach (Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
             Unemployment[resident] = 0.0f;
             Happiness[resident] = 0.0f;
@@ -76,6 +83,11 @@ public class City {
         Cash = data.Cash;
         Has_Town_Hall = data.Buildings.FirstOrDefault(x => x.Internal_Name == Building.TOWN_HALL_INTERNAL_NAME) != null;
         Contacts.Instance.Load(data.Contacts);
+        Expeditions = new List<Expedition>();
+        foreach(ExpeditionSaveData expedition in data.Expeditions) {
+            Expeditions.Add(new Expedition((Expedition.ExpeditionGoal)expedition.Goal, (Expedition.ExpeditionLenght)expedition.Lenght, expedition.Building_Id, expedition.Resource == -1 ? null : Resource.All.First(x => (int)x.Type == expedition.Resource),
+                expedition.Time_Remaining, (Expedition.ExpeditionState)expedition.State));
+        }
     }
 
     public void Update_Grace_Time(float total_days)
@@ -103,6 +115,9 @@ public class City {
             grace_time_remaining = Math.Max(grace_time_remaining - TimeManager.Instance.Seconds_To_Days(delta_time), 0.0f);
         }
         //TODO: Add stopwatch?
+        foreach(Expedition expedition in Expeditions) {
+            expedition.Update(delta_time);
+        }
         foreach(Building building in Buildings) {
             if (building is Residence) {
                 (building as Residence).Update(delta_time);
@@ -110,6 +125,7 @@ public class City {
                 building.Update(delta_time);
             }
         }
+
         foreach(Building building in removed_buildings) {
             Buildings.Remove(building);
         }
@@ -118,6 +134,15 @@ public class City {
             Buildings.Add(building);
         }
         added_buildings.Clear();
+
+        foreach (Expedition expedition in removed_expeditions) {
+            Expeditions.Remove(expedition);
+        }
+        removed_expeditions.Clear();
+        foreach (Expedition expedition in added_expeditions) {
+            Expeditions.Add(expedition);
+        }
+        added_expeditions.Clear();
 
         //Update statistics
         foreach (Resource resource in Resource.All) {
@@ -459,13 +484,29 @@ public class City {
         }
     }
 
+    public void Remove_Expedition(Expedition expedition)
+    {
+        if (!removed_expeditions.Contains(expedition)) {
+            removed_expeditions.Add(expedition);
+        }
+    }
+
+    public void Add_Expedition(Expedition expedition)
+    {
+        if (!added_expeditions.Contains(expedition)) {
+            added_expeditions.Add(expedition);
+        }
+    }
+
     public CitySaveData Save_Data()
     {
         return new CitySaveData() {
             Name = Name,
             Cash = Cash,
             Buildings = new List<BuildingSaveData>(),
-            Contacts = Contacts.Instance.Save()
+            Contacts = Contacts.Instance.Save(),
+            Expeditions = Expeditions.Select(x => new ExpeditionSaveData() { Goal = (int)x.Goal, Lenght = (int)x.Lenght, Building_Id = x.Building_Id, Resource = x.Resource != null ? (int)x.Resource.Type : -1,
+                State = (int)x.State, Time_Remaining = x.Time_Remaining }).ToList()
         };
     }
 

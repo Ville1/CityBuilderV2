@@ -26,7 +26,7 @@ public class Building {
     public enum UI_Category { Admin, Infrastructure, Housing, Services, Forestry, Agriculture, Textile, Industry, Unbuildable }
     public enum Resident { Peasant, Citizen, Noble }
     public enum BuildingSize { s1x1, s2x2, s3x3 }
-    public enum Tag { Undeletable, Does_Not_Block_Wind, Bridge, Land_Trade, Water_Trade, Unique, Does_Not_Disrupt_Hunting, No_Notification_On_Build }
+    public enum Tag { Undeletable, Does_Not_Block_Wind, Bridge, Land_Trade, Water_Trade, Unique, Does_Not_Disrupt_Hunting, No_Notification_On_Build, Creates_Expeditions }
 
     public long Id { get; protected set; }
     public string Name { get; private set; }
@@ -99,6 +99,7 @@ public class Building {
     public Dictionary<string, string> Data { get; private set; }
     public string Special_Status_Text_1 { get; set; }
     public string Special_Status_Text_2 { get; set; }
+    public bool Lock_Workers { get; set; }
 
     public GameObject GameObject { get; private set; }
     public SpriteRenderer Renderer { get { return GameObject != null ? GameObject.GetComponent<SpriteRenderer>() : null; } }
@@ -353,6 +354,7 @@ public class Building {
         Is_Deconstructing = data.Is_Deconstructing;
         Is_Connected = data.Is_Connected;
         Is_Paused = data.Is_Paused;
+        Lock_Workers = data.Lock_Workers;
         Construction_Progress = data.Construction_Progress;
         Deconstruction_Progress = data.Deconstruction_Progress;
         HP = data.HP;
@@ -999,7 +1001,8 @@ public class Building {
             Services = new List<ServiceSaveData>(),
             Storage_Settings = new List<StorageSettingSaveData>(),
             Selected_Sprite = Selected_Sprite,
-            Data = new List<BuildingDictionaryData>()
+            Data = new List<BuildingDictionaryData>(),
+            Lock_Workers = Lock_Workers
         };
         foreach(KeyValuePair<Resource, float> pair in Storage) {
             data.Storage.Add(new ResourceSaveData() { Resource = pair.Key.Id, Amount = pair.Value });

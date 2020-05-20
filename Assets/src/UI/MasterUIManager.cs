@@ -67,6 +67,9 @@ public class MasterUIManager : MonoBehaviour {
         if (TradeGUIManager.Instance != null && typeof(TradeGUIManager).Name != type_name) {
             TradeGUIManager.Instance.Active = false;
         }
+        if (NewExpeditionGUIManager.Instance != null && typeof(NewExpeditionGUIManager).Name != type_name) {
+            NewExpeditionGUIManager.Instance.Active = false;
+        }
         MenuManager.Instance.Close_Views_Panel();
     }
 

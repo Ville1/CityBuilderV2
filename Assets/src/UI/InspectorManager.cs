@@ -365,12 +365,12 @@ public class InspectorManager : MonoBehaviour {
                 Worker_Allocated_Current.text = building.Workers_Allocated.ToString();
                 Worker_Allocated_Max.text = building.Max_Workers_Total.ToString();
 
-                Worker_Peasant_Plus_Button.interactable = building.Workers_Allocated < building.Max_Workers_Total && building.Worker_Settings[Building.Resident.Peasant] < building.Max_Workers[Building.Resident.Peasant];
-                Worker_Citizen_Plus_Button.interactable = building.Workers_Allocated < building.Max_Workers_Total && building.Worker_Settings[Building.Resident.Citizen] < building.Max_Workers[Building.Resident.Citizen];
-                Worker_Noble_Plus_Button.interactable = building.Workers_Allocated < building.Max_Workers_Total && building.Worker_Settings[Building.Resident.Noble] < building.Max_Workers[Building.Resident.Noble];
-                Worker_Peasant_Minus_Button.interactable = building.Workers_Allocated > 1 && building.Worker_Settings[Building.Resident.Peasant] > 0;
-                Worker_Citizen_Minus_Button.interactable = building.Workers_Allocated > 1 && building.Worker_Settings[Building.Resident.Citizen] > 0;
-                Worker_Noble_Minus_Button.interactable = building.Workers_Allocated > 1 && building.Worker_Settings[Building.Resident.Noble] > 0;
+                Worker_Peasant_Plus_Button.interactable = !building.Lock_Workers && building.Workers_Allocated < building.Max_Workers_Total && building.Worker_Settings[Building.Resident.Peasant] < building.Max_Workers[Building.Resident.Peasant];
+                Worker_Citizen_Plus_Button.interactable = !building.Lock_Workers && building.Workers_Allocated < building.Max_Workers_Total && building.Worker_Settings[Building.Resident.Citizen] < building.Max_Workers[Building.Resident.Citizen];
+                Worker_Noble_Plus_Button.interactable = !building.Lock_Workers && building.Workers_Allocated < building.Max_Workers_Total && building.Worker_Settings[Building.Resident.Noble] < building.Max_Workers[Building.Resident.Noble];
+                Worker_Peasant_Minus_Button.interactable = !building.Lock_Workers && building.Workers_Allocated > 1 && building.Worker_Settings[Building.Resident.Peasant] > 0;
+                Worker_Citizen_Minus_Button.interactable = !building.Lock_Workers && building.Workers_Allocated > 1 && building.Worker_Settings[Building.Resident.Citizen] > 0;
+                Worker_Noble_Minus_Button.interactable = !building.Lock_Workers && building.Workers_Allocated > 1 && building.Worker_Settings[Building.Resident.Noble] > 0;
             } else if(building is Residence) {
                 Workers_Container.SetActive(false);
                 Residents_Container.SetActive(true);
@@ -528,7 +528,8 @@ public class InspectorManager : MonoBehaviour {
             Pause_Button.interactable = building.Can_Be_Paused;
             Pause_Button.GetComponentInChildren<Text>().text = building.Is_Paused ? "Unpause" : "Pause";
             Delete_Button.interactable = building.Can_Be_Deleted;
-            Settings_Button.interactable = building.Is_Complete && (building.Is_Storehouse || building.Special_Settings.Count > 0 || building.Tags.Contains(Building.Tag.Land_Trade) || building.Tags.Contains(Building.Tag.Water_Trade));
+            Settings_Button.interactable = building.Is_Complete && (building.Is_Storehouse || building.Special_Settings.Count > 0 || building.Tags.Contains(Building.Tag.Land_Trade) ||
+                building.Tags.Contains(Building.Tag.Water_Trade) || (building.Tags.Contains(Building.Tag.Creates_Expeditions) && building.Has_Functional_Dock() && building.Is_Operational));
 
             //Highlights
             float range = Mathf.Max(new float[3] { building.Range, building.Construction_Range, (building is Residence) ? ((building as Residence).Peasants_Only ? 0.0f : Residence.DIRT_ROAD_RANGE) : 0.0f });
@@ -628,6 +629,8 @@ public class InspectorManager : MonoBehaviour {
             SpecialSettingsGUIManager.Instance.Show(building);
         } else if (building.Tags.Contains(Building.Tag.Land_Trade) || building.Tags.Contains(Building.Tag.Water_Trade)) {
             TradeGUIManager.Instance.Show(building);
+        } else if (building.Tags.Contains(Building.Tag.Creates_Expeditions)) {
+            NewExpeditionGUIManager.Instance.Show(building);
         }
     }
 

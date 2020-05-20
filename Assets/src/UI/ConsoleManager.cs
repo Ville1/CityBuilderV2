@@ -223,10 +223,23 @@ public class ConsoleManager : MonoBehaviour
             return "Changed";
         });
 
+        commands.Add("ignore_all_needs", (string[] arguments) => {
+            bool val = !City.Instance.Ignore_All_Needs;
+            City.Instance.Ignore_All_Needs = val;
+            return val.ToString();
+        });
+
         commands.Add("ignore_citizen_needs", (string[] arguments) => {
             bool val = !City.Instance.Ignore_Citizen_Needs;
             City.Instance.Ignore_Citizen_Needs = val;
             return val.ToString();
+        });
+        
+        commands.Add("finish_expeditions", (string[] arguments) => {
+            foreach(Expedition expedition in City.Instance.Expeditions) {
+                expedition.Cheat_Finish();
+            }
+            return string.Format("{0} expeditions{1} finished", City.Instance.Expeditions.Count, Helper.Plural(City.Instance.Expeditions.Count));
         });
 
         Update_Output();

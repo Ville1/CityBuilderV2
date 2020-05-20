@@ -84,6 +84,7 @@
     <Compile Include="Assets\src\City\Contacts.cs" />
     <Compile Include="Assets\src\City\Entity.cs" />
     <Compile Include="Assets\src\City\EntityPrototypes.cs" />
+    <Compile Include="Assets\src\City\Expedition.cs" />
     <Compile Include="Assets\src\City\ForeignCity.cs" />
     <Compile Include="Assets\src\City\Residence.cs" />
     <Compile Include="Assets\src\City\Resource.cs" />
@@ -108,6 +109,7 @@
     <Compile Include="Assets\src\Saving\BuildingSaveData.cs" />
     <Compile Include="Assets\src\Saving\CitySaveData.cs" />
     <Compile Include="Assets\src\Saving\ContactsSaveData.cs" />
+    <Compile Include="Assets\src\Saving\ExpeditionSaveData.cs" />
     <Compile Include="Assets\src\Saving\MapSaveData.cs" />
     <Compile Include="Assets\src\Saving\ResidentSaveData.cs" />
     <Compile Include="Assets\src\Saving\ResourceSaveData.cs" />
@@ -131,6 +133,7 @@
     <Compile Include="Assets\src\UI\MenuManager.cs" />
     <Compile Include="Assets\src\UI\MessageManager.cs" />
     <Compile Include="Assets\src\UI\MouseManager.cs" />
+    <Compile Include="Assets\src\UI\NewExpeditionGUIManager.cs" />
     <Compile Include="Assets\src\UI\NewGameGUIManager.cs" />
     <Compile Include="Assets\src\UI\NotificationManager.cs" />
     <Compile Include="Assets\src\UI\ProgressBarManager.cs" />

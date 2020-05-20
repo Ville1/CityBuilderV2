@@ -56,7 +56,7 @@ public class BuildingPrototypes {
 
     //TODO: Refund ship is this harbor has one?
     private void On_Harbor_Deconstruct(Building building) {
-        Building dock = City.Instance.Buildings.FirstOrDefault(x => x.Id == int.Parse(building.Data["dock_id"]));
+        Building dock = City.Instance.Buildings.FirstOrDefault(x => x.Id == long.Parse(building.Data["dock_id"]));
         if (dock != null) {
             dock.Deconstruct(true, false);
         }
@@ -2071,7 +2071,7 @@ public class BuildingPrototypes {
         prototypes.First(x => x.Internal_Name == "trade_harbor").On_Build_Check = On_Harbor_Build_Check;
 
         prototypes.Add(new Building("Fishing Harbor", "fishing_harbor", Building.UI_Category.Agriculture, "fishing_harbor", Building.BuildingSize.s3x3, 175, new Dictionary<Resource, int>() {
-             { Resource.Lumber, 240 }, { Resource.Stone, 95 }, { Resource.Wood, 20 }, { Resource.Tools, 15 }
+             { Resource.Lumber, 240 }, { Resource.Stone, 95 }, { Resource.Wood, 20 }, { Resource.Tools, 20 }
         }, 250, new List<Resource>(), 0, 0.0f, 355, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f }, { Resource.Stone, 0.01f } }, 4.50f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 15 }, { Building.Resident.Citizen, 20 } }, 20,
         true, false, true, 0.0f, 0, On_Harbor_Built,
         delegate (Building building, float delta_time) {
@@ -2709,6 +2709,32 @@ public class BuildingPrototypes {
             return ship_access;
         };
         prototypes.First(x => x.Internal_Name == "shipyard").Special_Settings.Add(new SpecialSetting("build_ship_button", "Build ship", SpecialSetting.SettingType.Button));
+
+        prototypes.Add(new Building("Expedition Harbor", "expedition_harbor", Building.UI_Category.Admin, "expedition_harbor", Building.BuildingSize.s3x3, 175, new Dictionary<Resource, int>() {
+             { Resource.Lumber, 235 }, { Resource.Stone, 90 }, { Resource.Wood, 25 }, { Resource.Tools, 15 }, { Resource.Bricks, 10 }, { Resource.Mechanisms, 5 }
+        }, 500, new List<Resource>(), 0, 0.0f, 365, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f }, { Resource.Stone, 0.01f } }, 5.00f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Citizen, 15 }, { Building.Resident.Noble, 10 } }, 20,
+        false, false, true, 0.0f, 0, On_Harbor_Built,
+        delegate (Building building, float delta_time) {
+            List<Resource> clear_resources = new List<Resource>();
+            foreach(KeyValuePair<Resource, float> pair in building.Output_Storage) {
+                if(pair.Value == 0.0f) {
+                    clear_resources.Add(pair.Key);
+                }
+            }
+            foreach(Resource resource in clear_resources) {
+                building.Output_Storage.Remove(resource);
+            }
+            if (!building.Is_Operational) {
+                return;
+            }
+            if (!building.Has_Functional_Dock()) {
+                building.Show_Alert("alert_general");
+                return;
+            }
+        }, On_Harbor_Deconstruct, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
+        prototypes.First(x => x.Internal_Name == "expedition_harbor").On_Build_Check = On_Harbor_Ship_Build_Check;
+        prototypes.First(x => x.Internal_Name == "expedition_harbor").On_Building_Start = On_Harbor_Ship_Building_Start;
+        prototypes.First(x => x.Internal_Name == "expedition_harbor").Tags.Add(Building.Tag.Creates_Expeditions);
     }
 
     public static BuildingPrototypes Instance

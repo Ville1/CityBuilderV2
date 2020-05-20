@@ -229,7 +229,7 @@ public class Residence : Building {
             } else {
                 Happiness[Resident.Peasant] = BASE_HAPPINESS[Resident.Peasant];
                 Happiness_Info[Resident.Peasant].Add(string.Format("Base: {0}", UI_Happiness(BASE_HAPPINESS[Resident.Peasant])));
-                if (Current_Residents[Resident.Peasant] != 0) {
+                if (Current_Residents[Resident.Peasant] != 0 && !City.Instance.Ignore_All_Needs) {
                     float unemployment = City.Instance.Unemployment[Resident.Peasant] - UNEMPLOYMENT_PENALTY_THRESHOLD;
                     if (unemployment > 0.0f) {
                         Happiness[Resident.Peasant] -= MAX_UNEMPLOYMENT_PENALTY * unemployment;
@@ -347,13 +347,18 @@ public class Residence : Building {
                         Show_Alert("alert_unhappiness");
                     }
                 }
+                if (City.Instance.Ignore_All_Needs && Happiness[Resident.Peasant] < 0.5f) {
+                    float cheats = 0.5f - Happiness[Resident.Peasant];
+                    Happiness[Resident.Peasant] += cheats;
+                    Happiness_Info[Resident.Peasant].Add(string.Format("Cheats: +{0}", UI_Happiness(cheats)));
+                }
             }
         }
 
         if (Resident_Space[Resident.Citizen] != 0) {
             Happiness[Resident.Citizen] = BASE_HAPPINESS[Resident.Citizen];
             Happiness_Info[Resident.Citizen].Add(string.Format("Base: {0}", UI_Happiness(BASE_HAPPINESS[Resident.Citizen])));
-            if (Current_Residents[Resident.Citizen] != 0 && !City.Instance.Ignore_Citizen_Needs) {
+            if (Current_Residents[Resident.Citizen] != 0 && !City.Instance.Ignore_Citizen_Needs && !City.Instance.Ignore_All_Needs) {
                 float unemployment = City.Instance.Unemployment[Resident.Citizen] - UNEMPLOYMENT_PENALTY_THRESHOLD;
                 if (unemployment > 0.0f) {
                     Happiness[Resident.Citizen] -= MAX_UNEMPLOYMENT_PENALTY * unemployment;
@@ -497,7 +502,7 @@ public class Residence : Building {
                     Show_Alert("alert_unhappiness");
                 }
             }
-            if (City.Instance.Ignore_Citizen_Needs && Happiness[Resident.Citizen] < 0.5f) {
+            if ((City.Instance.Ignore_Citizen_Needs || City.Instance.Ignore_All_Needs) && Happiness[Resident.Citizen] < 0.5f) {
                 float cheats = 0.5f - Happiness[Resident.Citizen];
                 Happiness[Resident.Citizen] += cheats;
                 Happiness_Info[Resident.Citizen].Add(string.Format("Cheats: +{0}", UI_Happiness(cheats)));
@@ -507,7 +512,7 @@ public class Residence : Building {
         if (Resident_Space[Resident.Noble] != 0) {
             Happiness[Resident.Noble] = BASE_HAPPINESS[Resident.Noble];
             Happiness_Info[Resident.Noble].Add(string.Format("Base: {0}", UI_Happiness(BASE_HAPPINESS[Resident.Noble])));
-            if (Current_Residents[Resident.Noble] != 0) {
+            if (Current_Residents[Resident.Noble] != 0 && !City.Instance.Ignore_All_Needs) {
                 float unemployment = City.Instance.Unemployment[Resident.Noble] - UNEMPLOYMENT_PENALTY_THRESHOLD;
                 if (unemployment > 0.0f) {
                     Happiness[Resident.Noble] -= (MAX_UNEMPLOYMENT_PENALTY * unemployment) * 0.5f;
@@ -667,6 +672,11 @@ public class Residence : Building {
                 if (Happiness[Resident.Noble] < 0.4f) {
                     Show_Alert("alert_unhappiness");
                 }
+            }
+            if (City.Instance.Ignore_All_Needs && Happiness[Resident.Noble] < 0.5f) {
+                float cheats = 0.5f - Happiness[Resident.Noble];
+                Happiness[Resident.Noble] += cheats;
+                Happiness_Info[Resident.Noble].Add(string.Format("Cheats: +{0}", UI_Happiness(cheats)));
             }
         }
 
