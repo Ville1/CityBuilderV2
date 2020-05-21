@@ -9,6 +9,7 @@ public class SpriteData {
     public SpriteManager.SpriteType Type { get; private set; }
     public float Animation_Frame_Time { get; set; }
     public List<string> Animation_Sprites { get; set; }
+    public bool Is_Animated { get { return Animation_Frame_Time > 0.0f && Animation_Sprites.Count != 0; } }
 
     public SpriteData(string name)
     {
@@ -24,6 +25,14 @@ public class SpriteData {
         Type = type;
         Animation_Frame_Time = 0.0f;
         Animation_Sprites = new List<string>();
+    }
+
+    public SpriteData(SpriteManager.SpriteType type, List<string> animation_sprites, float animation_fps)
+    {
+        Name = animation_sprites[0];
+        Type = type;
+        Animation_Frame_Time = 1.0f / animation_fps;
+        Animation_Sprites = animation_sprites;
     }
 
     public SpriteData Clone()

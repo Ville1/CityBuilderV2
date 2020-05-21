@@ -196,6 +196,13 @@ public class Tile
         }
     }
 
+    public PathfindingNode Road_PathfindingNode
+    {
+        get {
+            return new PathfindingNode(Coordinates, Building == null || !Building.Is_Road || !Building.Is_Complete || Building.Is_Deconstructing ? float.MaxValue : 1.0f);
+        }
+    }
+
     public bool Active
     {
         get {

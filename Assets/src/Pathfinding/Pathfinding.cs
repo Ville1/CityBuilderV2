@@ -15,7 +15,7 @@ public class Pathfinding
     /// <param name="start"></param>
     /// <param name="end"></param>
     /// <returns></returns>
-    public static List<PathfindingNode> Path(List<PathfindingNode> all_nodes, PathfindingNode start, PathfindingNode end)
+    public static List<PathfindingNode> Path(List<PathfindingNode> all_nodes, PathfindingNode start, PathfindingNode end, bool diagonal_movement)
     {
         List<PathfindingNode> path = new List<PathfindingNode>();
         List<PathfindingNode> Q = new List<PathfindingNode>();
@@ -37,7 +37,7 @@ public class Pathfinding
         dist[start] = 0.0f;
 
 		///////TODO: Check for impassable tiles and give them dist = float.MaxValue
-        foreach (KeyValuePair<Coordinates.Direction, PathfindingNode> v in start.Get_Adjanced_nodes(all_nodes.ToList())) {
+        foreach (KeyValuePair<Coordinates.Direction, PathfindingNode> v in start.Get_Adjanced_Nodes(all_nodes.ToList(), diagonal_movement)) {
             dist[v.Value] = Helper.Is_Diagonal(v.Key) ? Mathf.Sqrt(2.0f) * v.Value.Cost : v.Value.Cost;
             prev[v.Value] = start;
         }
@@ -63,7 +63,7 @@ public class Pathfinding
                 path.Add(end);
                 break;
             } else {
-                foreach (KeyValuePair<Coordinates.Direction, PathfindingNode> v in u.Get_Adjanced_nodes(all_nodes)) {
+                foreach (KeyValuePair<Coordinates.Direction, PathfindingNode> v in u.Get_Adjanced_Nodes(all_nodes, diagonal_movement)) {
                     float alt = Helper.Is_Diagonal(v.Key) ? dist[u] + (Mathf.Sqrt(2.0f) * v.Value.Cost) : dist[u] + v.Value.Cost;
                     ///////TODO: Check for impassable tiles and give them dist = float.MaxValue
 					if (alt < dist[v.Value]) {

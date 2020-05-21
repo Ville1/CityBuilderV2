@@ -40,10 +40,13 @@ public class PathfindingNode
         return "PathfindingNode(X: " + X + ", Y: " + Y + ")";
     }
 
-    public Dictionary<Coordinates.Direction, PathfindingNode> Get_Adjanced_nodes(List<PathfindingNode> other_nodes)
+    public Dictionary<Coordinates.Direction, PathfindingNode> Get_Adjanced_Nodes(List<PathfindingNode> other_nodes, bool diagonals)
     {
         Dictionary<Coordinates.Direction, PathfindingNode> nodes = new Dictionary<Coordinates.Direction, PathfindingNode>();
         foreach (Coordinates.Direction direction in Enum.GetValues(typeof(Coordinates.Direction))) {
+            if(!diagonals && !Coordinates.Directly_Adjacent_Directions.Contains(direction)) {
+                continue;
+            }
             Coordinates new_coordinates = new Coordinates(Coordinates);
             new_coordinates.Shift(direction);
             PathfindingNode node = other_nodes.FirstOrDefault(x => x.Coordinates.X == new_coordinates.X && x.Coordinates.Y == new_coordinates.Y);

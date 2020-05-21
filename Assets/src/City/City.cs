@@ -29,6 +29,7 @@ public class City {
     public float Food_Consumed { get; private set; }
     public float Food_Delta { get; private set; }
     public List<Expedition> Expeditions { get; private set; }
+    public List<Entity> Walkers { get; private set; }
 
     public bool Ignore_Citizen_Needs { get; set; }
     public bool Ignore_All_Needs { get; set; }
@@ -59,6 +60,7 @@ public class City {
         }
         Cash_Delta = 0.0f;
         Expeditions = new List<Expedition>();
+        Walkers = new List<Entity>();
     }
 
     public void Start_New(string name)
@@ -71,6 +73,7 @@ public class City {
         added_buildings = new List<Building>();
         removed_expeditions = new List<Expedition>();
         added_expeditions = new List<Expedition>();
+        Walkers.Clear();
         foreach (Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
             Unemployment[resident] = 0.0f;
             Happiness[resident] = 0.0f;
@@ -279,6 +282,41 @@ public class City {
             }
             if (workers_allocated[resident] > current_population[resident]) {
                 CustomLogger.Instance.Error("Worker allocation mismatch, allocated > population");
+            }
+        }
+
+        //Spawn walkers
+        int max = Mathf.Min(Mathf.RoundToInt((current_population[Building.Resident.Peasant] + current_population[Building.Resident.Citizen] + current_population[Building.Resident.Noble]) / 30.0f) + 1, 10);
+        if (Walkers.Count < max) {
+            List<Building> possible_buildings = Buildings.Where(x => x.Is_Connected && x.Requires_Connection && x.Is_Operational && !x.Is_Road && x.Entities_Spawned.Count == 0).ToList();
+            if (possible_buildings.Count > 1) {
+                Building spawner = RNG.Instance.Item(possible_buildings);
+                possible_buildings.Remove(spawner);
+                Building road = null;
+                foreach (Building b in Map.Instance.Get_Buildings_Around(spawner)) {
+                    if (b.Is_Road && b.Is_Built && b.Is_Connected) {
+                        road = b;
+                        break;
+                    }
+                }
+                if (road != null) {
+                    Building target_building = RNG.Instance.Item(possible_buildings);
+                    Building target_road = null;
+                    foreach (Building b in Map.Instance.Get_Buildings_Around(target_building)) {
+                        if (b.Is_Road && b.Is_Built && b.Is_Connected) {
+                            target_road = b;
+                            break;
+                        }
+                    }
+                    if (target_road != null) {
+                        List<PathfindingNode> path = Pathfinding.Path(Map.Instance.Road_Pathing, road.Tile.PathfindingNode, target_road.Tile.Road_PathfindingNode, false);
+                        if (path.Count > 2) {
+                            Entity walker = new Entity(EntityPrototypes.Instance.Get("walker"), road.Tile, spawner);
+                            walker.Set_Path(path, 0.5f);
+                            Walkers.Add(walker);
+                        }
+                    }
+                }
             }
         }
 

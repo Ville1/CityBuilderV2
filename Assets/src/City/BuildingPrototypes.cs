@@ -414,17 +414,27 @@ public class BuildingPrototypes {
 
             float total_water_tiles = 0.0f;
             float own_water_tiles = 0.0f;
+            List<Tile> boat_spawns = new List<Tile>();
+            int max_boats = Mathf.RoundToInt(2 * building.Efficency);
             foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
                 if (tile.Internal_Name.StartsWith("water")) {
                     total_water_tiles += 1.0f;
                     if (tile.Can_Work(building, Tile.Work_Type.Fish)) {
                         own_water_tiles += 1.0f;
+                        if(tile.Building == null) {
+                            boat_spawns.Add(tile);
+                        }
                     }
                 }
             }
 
             if(total_water_tiles == 0.0f) {
                 return;
+            }
+
+            if(boat_spawns.Count != 0 && building.Entities_Spawned.Count < max_boats) {
+                Tile spawn = RNG.Instance.Item(boat_spawns);
+                Entity boat = new Entity(EntityPrototypes.Instance.Get("fishing_boat"), spawn, building);
             }
             
             float prefered_water_count = 25.0f;
