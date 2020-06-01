@@ -16,6 +16,7 @@ public class Building {
     public static readonly float UPDATE_INTERVAL = 1.0f;
     public static readonly float ALERT_CHANGE_INTERVAL = 2.0f;
     public static readonly string TOWN_HALL_INTERNAL_NAME = "town_hall";
+    public static readonly string DOCK_ID_KEY = "dock_id";
     public static int INPUT_OUTPUT_STORAGE_LIMIT = 100;
     public static float DECONSTRUCTION_SPEED = 10.0f;
     public static float REFUND = 0.50f;
@@ -26,7 +27,7 @@ public class Building {
     public enum UI_Category { Admin, Infrastructure, Housing, Services, Forestry, Agriculture, Textile, Industry, Unbuildable }
     public enum Resident { Peasant, Citizen, Noble }
     public enum BuildingSize { s1x1, s2x2, s3x3 }
-    public enum Tag { Undeletable, Does_Not_Block_Wind, Bridge, Land_Trade, Water_Trade, Unique, Does_Not_Disrupt_Hunting, No_Notification_On_Build, Creates_Expeditions }
+    public enum Tag { Undeletable, Does_Not_Block_Wind, Bridge, Land_Trade, Water_Trade, Unique, Does_Not_Disrupt_Hunting, No_Notification_On_Build, Creates_Expeditions, Dock }
 
     public long Id { get; protected set; }
     public string Name { get; private set; }

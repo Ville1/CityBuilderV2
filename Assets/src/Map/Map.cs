@@ -1252,6 +1252,22 @@ public class Map : MonoBehaviour
         }
     }
 
+    public List<PathfindingNode> Ship_Pathing
+    {
+        get {
+            if (State != MapState.Normal) {
+                return null;
+            }
+            List<PathfindingNode> nodes = new List<PathfindingNode>();
+            for (int x = 0; x < Width; x++) {
+                for (int y = 0; y < Height; y++) {
+                    nodes.Add(tiles[x][y].Ship_PathfindingNode);
+                }
+            }
+            return nodes;
+        }
+    }
+
     private void Update_Ship_Access_Recursive(Tile tile)
     {
         if(!tile.Is_Water || (tile.Building != null && !tile.Building.Is_Deconstructing) || tile.Has_Ship_Access) {

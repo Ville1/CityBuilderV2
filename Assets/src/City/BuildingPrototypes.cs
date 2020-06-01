@@ -48,7 +48,7 @@ public class BuildingPrototypes {
                 Building dock = new Building(Instance.Get("dock"), tile, new List<Tile>() { tile }, false);
                 dock.Selected_Sprite = dock_data.Value;
                 City.Instance.Add_Building(dock);
-                building.Data.Add("dock_id", dock.Id.ToString());
+                building.Data.Add(Building.DOCK_ID_KEY, dock.Id.ToString());
                 break;
             }
         }
@@ -56,7 +56,7 @@ public class BuildingPrototypes {
 
     //TODO: Refund ship is this harbor has one?
     private void On_Harbor_Deconstruct(Building building) {
-        Building dock = City.Instance.Buildings.FirstOrDefault(x => x.Id == long.Parse(building.Data["dock_id"]));
+        Building dock = City.Instance.Buildings.FirstOrDefault(x => x.Id == long.Parse(building.Data[Building.DOCK_ID_KEY]));
         if (dock != null) {
             dock.Deconstruct(true, false);
         }
@@ -2105,6 +2105,7 @@ public class BuildingPrototypes {
         prototypes.First(x => x.Internal_Name == "dock").Sprites.Add(new SpriteData("dock_e"));
         prototypes.First(x => x.Internal_Name == "dock").Sprites.Add(new SpriteData("dock_s"));
         prototypes.First(x => x.Internal_Name == "dock").Sprites.Add(new SpriteData("dock_w"));
+        prototypes.First(x => x.Internal_Name == "dock").Tags.Add(Building.Tag.Dock);
         prototypes.First(x => x.Internal_Name == "dock").Tags.Add(Building.Tag.Does_Not_Block_Wind);
         prototypes.First(x => x.Internal_Name == "dock").Tags.Add(Building.Tag.Does_Not_Disrupt_Hunting);
         prototypes.First(x => x.Internal_Name == "dock").Tags.Add(Building.Tag.No_Notification_On_Build);

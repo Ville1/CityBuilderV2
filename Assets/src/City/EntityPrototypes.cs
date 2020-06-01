@@ -20,6 +20,12 @@ public class EntityPrototypes {
             new SpriteData(SpriteManager.SpriteType.Entity, new List<string>() { "walker_b_1", "walker_b_2" }, 2.0f),
             new SpriteData(SpriteManager.SpriteType.Entity, new List<string>() { "walker_c_1", "walker_c_2" }, 2.0f)
         }, -1, -1));
+        prototypes.Add(new Entity("ship", Entity.EntityType.Ship, new List<SpriteData> {
+            new SpriteData(SpriteManager.SpriteType.Entity, new List<string>() { "ship_n_1", "ship_n_2", "ship_n_3" }, 2.0f),
+            new SpriteData(SpriteManager.SpriteType.Entity, new List<string>() { "ship_e_1", "ship_e_2", "ship_e_3" }, 2.0f),
+            new SpriteData(SpriteManager.SpriteType.Entity, new List<string>() { "ship_s_1", "ship_s_2", "ship_s_3" }, 2.0f),
+            new SpriteData(SpriteManager.SpriteType.Entity, new List<string>() { "ship_w_1", "ship_w_2", "ship_w_3" }, 2.0f)
+        }, -1, -1));
     }
 
     public static EntityPrototypes Instance

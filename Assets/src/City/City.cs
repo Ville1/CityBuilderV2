@@ -39,6 +39,8 @@ public class City {
     private List<Building> added_buildings;
     private List<Expedition> removed_expeditions;
     private List<Expedition> added_expeditions;
+    private Dictionary<Building, Entity> ships;
+    private float ship_spawn_cooldown;
 
     private City()
     {
@@ -61,6 +63,8 @@ public class City {
         Cash_Delta = 0.0f;
         Expeditions = new List<Expedition>();
         Walkers = new List<Entity>();
+        ships = new Dictionary<Building, Entity>();
+        ship_spawn_cooldown = 0.0f;
     }
 
     public void Start_New(string name)
@@ -74,6 +78,8 @@ public class City {
         removed_expeditions = new List<Expedition>();
         added_expeditions = new List<Expedition>();
         Walkers.Clear();
+        ships.Clear();
+        ship_spawn_cooldown = 0.0f;
         foreach (Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
             Unemployment[resident] = 0.0f;
             Happiness[resident] = 0.0f;
@@ -320,6 +326,44 @@ public class City {
             }
         }
 
+        //Spawn ships
+        if (Map.Instance.Ship_Spawns.Count > 0) {
+            ship_spawn_cooldown -= delta_time * TimeManager.Instance.Multiplier;
+            if (ship_spawn_cooldown <= 0.0f) {
+                ship_spawn_cooldown += 120.0f * (200.0f / (100.0f + ((0.5f * current_population[Building.Resident.Peasant]) + (1.5f * current_population[Building.Resident.Citizen]) + current_population[Building.Resident.Noble]))) *
+                    (RNG.Instance.Next(50, 150) * 0.01f);
+                foreach (Building building in Buildings) {
+                    if (!building.Data.ContainsKey(Building.DOCK_ID_KEY)) {
+                        continue;
+                    }
+                    Building dock = Buildings.FirstOrDefault(x => x.Id == long.Parse(building.Data[Building.DOCK_ID_KEY]));
+                    if (dock == null || ships.ContainsKey(dock) || building.Tags.Contains(Building.Tag.Creates_Expeditions)) {
+                        continue;
+                    }
+                    Tile spawn = RNG.Instance.Item(Map.Instance.Ship_Spawns);
+                    Tile target = null;
+                    foreach(Tile t in Map.Instance.Get_Adjanced_Tiles(dock.Tile).Select(x => x.Value).ToArray()) {
+                        if(t.Building == null && t.Has_Ship_Access) {
+                            target = t;
+                            break;
+                        }
+                    }
+                    if(target == null) {
+                        break;
+                    }
+                    List<PathfindingNode> path = Pathfinding.Path(Map.Instance.Ship_Pathing, spawn.Ship_PathfindingNode, target.Ship_PathfindingNode, false);
+                    if(path.Count > 2) {
+                        List<PathfindingNode> return_path = Pathfinding.Path(Map.Instance.Ship_Pathing, target.Ship_PathfindingNode, spawn.Ship_PathfindingNode, false);
+                        path.AddRange(return_path.Where(x => !x.Coordinates.Equals(target.Coordinates)).ToList());
+                        Entity ship = new Entity(EntityPrototypes.Instance.Get("ship"), spawn, dock);
+                        ship.Set_Path(path, 0.75f);
+                        ship.Add_Order(new Entity.PathOrder(target.Ship_PathfindingNode, 20.0f));
+                        ships.Add(dock, ship);
+                    }
+                }
+            }
+        }
+
         //GUI
         int peasant_current = current_population[Building.Resident.Peasant];
         int peasant_max = max_population[Building.Resident.Peasant];
@@ -533,6 +577,13 @@ public class City {
     {
         if (!added_expeditions.Contains(expedition)) {
             added_expeditions.Add(expedition);
+        }
+    }
+
+    public void Delete_Ship(Entity ship)
+    {
+        if (ships.ContainsValue(ship)) {
+            ships.Remove(ships.First(x => x.Value == ship).Key);
         }
     }
 
