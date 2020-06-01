@@ -337,7 +337,7 @@ public class City {
                         continue;
                     }
                     Building dock = Buildings.FirstOrDefault(x => x.Id == long.Parse(building.Data[Building.DOCK_ID_KEY]));
-                    if (dock == null || ships.ContainsKey(dock) || building.Tags.Contains(Building.Tag.Creates_Expeditions)) {
+                    if (dock == null || ships.ContainsKey(dock) || building.Tags.Contains(Building.Tag.Creates_Expeditions) || !building.Is_Operational) {
                         continue;
                     }
                     Tile spawn = RNG.Instance.Item(Map.Instance.Ship_Spawns);

@@ -206,7 +206,7 @@ public class Tile
     public PathfindingNode Ship_PathfindingNode
     {
         get {
-            return new PathfindingNode(Coordinates, Has_Ship_Access ? 1.0f : float.MaxValue);
+            return new PathfindingNode(Coordinates, Has_Ship_Access ? 1.0f + Entities.Count : float.MaxValue);
         }
     }
 

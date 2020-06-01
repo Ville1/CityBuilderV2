@@ -73,7 +73,7 @@ public class Entity {
             Map.Instance.Entity_Container.transform
         );
         GameObject.name = ToString();
-        SpriteRenderer.sortingLayerName = "Entities";
+        SpriteRenderer.sortingLayerName = "Buildings";
 
         Sprite = RNG.Instance.Item(Sprites);
         SpriteRenderer.sprite = SpriteManager.Instance.Get(Sprite.Name, Sprite.Type);
@@ -144,7 +144,7 @@ public class Entity {
                     Map.Instance.Delete_Entity(this);
                     return;
                 }
-                Tile = Map.Instance.Get_Tile_At(Next_Node.Coordinates);
+                Change_Tile(Next_Node.Coordinates);
                 GameObject.transform.position = new Vector3(Tile.GameObject.transform.position.x, Tile.GameObject.transform.position.y + (Tile.Building.Tags.Contains(Building.Tag.Bridge) ? BRIDGE_HEIGHT : 0.0f),
                     Tile.GameObject.transform.position.z);
                 Path_Index++;
@@ -187,7 +187,7 @@ public class Entity {
                     Map.Instance.Delete_Entity(this);
                     return;
                 }
-                Tile = Map.Instance.Get_Tile_At(Next_Node.Coordinates);
+                Change_Tile(Next_Node.Coordinates);
                 GameObject.transform.position = new Vector3(Tile.GameObject.transform.position.x, Tile.GameObject.transform.position.y, Tile.GameObject.transform.position.z);
                 Path_Index++;
                 Current_Node = Path[Path_Index];
@@ -237,6 +237,10 @@ public class Entity {
                     current_order = order;
                 }
             }
+        }
+        int sorting_order = Map.Instance.Height - Tile.Coordinates.Y + 1;
+        if (SpriteRenderer.sortingOrder != sorting_order) {
+            SpriteRenderer.sortingOrder = sorting_order;
         }
     }
 
@@ -288,6 +292,13 @@ public class Entity {
     public override string ToString()
     {
         return Is_Prototype ? string.Format("{0}_prototype", Internal_Name) : string.Format("{0}_#{1}", Internal_Name, Id);
+    }
+
+    private void Change_Tile(Coordinates coordinates)
+    {
+        Tile.Entities.Remove(this);
+        Tile = Map.Instance.Get_Tile_At(Next_Node.Coordinates);
+        Tile.Entities.Add(this);
     }
 
     public class PathOrder
