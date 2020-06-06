@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -240,6 +241,40 @@ public class ConsoleManager : MonoBehaviour
                 expedition.Cheat_Finish();
             }
             return string.Format("{0} expeditions{1} finished", City.Instance.Expeditions.Count, Helper.Plural(City.Instance.Expeditions.Count));
+        });
+
+        commands.Add("serve", (string[] arguments) => {
+            if (arguments.Length != 4) {
+                return "Invalid number of arguments";
+            }
+            float amount = 0;
+            if (!float.TryParse(arguments[1], out amount)) {
+                return "Invalid service amount";
+            }
+            float quality = 0;
+            if (!float.TryParse(arguments[2], out quality)) {
+                return "Invalid service quality";
+            }
+            Residence.ServiceType type = Residence.ServiceType.Chapel;
+            bool found = false;
+            foreach(Residence.ServiceType t in Enum.GetValues(typeof(Residence.ServiceType))) {
+                if(t.ToString().ToLower() == arguments[3].ToLower()) {
+                    type = t;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                return "Invalid service type";
+            }
+            int count = 0;
+            foreach(Building building in City.Instance.Buildings) {
+                if(building is Residence) {
+                    (building as Residence).Serve(type, amount, quality);
+                    count++;
+                }
+            }
+            return string.Format("{0} residence{1} served", count, Helper.Plural(count));
         });
 
         Update_Output();

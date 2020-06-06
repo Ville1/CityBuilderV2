@@ -24,8 +24,8 @@ public class Residence : Building {
     };
     public static readonly Dictionary<Resident, List<ServiceType>> SERVICES_CONSUMED = new Dictionary<Resident, List<ServiceType>>() {
         { Resident.Peasant, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Tavern, ServiceType.Chapel, ServiceType.Taxes, ServiceType.Clothes, ServiceType.Furniture } },
-        { Resident.Citizen, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Tavern, ServiceType.Chapel, ServiceType.Taxes, ServiceType.Clothes, ServiceType.Coffeehouse, ServiceType.Tableware, ServiceType.Furniture } },
-        { Resident.Noble, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Furniture, ServiceType.Taxes, ServiceType.Fine_Clothes, ServiceType.Tableware, ServiceType.Wine, ServiceType.Delicacies, ServiceType.Jewelry } }//Jewelry, silverware, bath house, church, fine clothes, delicacies <-> wine, parks, theatre
+        { Resident.Citizen, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Tavern, ServiceType.Chapel, ServiceType.Taxes, ServiceType.Clothes, ServiceType.Coffeehouse, ServiceType.Tableware, ServiceType.Furniture, ServiceType.Theatre } },
+        { Resident.Noble, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Furniture, ServiceType.Taxes, ServiceType.Fine_Clothes, ServiceType.Tableware, ServiceType.Wine, ServiceType.Delicacies, ServiceType.Jewelry, ServiceType.Theatre } }//silverware, bath house, church, parks
     };
     public static readonly Dictionary<ServiceType, float> OTHER_SERVICE_CONSUMPTION = new Dictionary<ServiceType, float>() {
         { ServiceType.Herbs, 0.0025f },
@@ -40,7 +40,8 @@ public class Residence : Building {
         { ServiceType.Wine, 0.025f },
         { ServiceType.Delicacies, 0.025f },
         { ServiceType.Jewelry, 0.01f },
-        { ServiceType.Fine_Clothes, 0.01f }
+        { ServiceType.Fine_Clothes, 0.01f },
+        { ServiceType.Theatre, 0.05f }
     };
     public static readonly float FUEL_CONSUMPTION_PER_TILE = 0.025f;//Per day
     public static readonly float FUEL_CONSUMPTION_PER_RESIDENT = 0.005f;//Per day
@@ -57,7 +58,7 @@ public class Residence : Building {
     public static readonly float DIRT_ROAD_RANGE = 3.0f;
     public static readonly float DIRT_ROAD_PENALTY = 0.2f;
 
-    public enum ServiceType { Food, Fuel, Herbs, Salt, Tavern, Chapel, Taxes, Clothes, Coffeehouse, Tableware, Furniture, Wine, Delicacies, Jewelry, Fine_Clothes }
+    public enum ServiceType { Food, Fuel, Herbs, Salt, Tavern, Chapel, Taxes, Clothes, Coffeehouse, Tableware, Furniture, Wine, Delicacies, Jewelry, Fine_Clothes, Theatre }
 
     public float Residence_Quality { get; private set; }
     public Dictionary<Resident, int> Resident_Space { get; private set; }
@@ -484,6 +485,13 @@ public class Residence : Building {
                     Happiness_Info[Resident.Citizen].Add(string.Format("Chapel: +{0}", UI_Happiness(chapel_bonus)));
                 }
 
+                if (services[ServiceType.Theatre][AMOUNT] != 0.0f) {
+                    float base_theatre_bonus = 0.02f;
+                    float theatre_bonus = base_theatre_bonus * services[ServiceType.Theatre][QUALITY];
+                    Happiness[Resident.Citizen] += theatre_bonus;
+                    Happiness_Info[Resident.Citizen].Add(string.Format("Theatre: +{0}", UI_Happiness(theatre_bonus)));
+                }
+
                 if (services[ServiceType.Coffeehouse][AMOUNT] != 0.0f) {
                     float base_coffeehouse_bonus = 0.10f;
                     float coffeehouse_bonus = base_coffeehouse_bonus * services[ServiceType.Coffeehouse][QUALITY];
@@ -660,6 +668,13 @@ public class Residence : Building {
                     float delicacy_bonus = base_delicacy_bonus * services[ServiceType.Delicacies][QUALITY];
                     Happiness[Resident.Noble] += delicacy_bonus;
                     Happiness_Info[Resident.Noble].Add(string.Format("Delicacies: +{0}", UI_Happiness(delicacy_bonus)));
+                }
+
+                if (services[ServiceType.Theatre][AMOUNT] != 0.0f) {
+                    float base_theatre_bonus = 0.05f;
+                    float theatre_bonus = base_theatre_bonus * services[ServiceType.Theatre][QUALITY];
+                    Happiness[Resident.Noble] += theatre_bonus;
+                    Happiness_Info[Resident.Noble].Add(string.Format("Theatre: +{0}", UI_Happiness(theatre_bonus)));
                 }
 
                 if (services[ServiceType.Taxes][AMOUNT] != 0.0f) {

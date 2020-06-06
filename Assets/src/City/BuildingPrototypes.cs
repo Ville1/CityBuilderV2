@@ -2746,6 +2746,20 @@ public class BuildingPrototypes {
         prototypes.First(x => x.Internal_Name == "expedition_harbor").On_Build_Check = On_Harbor_Ship_Build_Check;
         prototypes.First(x => x.Internal_Name == "expedition_harbor").On_Building_Start = On_Harbor_Ship_Building_Start;
         prototypes.First(x => x.Internal_Name == "expedition_harbor").Tags.Add(Building.Tag.Creates_Expeditions);
+
+        prototypes.Add(new Building("Theatre", "theatre", Building.UI_Category.Services, "theatre", Building.BuildingSize.s3x3, 300, new Dictionary<Resource, int>() {
+            { Resource.Lumber, 250 }, { Resource.Stone, 275 }, { Resource.Marble, 25 }, { Resource.Tools, 30 }
+        }, 650, new List<Resource>(), 0, 0.0f, 550, new Dictionary<Resource, float>() { { Resource.Stone, 0.05f }, { Resource.Lumber, 0.05f } }, 5.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() {
+        { Building.Resident.Citizen, 15 }, { Building.Resident.Noble, 10 } }, 20, true, false, true, 0.0f, 14, null, delegate (Building theatre, float delta_time) {
+            if (!theatre.Is_Operational) {
+                return;
+            }
+            foreach (Building building in theatre.Get_Connected_Buildings(theatre.Road_Range).Select(x => x.Key).ToArray()) {
+                if (building is Residence) {
+                    (building as Residence).Serve(Residence.ServiceType.Theatre, 1.0f, theatre.Efficency);
+                }
+            }
+        }, null, null, new List<Resource>(), new List<Resource>(), 0.01f, 5.0f));
     }
 
     public static BuildingPrototypes Instance
