@@ -126,6 +126,7 @@ public class Entity {
             wait_time_left -= delta_time * TimeManager.Instance.Multiplier;
             return;
         }
+        bool moving_road_south = false;
         if (Type == EntityType.Road_Path && !TimeManager.Instance.Paused) {
             if (Path == null || Path.Count == 0) {
                 Map.Instance.Delete_Entity(this);
@@ -168,6 +169,7 @@ public class Entity {
                     next,
                     Current_Movement
                 );
+                moving_road_south = next_tile.Y < Tile.Y;
             }
         } else if (Type == EntityType.Ship && !TimeManager.Instance.Paused) {
             if (Path == null || Path.Count == 0) {
@@ -238,7 +240,7 @@ public class Entity {
                 }
             }
         }
-        int sorting_order = Map.Instance.Height - Tile.Coordinates.Y + 1;
+        int sorting_order = Map.Instance.Height - Tile.Coordinates.Y + 1 + (moving_road_south ? 1 : 0);
         if (SpriteRenderer.sortingOrder != sorting_order) {
             SpriteRenderer.sortingOrder = sorting_order;
         }

@@ -21,6 +21,21 @@ public class CityInfoGUIManager : MonoBehaviour {
     public Text Food_Consumed_Text;
     public Text Food_Delta_Text;
 
+    public Text Peasant_Happiness_Text;
+    public Text Peasant_Education_Text;
+    public Text Peasant_Health_Text;
+    public Text Peasant_Efficency_Text;
+
+    public Text Citizen_Happiness_Text;
+    public Text Citizen_Education_Text;
+    public Text Citizen_Health_Text;
+    public Text Citizen_Efficency_Text;
+
+    public Text Noble_Happiness_Text;
+    public Text Noble_Education_Text;
+    public Text Noble_Health_Text;
+    public Text Noble_Efficency_Text;
+
     public GameObject Resources_Tab_Panel;
     public GameObject Resources_Content;
     public GameObject Resource_Row_Prototype;
@@ -118,6 +133,21 @@ public class CityInfoGUIManager : MonoBehaviour {
         Food_Produced_Text.text = Helper.Float_To_String(City.Instance.Food_Produced, 1, true);
         Food_Consumed_Text.text = Helper.Float_To_String(City.Instance.Food_Consumed, 1);
         Food_Delta_Text.text = Helper.Float_To_String(City.Instance.Food_Delta, 1, true);
+        //Peasants
+        Peasant_Happiness_Text.text = Helper.Float_To_String(City.Instance.Happiness[Building.Resident.Peasant] * 100.0f, 0);
+        Peasant_Education_Text.text = "-";
+        Peasant_Health_Text.text = "WIP";
+        Peasant_Efficency_Text.text = string.Format("{0}%", Helper.Float_To_String(Residence.Get_Efficency(Building.Resident.Peasant) * 100.0f, 1));
+        //Citizens
+        Citizen_Happiness_Text.text = Helper.Float_To_String(City.Instance.Happiness[Building.Resident.Citizen] * 100.0f, 0);
+        Citizen_Education_Text.text = string.Format("{0}%", Helper.Float_To_String(City.Instance.Education[Building.Resident.Citizen] * 100.0f, 1));
+        Citizen_Health_Text.text = "WIP";
+        Citizen_Efficency_Text.text = string.Format("{0}%", Helper.Float_To_String(Residence.Get_Efficency(Building.Resident.Citizen) * 100.0f, 1));
+        //Nobles
+        Noble_Happiness_Text.text = Helper.Float_To_String(City.Instance.Happiness[Building.Resident.Noble] * 100.0f, 0);
+        Noble_Education_Text.text = string.Format("{0}%", Helper.Float_To_String(City.Instance.Education[Building.Resident.Noble] * 100.0f, 1));
+        Noble_Health_Text.text = "WIP";
+        Noble_Efficency_Text.text = string.Format("{0}%", Helper.Float_To_String(Residence.Get_Efficency(Building.Resident.Noble) * 100.0f, 1));
     }
 
     private void Update_Resources()

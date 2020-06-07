@@ -24,8 +24,8 @@ public class Residence : Building {
     };
     public static readonly Dictionary<Resident, List<ServiceType>> SERVICES_CONSUMED = new Dictionary<Resident, List<ServiceType>>() {
         { Resident.Peasant, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Tavern, ServiceType.Chapel, ServiceType.Taxes, ServiceType.Clothes, ServiceType.Furniture } },
-        { Resident.Citizen, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Tavern, ServiceType.Chapel, ServiceType.Taxes, ServiceType.Clothes, ServiceType.Coffeehouse, ServiceType.Tableware, ServiceType.Furniture, ServiceType.Theatre } },
-        { Resident.Noble, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Furniture, ServiceType.Taxes, ServiceType.Fine_Clothes, ServiceType.Tableware, ServiceType.Wine, ServiceType.Delicacies, ServiceType.Jewelry, ServiceType.Theatre } }//silverware, bath house, church, parks
+        { Resident.Citizen, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Tavern, ServiceType.Chapel, ServiceType.Taxes, ServiceType.Clothes, ServiceType.Coffeehouse, ServiceType.Tableware, ServiceType.Furniture, ServiceType.Theatre, ServiceType.Education } },
+        { Resident.Noble, new List<ServiceType>() { ServiceType.Food, ServiceType.Fuel, ServiceType.Herbs, ServiceType.Salt, ServiceType.Furniture, ServiceType.Taxes, ServiceType.Fine_Clothes, ServiceType.Tableware, ServiceType.Wine, ServiceType.Delicacies, ServiceType.Jewelry, ServiceType.Theatre, ServiceType.University } }//silverware, bath house, church, parks
     };
     public static readonly Dictionary<ServiceType, float> OTHER_SERVICE_CONSUMPTION = new Dictionary<ServiceType, float>() {
         { ServiceType.Herbs, 0.0025f },
@@ -41,7 +41,9 @@ public class Residence : Building {
         { ServiceType.Delicacies, 0.025f },
         { ServiceType.Jewelry, 0.01f },
         { ServiceType.Fine_Clothes, 0.01f },
-        { ServiceType.Theatre, 0.05f }
+        { ServiceType.Theatre, 0.05f },
+        { ServiceType.Education, 0.05f },
+        { ServiceType.University, 0.05f }
     };
     public static readonly float FUEL_CONSUMPTION_PER_TILE = 0.025f;//Per day
     public static readonly float FUEL_CONSUMPTION_PER_RESIDENT = 0.005f;//Per day
@@ -58,7 +60,7 @@ public class Residence : Building {
     public static readonly float DIRT_ROAD_RANGE = 3.0f;
     public static readonly float DIRT_ROAD_PENALTY = 0.2f;
 
-    public enum ServiceType { Food, Fuel, Herbs, Salt, Tavern, Chapel, Taxes, Clothes, Coffeehouse, Tableware, Furniture, Wine, Delicacies, Jewelry, Fine_Clothes, Theatre }
+    public enum ServiceType { Food, Fuel, Herbs, Salt, Tavern, Chapel, Taxes, Clothes, Coffeehouse, Tableware, Furniture, Wine, Delicacies, Jewelry, Fine_Clothes, Theatre, Education, University }
 
     public float Residence_Quality { get; private set; }
     public Dictionary<Resident, int> Resident_Space { get; private set; }
@@ -780,6 +782,17 @@ public class Residence : Building {
         return services[service][QUALITY];
     }
 
+    public float Education(Resident resident)
+    {
+        switch (resident) {
+            case Resident.Citizen:
+                return Mathf.Clamp01(services[ServiceType.Education][QUALITY]);
+            case Resident.Noble:
+                return Mathf.Clamp01(services[ServiceType.University][QUALITY]);
+        }
+        return 0.0f;
+    }
+
     private string UI_Happiness(float happiness)
     {
         return Mathf.RoundToInt(100.0f * happiness).ToString();
@@ -805,5 +818,65 @@ public class Residence : Building {
             }
         }
         return count;
+    }
+
+    public static float Get_Efficency(Resident resident)
+    {
+        float happiness = City.Instance.Happiness[resident];
+        float happiness_penalty_threshold = 0.0f;
+        float happiness_bonus_threshold = 0.0f;
+        float max_happiness_penalty = 0.0f;
+        float max_happiness_bonus = 0.0f;
+        float education = 0.0f;
+        float max_education_penalty = 0.0f;
+        float max_education_bonus = 0.0f;
+        float efficency = 1.0f;
+
+        switch (resident) {
+            case Resident.Peasant:
+                happiness_penalty_threshold = 0.35f;
+                happiness_bonus_threshold = 0.50f;
+                max_happiness_penalty = 0.50f;
+                max_happiness_bonus = 0.25f;
+                education = City.Instance.Education[Resident.Peasant];
+                max_education_penalty = 0.0f;
+                max_education_bonus = 0.0f;
+                break;
+            case Resident.Citizen:
+                happiness_penalty_threshold = 0.40f;
+                happiness_bonus_threshold = 0.50f;
+                max_happiness_penalty = 0.55f;
+                max_happiness_bonus = 0.20f;
+                education = City.Instance.Education[Resident.Citizen];
+                max_education_penalty = 0.05f;
+                max_education_bonus = 0.05f;
+                break;
+            case Resident.Noble:
+                happiness_penalty_threshold = 0.45f;
+                happiness_bonus_threshold = 0.50f;
+                max_happiness_penalty = 0.60f;
+                max_happiness_bonus = 0.20f;
+                education = City.Instance.Education[Resident.Noble];
+                max_education_penalty = 0.05f;
+                max_education_bonus = 0.05f;
+                break;
+            default:
+                CustomLogger.Instance.Error(string.Format("Invalid Resident type: {0}", resident));
+                return 1.0f;
+        }
+
+        if(happiness < happiness_penalty_threshold) {
+            efficency -= (max_happiness_penalty * ((happiness_penalty_threshold - happiness) / happiness_penalty_threshold));
+        } else if(happiness > happiness_bonus_threshold) {
+            efficency += (max_happiness_bonus * ((happiness - happiness_bonus_threshold) / (1.0f - happiness_bonus_threshold)));
+        }
+
+        if(max_education_penalty > 0.0f && education < 0.5f) {
+            efficency -= (max_education_penalty * ((0.5f - education) / 0.5f));
+        } else if(max_education_bonus > 0.0f && education > 0.5f) {
+            efficency += (max_education_bonus * ((education - 0.5f) / 0.5f));
+        }
+        
+        return Mathf.Clamp(efficency, 0.05f, 2.0f);
     }
 }

@@ -27,7 +27,7 @@ public class Building {
     public enum UI_Category { Admin, Infrastructure, Housing, Services, Forestry, Agriculture, Textile, Industry, Unbuildable }
     public enum Resident { Peasant, Citizen, Noble }
     public enum BuildingSize { s1x1, s2x2, s3x3 }
-    public enum Tag { Undeletable, Does_Not_Block_Wind, Bridge, Land_Trade, Water_Trade, Unique, Does_Not_Disrupt_Hunting, No_Notification_On_Build, Creates_Expeditions, Dock }
+    public enum Tag { Undeletable, Does_Not_Block_Wind, Bridge, Land_Trade, Water_Trade, Unique, Does_Not_Disrupt_Hunting, No_Notification_On_Build, Creates_Expeditions, Dock, Random_Sprite }
 
     public long Id { get; protected set; }
     public string Name { get; private set; }
@@ -831,29 +831,16 @@ public class Building {
             }
             float workers = 0.0f;
             float workers_needed = Max_Workers_Total;
-            float worker_happiness_total = 0.0f;
+            float worker_efficency_total = 0.0f;
             foreach(KeyValuePair<Resident, int> pair in Current_Workers) {
                 workers += pair.Value;
-                worker_happiness_total += pair.Value * City.Instance.Happiness[pair.Key];
+                worker_efficency_total += pair.Value * Residence.Get_Efficency(pair.Key);
             }
             if(workers == 0.0f) {
                 return 0.0f;
             }
             float base_efficency = workers / workers_needed;
-            float multiplier = 1.0f;
-            float average_happiness = Mathf.Clamp01(worker_happiness_total / workers);
-
-            float happiness_penalty_threshold = 0.40f;
-            float happiness_penalty_max = 0.65f;
-            float happiness_bonus_threshold = 0.60f;
-            float happiness_bonus_max = 0.35f;
-            if (average_happiness < happiness_penalty_threshold) {
-                float penalty = happiness_penalty_max * ((happiness_penalty_threshold - average_happiness) / happiness_penalty_threshold);
-                multiplier -= penalty;
-            } else if(average_happiness > happiness_bonus_threshold) {
-                float bonus = happiness_bonus_max * ((average_happiness - happiness_bonus_threshold) / (1.0f - happiness_bonus_threshold));
-                multiplier += bonus;
-            }
+            float multiplier = worker_efficency_total / workers;
 
             float hp_penalty_threshold = 0.5f;
             float hp_penalty_max = 0.5f;

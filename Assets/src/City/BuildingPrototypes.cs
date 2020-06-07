@@ -2760,6 +2760,21 @@ public class BuildingPrototypes {
                 }
             }
         }, null, null, new List<Resource>(), new List<Resource>(), 0.01f, 5.0f));
+
+        prototypes.Add(new Building("School House", "school_house", Building.UI_Category.Services, "school_house", Building.BuildingSize.s2x2, 125, new Dictionary<Resource, int>() {
+            { Resource.Lumber, 45 }, { Resource.Bricks, 90 }, { Resource.Stone, 20 }, { Resource.Tools, 15 }
+        }, 200, new List<Resource>(), 0, 0.0f, 155, new Dictionary<Resource, float>() { { Resource.Bricks, 0.02f }, { Resource.Lumber, 0.01f } }, 2.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() {
+        { Building.Resident.Citizen, 5 } }, 5, true, false, true, 0.0f, 5, null, delegate (Building school, float delta_time) {
+            if (!school.Is_Operational) {
+                return;
+            }
+            foreach (Building building in school.Get_Connected_Buildings(school.Road_Range).Select(x => x.Key).ToArray()) {
+                if (building is Residence) {
+                    (building as Residence).Serve(Residence.ServiceType.Education, 1.0f, school.Efficency);
+                }
+            }
+        }, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
+        prototypes.First(x => x.Internal_Name == "school_house").Sprites.Add(new SpriteData("school_house_1"));
     }
 
     public static BuildingPrototypes Instance
