@@ -769,6 +769,11 @@ public class BuildingPrototypes {
             { Resource.Stone, 5 }, { Resource.Tools, 1 }
         }, 25, new List<Resource>(), 0, 0.0f, 50, new Dictionary<Resource, float>(), 0.02f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 0, null, null, null, null,
         new List<Resource>(), new List<Resource>(), 0.5f, 3.0f));
+        prototypes.First(x => x.Internal_Name == "decorative_tree").Sprites.Add(new SpriteData("decorative_tree_1"));
+        prototypes.First(x => x.Internal_Name == "decorative_tree").Sprites.Add(new SpriteData("decorative_tree_2"));
+        prototypes.First(x => x.Internal_Name == "decorative_tree").Sprites.Add(new SpriteData("decorative_tree_3"));
+        prototypes.First(x => x.Internal_Name == "decorative_tree").Tags.Add(Building.Tag.Random_Sprite);
+        prototypes.First(x => x.Internal_Name == "decorative_tree").Tags.Add(Building.Tag.No_Notification_On_Build);
 
         prototypes.Add(new Building("Fountain Plaza", "fountain_plaza", Building.UI_Category.Services, "fountain_plaza", Building.BuildingSize.s1x1, 75, new Dictionary<Resource, int>() {
             { Resource.Stone, 15 }, { Resource.Marble, 10 }, { Resource.Mechanisms, 1 }, { Resource.Tools, 5 }
@@ -1519,6 +1524,7 @@ public class BuildingPrototypes {
         prototypes.First(x => x.Internal_Name == "townhouse").Sprites.Add(new SpriteData("townhouse_1"));
         prototypes.First(x => x.Internal_Name == "townhouse").Sprites.Add(new SpriteData("townhouse_2"));
         prototypes.First(x => x.Internal_Name == "townhouse").Sprites.Add(new SpriteData("townhouse_3"));
+        prototypes.First(x => x.Internal_Name == "townhouse").Tags.Add(Building.Tag.Random_Sprite);
 
         prototypes.Add(new Building("Tax Office", "tax_office", Building.UI_Category.Admin, "tax_office", Building.BuildingSize.s2x2, 150, new Dictionary<Resource, int>() {
             { Resource.Lumber, 90 }, { Resource.Stone, 90 }, { Resource.Tools, 10 }

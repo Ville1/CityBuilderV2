@@ -865,7 +865,7 @@ public class Residence : Building {
                 return 1.0f;
         }
 
-        if(happiness < happiness_penalty_threshold) {
+        if (happiness < happiness_penalty_threshold) {
             efficency -= (max_happiness_penalty * ((happiness_penalty_threshold - happiness) / happiness_penalty_threshold));
         } else if(happiness > happiness_bonus_threshold) {
             efficency += (max_happiness_bonus * ((happiness - happiness_bonus_threshold) / (1.0f - happiness_bonus_threshold)));

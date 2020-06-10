@@ -59,6 +59,9 @@ public class BuildMenuManager : MonoBehaviour
             Tile tile = MouseManager.Instance.Tile_Under_Cursor;
             if (preview_building.Is_Prototype) {
                 preview_building = new Building(preview_building, tile, null, true);
+                if (preview_building.Tags.Contains(Building.Tag.Random_Sprite) && preview_building.Sprites.Count > 1) {
+                    preview_building.Selected_Sprite = RNG.Instance.Next(0, preview_building.Sprites.Count - 1);
+                }
             } else {
                 preview_building.Move(tile);
                 foreach(Tile t in highlighted_tiles) {
@@ -198,6 +201,8 @@ public class BuildMenuManager : MonoBehaviour
         City.Instance.Build(preview_building, tile);
         if (!KeyboardManager.Instance.Keep_Building) {
             End_Preview();
+        } else if(preview_building.Tags.Contains(Building.Tag.Random_Sprite) && preview_building.Sprites.Count > 1) {
+            preview_building.Selected_Sprite = RNG.Instance.Next(0, preview_building.Sprites.Count - 1);
         }
     }
 
