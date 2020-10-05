@@ -24,7 +24,7 @@ public class Building {
     public static float DISREPAIR_SPEED = 1.0f;//HP / day
     public static float PAUSE_UPKEEP_MULTIPLIER = 0.5f;
 
-    public enum UI_Category { Admin, Infrastructure, Housing, Services, Forestry, Agriculture, Textile, Industry, Unbuildable }
+    public enum UI_Category { Admin, Infrastructure, Housing, Services, Forestry, Agriculture, Textile, Coastal, Industry, Unbuildable }
     public enum Resident { Peasant, Citizen, Noble }
     public enum BuildingSize { s1x1, s2x2, s3x3 }
     public enum Tag { Undeletable, Does_Not_Block_Wind, Bridge, Land_Trade, Water_Trade, Unique, Does_Not_Disrupt_Hunting, No_Notification_On_Build, Creates_Expeditions, Dock, Random_Sprite }

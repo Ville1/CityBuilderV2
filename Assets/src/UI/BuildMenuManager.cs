@@ -215,7 +215,7 @@ public class BuildMenuManager : MonoBehaviour
             Button button = GameObject.Instantiate(
                 Tab_Button_Prototype,
                 new Vector3(
-                    Tab_Button_Prototype.transform.position.x + (tab_buttons.Count * 150.0f),
+                    Tab_Button_Prototype.transform.position.x + (tab_buttons.Count * 125.0f),
                     Tab_Button_Prototype.transform.position.y,
                     Tab_Button_Prototype.transform.position.z
                 ),

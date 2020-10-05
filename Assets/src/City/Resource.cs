@@ -5,7 +5,7 @@ public class Resource {
     public enum ResourceType { Wood, Stone, Lumber, Tools, Roots, Berries, Mushrooms, Herbs, Firewood, Charcoal, Game, Hide, Leather, Potatoes, Corn, Bread, Iron_Ore, Coal, Salt, Iron_Bars, Ale, Wool, Cloth, Thread, Mutton,
         Barrels, Simple_Clothes, Leather_Clothes, Wheat, Flour, Mechanisms, Clay, Bricks, Fish, Marble, Bananas, Oranges, Beer, Rum, Wine, Coffee, Pretzels, Cakes, Copper_Ore, Copper_Bars, Tin_Ore, Tin_Bars, Pewter_Bars, Pewterware,
         Bronze_Bars, Furniture, Pig_Iron, Steel_Bars, Salted_Fish, Salted_Meat, Simple_Jewelry, Opulent_Jewelry, Furs, Silk, Fine_Clothes, Luxury_Clothes, Grapes, Gold_Ore, Gold_Bars, Silver_Ore, Silver_Bars, Gems, Fine_Jewelry, Ship_Parts,
-        Lobsters }
+        Lobsters, Sand, Potash, Glass, Glassware }
     public enum FoodType { None, Meat, Vegetable, Delicacy }
     public enum ResourceTag { Agricultural, Industrial, Forestry, Archaic, Coastal, Mining, Opulent, Foraging, Hunting, Construction, Livestock, Food, Crop, Clothing, Fine, Exotic, Alcohol, Pastry, Jewelry, Non_Tradeable,
         Basic }
@@ -81,6 +81,10 @@ public class Resource {
     public static Resource Gems { get { return Get(ResourceType.Gems); } }
     public static Resource Ship_Parts { get { return Get(ResourceType.Ship_Parts); } }
     public static Resource Lobsters { get { return Get(ResourceType.Lobsters); } }
+    public static Resource Sand { get { return Get(ResourceType.Sand); } }
+    public static Resource Potash { get { return Get(ResourceType.Potash); } }
+    public static Resource Glass { get { return Get(ResourceType.Glass); } }
+    public static Resource Glassware { get { return Get(ResourceType.Glassware); } }
     private static Dictionary<ResourceType, Resource> resources;
 
     public int Id { get { return (int)Type; } }
@@ -202,6 +206,11 @@ public class Resource {
             resources.Add(ResourceType.Furs, new Resource(ResourceType.Furs, "Furs", "furs", SpriteManager.SpriteType.UI, 2.60f, ResourceRarity.Rare, new List<ResourceTag>() { ResourceTag.Archaic, ResourceTag.Hunting, ResourceTag.Basic }));
             resources.Add(ResourceType.Silk, new Resource(ResourceType.Silk, "Silk", "silk", SpriteManager.SpriteType.UI, 3.00f, ResourceRarity.Very_Rare, new List<ResourceTag>() { ResourceTag.Exotic, ResourceTag.Opulent, ResourceTag.Agricultural, ResourceTag.Basic }));
             resources.Add(ResourceType.Ship_Parts, new Resource(ResourceType.Ship_Parts, "Ship parts", null, SpriteManager.SpriteType.UI, 5.00f, ResourceRarity.Non_Tradeable, new List<ResourceTag>() { ResourceTag.Non_Tradeable }));
+
+            resources.Add(ResourceType.Sand, new Resource(ResourceType.Sand, "Sand", "sand", SpriteManager.SpriteType.UI, 0.05f, ResourceRarity.Common, new List<ResourceTag>() { ResourceTag.Archaic, ResourceTag.Coastal, ResourceTag.Basic }));
+            resources.Add(ResourceType.Potash, new Resource(ResourceType.Potash, "Potash", "potash", SpriteManager.SpriteType.UI, 0.85f, ResourceRarity.Uncommon, new List<ResourceTag>() { ResourceTag.Forestry, ResourceTag.Agricultural }));
+            resources.Add(ResourceType.Glass, new Resource(ResourceType.Glass, "Glass", "glass", SpriteManager.SpriteType.UI, 1.40f, ResourceRarity.Rare, new List<ResourceTag>() { ResourceTag.Coastal, ResourceTag.Industrial }));
+            resources.Add(ResourceType.Glassware, new Resource(ResourceType.Glassware, "Glassware", "glassware", SpriteManager.SpriteType.UI, 2.90f, ResourceRarity.Very_Rare, new List<ResourceTag>() { ResourceTag.Industrial, ResourceTag.Fine }));
 
             resources.Add(ResourceType.Game, new Resource(ResourceType.Game, "Game", "game", SpriteManager.SpriteType.UI, FoodType.Meat, 1.05f, 1.10f, ResourceRarity.Common, new List<ResourceTag>() { ResourceTag.Hunting, ResourceTag.Archaic, ResourceTag.Food, ResourceTag.Basic }));
             resources.Add(ResourceType.Roots, new Resource(ResourceType.Roots, "Roots", "roots", SpriteManager.SpriteType.UI, FoodType.Vegetable, 0.15f, 0.65f, ResourceRarity.Common, new List<ResourceTag>() { ResourceTag.Foraging, ResourceTag.Archaic, ResourceTag.Food, ResourceTag.Basic }));
