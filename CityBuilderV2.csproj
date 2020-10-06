@@ -137,6 +137,7 @@
     <Compile Include="Assets\src\UI\NewGameGUIManager.cs" />
     <Compile Include="Assets\src\UI\NotificationManager.cs" />
     <Compile Include="Assets\src\UI\ProgressBarManager.cs" />
+    <Compile Include="Assets\src\UI\RowScrollView.cs" />
     <Compile Include="Assets\src\UI\SaveGUIManager.cs" />
     <Compile Include="Assets\src\UI\SpecialSettingsGUIManager.cs" />
     <Compile Include="Assets\src\UI\StorageSettingsGUIManager.cs" />
@@ -144,6 +145,7 @@
     <Compile Include="Assets\src\UI\TooltipManager.cs" />
     <Compile Include="Assets\src\UI\TopGUIManager.cs" />
     <Compile Include="Assets\src\UI\TradeGUIManager.cs" />
+    <Compile Include="Assets\src\UI\UIElementList.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="GenerateTargetFrameworkMonikerAttribute" />

@@ -299,6 +299,14 @@ public class BuildMenuManager : MonoBehaviour
         Scroll_Content.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, tab_sizes[tab]);
     }
 
+    public void Select_Building(string internal_name)
+    {
+        if (!Active) {
+            Active = true;
+        }
+        Select_Building(BuildingPrototypes.Instance.Get(internal_name));
+    }
+
     private void Select_Building(Building building)
     {
         //Active = false;

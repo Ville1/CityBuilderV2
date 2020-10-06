@@ -77,4 +77,15 @@ public class SpriteManager
         }
         return null;
     }
+
+    public Sprite Get(IHasSprite obj)
+    {
+        return Get(obj.Sprite_Name, obj.Sprite_Type);
+    }
+}
+
+public interface IHasSprite
+{
+    string Sprite_Name { get; }
+    SpriteManager.SpriteType Sprite_Type { get; }
 }

@@ -60,6 +60,10 @@ public class MouseManager : MonoBehaviour
             if (BuildMenuManager.Instance.Preview_Active) {
                 BuildMenuManager.Instance.Preview_Active = false;
             }
+            Tile tile = Tile_Under_Cursor;
+            if (!EventSystem.current.IsPointerOverGameObject() && tile != null && tile.Building != null) {
+                BuildMenuManager.Instance.Select_Building(tile.Building.Internal_Name);
+            }
         }
         //Scrolling
         if (Input.GetAxis("Mouse ScrollWheel") > 0.0f) {

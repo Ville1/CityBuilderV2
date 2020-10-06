@@ -454,7 +454,6 @@ public class Residence : Building {
                 }
 
                 if (services[ServiceType.Tableware][AMOUNT] != 0.0f) {
-                    //TODO: Cheaper tableware from clay -> no happiness bonus
                     float base_tableware_bonus = 0.05f;
                     float tableware_bonus = base_tableware_bonus * services[ServiceType.Tableware][QUALITY];
                     Happiness[Resident.Citizen] += tableware_bonus;

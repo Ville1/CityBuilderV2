@@ -22,6 +22,12 @@ public class TopGUIManager : MonoBehaviour {
     public Text Noble_Info_Text_1;
     public Text Noble_Info_Text_2;
 
+    public Button Expand_Button;
+    public GameObject Extra_Panel;
+    public Text Marble_Text;
+    public Text Mechanisms_Text;
+    public Text Glass_Text;
+
     /// <summary>
     /// Initializiation
     /// </summary>
@@ -33,6 +39,7 @@ public class TopGUIManager : MonoBehaviour {
         }
         Instance = this;
         Panel.SetActive(false);
+        Extra_Panel.SetActive(false);
     }
 
     /// <summary>
@@ -49,12 +56,13 @@ public class TopGUIManager : MonoBehaviour {
         }
         set {
             Panel.SetActive(value);
+            Close_Extra_Panel();
         }
     }
 
-    public void Update_City_Info(string name, float cash, float income, int wood, int lumber, int stone, int bricks, int tools, int peasant_current, int peasant_max, float peasant_happiness, float peasant_employment_relative,
-        int peasant_employment, int citizen_current, int citizen_max, float citizen_happiness, float citizen_employment_relative, int citizen_employment, int noble_current, int noble_max, float noble_happiness,
-        float noble_employment_relative, int noble_employment)
+    public void Update_City_Info(string name, float cash, float income, int wood, int lumber, int stone, int bricks, int tools, int marble, int mechanisms, int glass, int peasant_current, int peasant_max,
+        float peasant_happiness, float peasant_employment_relative, int peasant_employment, int citizen_current, int citizen_max, float citizen_happiness, float citizen_employment_relative, int citizen_employment,
+        int noble_current, int noble_max, float noble_happiness, float noble_employment_relative, int noble_employment)
     {
         if (!Active) {
             return;
@@ -72,6 +80,10 @@ public class TopGUIManager : MonoBehaviour {
         Peasant_Info_Text_2.text = string.Format("{0}{1}{2}%", peasant_employment, Environment.NewLine, Helper.Float_To_String(peasant_employment_relative * 100.0f, 0));
         Citizen_Info_Text_2.text = string.Format("{0}{1}{2}%", citizen_employment, Environment.NewLine, Helper.Float_To_String(citizen_employment_relative * 100.0f, 0));
         Noble_Info_Text_2.text = string.Format("{0}{1}{2}%", noble_employment, Environment.NewLine, Helper.Float_To_String(noble_employment_relative * 100.0f, 0));
+
+        Marble_Text.text = marble.ToString();
+        Mechanisms_Text.text = mechanisms.ToString();
+        Glass_Text.text = glass.ToString();
     }
 
     public void Update_Speed(TimeManager.Speed speed)
@@ -105,5 +117,26 @@ public class TopGUIManager : MonoBehaviour {
     public void Update_Time(string time)
     {
         Time_Text.text = time;
+    }
+
+    public void Close_Extra_Panel()
+    {
+        Extra_Panel.SetActive(false);
+        Expand_Button.GetComponentInChildren<Text>().text = "V";
+    }
+
+    public void Open_Extra_Panel()
+    {
+        Extra_Panel.SetActive(true);
+        Expand_Button.GetComponentInChildren<Text>().text = "-";
+    }
+
+    public void Toggle_Extra_Panel()
+    {
+        if (Extra_Panel.activeSelf) {
+            Close_Extra_Panel();
+        } else {
+            Open_Extra_Panel();
+        }
     }
 }

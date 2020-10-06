@@ -400,7 +400,8 @@ public class City {
         Education[Building.Resident.Noble] = noble_current == 0 ? 0.0f : total_education[Building.Resident.Noble] / noble_current;
 
         TopGUIManager.Instance.Update_City_Info(Name, Cash, Cash_Delta, Mathf.RoundToInt(Usable_Resource_Totals[Resource.Wood]), Mathf.RoundToInt(Usable_Resource_Totals[Resource.Lumber]), Mathf.RoundToInt(Usable_Resource_Totals[Resource.Stone]),
-            Mathf.RoundToInt(Usable_Resource_Totals[Resource.Bricks]), Mathf.RoundToInt(Usable_Resource_Totals[Resource.Tools]), peasant_current, peasant_max, peasant_happiness, peasant_employment_relative, peasant_employment, citizen_current, citizen_max, citizen_happiness,
+            Mathf.RoundToInt(Usable_Resource_Totals[Resource.Bricks]), Mathf.RoundToInt(Usable_Resource_Totals[Resource.Tools]), Mathf.RoundToInt(Usable_Resource_Totals[Resource.Marble]), Mathf.RoundToInt(Usable_Resource_Totals[Resource.Mechanisms]),
+            Mathf.RoundToInt(Usable_Resource_Totals[Resource.Glass]), peasant_current, peasant_max, peasant_happiness, peasant_employment_relative, peasant_employment, citizen_current, citizen_max, citizen_happiness,
             citizen_employment_relative, citizen_employment, noble_current, noble_max, noble_happiness, noble_employment_relative, noble_employment);
     }
 
