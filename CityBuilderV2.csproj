@@ -81,6 +81,7 @@
     <Compile Include="Assets\src\City\Building.cs" />
     <Compile Include="Assets\src\City\BuildingPrototypes.cs" />
     <Compile Include="Assets\src\City\City.cs" />
+    <Compile Include="Assets\src\City\Colony.cs" />
     <Compile Include="Assets\src\City\Contacts.cs" />
     <Compile Include="Assets\src\City\Entity.cs" />
     <Compile Include="Assets\src\City\EntityPrototypes.cs" />
@@ -133,6 +134,7 @@
     <Compile Include="Assets\src\UI\MenuManager.cs" />
     <Compile Include="Assets\src\UI\MessageManager.cs" />
     <Compile Include="Assets\src\UI\MouseManager.cs" />
+    <Compile Include="Assets\src\UI\NewColonyGUIManager.cs" />
     <Compile Include="Assets\src\UI\NewExpeditionGUIManager.cs" />
     <Compile Include="Assets\src\UI\NewGameGUIManager.cs" />
     <Compile Include="Assets\src\UI\NotificationManager.cs" />

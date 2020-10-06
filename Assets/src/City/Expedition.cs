@@ -18,9 +18,9 @@ public class Expedition {
             { ExpeditionLenght.Long, 1000.0f }
         } },
         { ExpeditionGoal.Establish_Colony, new Dictionary<ExpeditionLenght, float>() {
-            { ExpeditionLenght.Short, 2000.0f },
-            { ExpeditionLenght.Medium, 2000.0f },
-            { ExpeditionLenght.Long, 2000.0f }
+            { ExpeditionLenght.Short, 3000.0f },
+            { ExpeditionLenght.Medium, 3000.0f },
+            { ExpeditionLenght.Long, 3000.0f }
         } }
     };
     public static readonly Dictionary<ExpeditionGoal, Dictionary<ExpeditionLenght, int[]>> ACTIVE_TIME = new Dictionary<ExpeditionGoal, Dictionary<ExpeditionLenght, int[]>>() {
@@ -64,6 +64,7 @@ public class Expedition {
     public Resource Resource { get; private set; }
     public float Time_Remaining { get; private set; }
     public ExpeditionState State { get; private set; }
+    public ColonyLocation Colony_Data { get; private set; }
 
     public Expedition(ExpeditionGoal goal, ExpeditionLenght lenght, long building_id, Resource resource)
     {
@@ -73,9 +74,21 @@ public class Expedition {
         Resource = resource;
         Time_Remaining = RNG.Instance.Next(ACTIVE_TIME[goal][lenght][0], ACTIVE_TIME[goal][lenght][1]);
         State = ExpeditionState.Active;
+        Colony_Data = null;
     }
 
-    public Expedition(ExpeditionGoal goal, ExpeditionLenght lenght, long building_id, Resource resource, float time_remaining, ExpeditionState state)
+    public Expedition(long building_id, ColonyLocation location)
+    {
+        Goal = ExpeditionGoal.Establish_Colony;
+        Lenght = ExpeditionLenght.Long;
+        Building_Id = building_id;
+        Resource = null;
+        Time_Remaining = RNG.Instance.Next(ACTIVE_TIME[Goal][Lenght][0], ACTIVE_TIME[Goal][Lenght][1]);
+        State = ExpeditionState.Active;
+        Colony_Data = location;
+    }
+
+    public Expedition(ExpeditionGoal goal, ExpeditionLenght lenght, long building_id, Resource resource, float time_remaining, ExpeditionState state, ColonyLocation colony_data)
     {
         Goal = goal;
         Lenght = lenght;
@@ -83,6 +96,7 @@ public class Expedition {
         Resource = resource;
         Time_Remaining = time_remaining;
         State = state;
+        Colony_Data = colony_data;
     }
 
     public void Update(float delta_time)
@@ -141,6 +155,10 @@ public class Expedition {
                 found_resources.Add(extra);
                 additional_chance /= 2;
             }
+        } else if(Goal == ExpeditionGoal.Find_Colony_Locations) {
+            City.Instance.Add_Colony_Location(new ColonyLocation(Resource));
+        } else if(Goal == ExpeditionGoal.Establish_Colony) {
+            Contacts.Instance.Cities.Add(new ForeignCity(Colony_Data));
         }
         if(harbor != null) {
             harbor.Lock_Workers = false;
@@ -192,5 +210,15 @@ public class Expedition {
             }
         }
         return possible_resources.Count == 0 ? null : RNG.Instance.Item(possible_resources);
+    }
+
+    public void Launch(Building harbor)
+    {
+        City.Instance.Take_Cash(COSTS[Goal][Lenght]);
+        City.Instance.Add_Expedition(this);
+        harbor.Lock_Workers = true;
+        if(Goal == ExpeditionGoal.Establish_Colony) {
+            City.Instance.Remove_Colony_Location(Colony_Data);
+        }
     }
 }

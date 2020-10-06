@@ -6,6 +6,7 @@ using UnityEngine;
 public class City {
     public static readonly float GRACE_TIME = 120;
     public static readonly bool PAUSED_BUILDINGS_KEEP_WORKERS = false;
+    public static readonly int MAX_COLONY_LOCATIONS = 10;
 
     private static City instance;
 
@@ -31,6 +32,7 @@ public class City {
     public float Food_Delta { get; private set; }
     public List<Expedition> Expeditions { get; private set; }
     public List<Entity> Walkers { get; private set; }
+    public List<ColonyLocation> Colony_Locations { get; private set; }
 
     public bool Ignore_Citizen_Needs { get; set; }
     public bool Ignore_All_Needs { get; set; }
@@ -42,6 +44,7 @@ public class City {
     private List<Expedition> added_expeditions;
     private Dictionary<Building, Entity> ships;
     private float ship_spawn_cooldown;
+    private int noble_count;
 
     private City()
     {
@@ -68,6 +71,8 @@ public class City {
         Walkers = new List<Entity>();
         ships = new Dictionary<Building, Entity>();
         ship_spawn_cooldown = 0.0f;
+        Colony_Locations = new List<ColonyLocation>();
+        noble_count = 0;
     }
 
     public void Start_New(string name)
@@ -83,6 +88,8 @@ public class City {
         Walkers.Clear();
         ships.Clear();
         ship_spawn_cooldown = 0.0f;
+        Colony_Locations.Clear();
+        noble_count = 0;
         foreach (Building.Resident resident in Enum.GetValues(typeof(Building.Resident))) {
             Unemployment[resident] = 0.0f;
             Happiness[resident] = 0.0f;
@@ -99,7 +106,10 @@ public class City {
         Expeditions = new List<Expedition>();
         foreach(ExpeditionSaveData expedition in data.Expeditions) {
             Expeditions.Add(new Expedition((Expedition.ExpeditionGoal)expedition.Goal, (Expedition.ExpeditionLenght)expedition.Lenght, expedition.Building_Id, expedition.Resource == -1 ? null : Resource.All.First(x => (int)x.Type == expedition.Resource),
-                expedition.Time_Remaining, (Expedition.ExpeditionState)expedition.State));
+                expedition.Time_Remaining, (Expedition.ExpeditionState)expedition.State, expedition.Colony_Data == null ? null : new ColonyLocation(expedition.Colony_Data)));
+        }
+        foreach(ColonyLocationSaveData colony_location in data.Colony_Locations) {
+            Colony_Locations.Add(new ColonyLocation(colony_location));
         }
     }
 
@@ -398,6 +408,7 @@ public class City {
         float noble_employment_relative = noble_current == 0 ? 0.0f : noble_employment / (float)noble_current;
         Unemployment[Building.Resident.Noble] = noble_employment_relative > 0.0f ? noble_employment_relative : 0.0f;
         Education[Building.Resident.Noble] = noble_current == 0 ? 0.0f : total_education[Building.Resident.Noble] / noble_current;
+        noble_count = noble_current;
 
         TopGUIManager.Instance.Update_City_Info(Name, Cash, Cash_Delta, Mathf.RoundToInt(Usable_Resource_Totals[Resource.Wood]), Mathf.RoundToInt(Usable_Resource_Totals[Resource.Lumber]), Mathf.RoundToInt(Usable_Resource_Totals[Resource.Stone]),
             Mathf.RoundToInt(Usable_Resource_Totals[Resource.Bricks]), Mathf.RoundToInt(Usable_Resource_Totals[Resource.Tools]), Mathf.RoundToInt(Usable_Resource_Totals[Resource.Marble]), Mathf.RoundToInt(Usable_Resource_Totals[Resource.Mechanisms]),
@@ -599,6 +610,58 @@ public class City {
         }
     }
 
+    public void Add_Colony_Location(ColonyLocation location)
+    {
+        if(Colony_Locations.Count < MAX_COLONY_LOCATIONS) {
+            Colony_Locations.Add(location);
+        } else {
+            for(int i = 0; i < MAX_COLONY_LOCATIONS - 1; i++) {
+                Colony_Locations[i + 1] = Colony_Locations[i];
+            }
+            Colony_Locations[0] = location;
+        }
+    }
+
+    public void Remove_Colony_Location(ColonyLocation location)
+    {
+        if (Colony_Locations.Contains(location)) {
+            Colony_Locations.Remove(location);
+        }
+    }
+
+    public List<ForeignCity> Colonies
+    {
+        get {
+            return Contacts.Instance.Cities.Where(x => x.City_Type == ForeignCity.CityType.Colony).ToList();
+        }
+    }
+
+    public int Max_Colonies
+    {
+        get {
+            if(noble_count == 0) {
+                return 0;
+            }
+            if(noble_count < 50) {
+                return 1;
+            }
+            if(noble_count < 100) {
+                return 2;
+            }
+            if (noble_count < 250) {
+                return 3;
+            }
+            return 4;
+        }
+    }
+
+    public float Colony_Effectiveness
+    {
+        get {
+            return Colonies.Count <= Max_Colonies ? 1.0f : (Colonies.Count == Max_Colonies + 1 ? 0.35f : 0.0f);
+        }
+    }
+
     public CitySaveData Save_Data()
     {
         return new CitySaveData() {
@@ -607,7 +670,8 @@ public class City {
             Buildings = new List<BuildingSaveData>(),
             Contacts = Contacts.Instance.Save(),
             Expeditions = Expeditions.Select(x => new ExpeditionSaveData() { Goal = (int)x.Goal, Lenght = (int)x.Lenght, Building_Id = x.Building_Id, Resource = x.Resource != null ? (int)x.Resource.Type : -1,
-                State = (int)x.State, Time_Remaining = x.Time_Remaining }).ToList()
+                State = (int)x.State, Time_Remaining = x.Time_Remaining, Colony_Data = x.Colony_Data == null ? null : x.Colony_Data.Save_Data }).ToList(),
+            Colony_Locations = Colony_Locations.Select(x => x.Save_Data).ToList()
         };
     }
 

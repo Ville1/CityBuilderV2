@@ -70,6 +70,9 @@ public class MasterUIManager : MonoBehaviour {
         if (NewExpeditionGUIManager.Instance != null && typeof(NewExpeditionGUIManager).Name != type_name) {
             NewExpeditionGUIManager.Instance.Active = false;
         }
+        if (NewColonyGUIManager.Instance != null && typeof(NewColonyGUIManager).Name != type_name) {
+            NewColonyGUIManager.Instance.Active = false;
+        }
         MenuManager.Instance.Close_Views_Panel();
     }
 

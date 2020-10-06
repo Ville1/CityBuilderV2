@@ -97,7 +97,7 @@ public class TradeGUIManager : MonoBehaviour {
             List<Dropdown.OptionData> options = new List<Dropdown.OptionData>();
             options.Add(new Dropdown.OptionData("None"));
             foreach (ForeignCity city in partners) {
-                options.Add(new Dropdown.OptionData(city.Name));
+                options.Add(new Dropdown.OptionData(city.City_Type == ForeignCity.CityType.Colony ? string.Format("(C) {0}", city.Name) : city.Name));
             }
             Partner_Dropdown.options = options;
         }

@@ -67,4 +67,22 @@ public class RNG
         new_list.Add(list[0]);
         return new_list;
     }
+
+    public List<T> Cut<T>(List<T> list, int max)
+    {
+        if(max == 0) {
+            return new List<T>();
+        }
+        if(list.Count <= max) {
+            return Helper.Clone_List(list);
+        }
+        List<T> new_list = new List<T>();
+        while (new_list.Count < max) {
+            T item = Item(list);
+            if (!new_list.Contains(item)) {
+                new_list.Add(item);
+            }
+        }
+        return new_list;
+    }
 }

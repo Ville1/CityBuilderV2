@@ -6,7 +6,7 @@ using UnityEngine;
 public class ForeignCity {
     private static long current_id;
     public enum TradeRouteType { Land, Water, Both }
-    public enum CityType { Farming_Town, Rural_Town, Industrial_City, Forest_Village, Remote_Village, Maritime_Town, Mining_Town, Large_City }
+    public enum CityType { Farming_Town, Rural_Town, Industrial_City, Forest_Village, Remote_Village, Maritime_Town, Mining_Town, Large_City, Colony }
 
     public static readonly List<Resource> IMPORTANT_EXPORTS = new List<Resource>() { Resource.Coffee, Resource.Silk };
     public static readonly float EXPORT_BASE_PRICE_MULTIPLIER = 2.0f;
@@ -18,6 +18,7 @@ public class ForeignCity {
     public static readonly float OPINION_MAX_RESTING_POINT = 0.50f;
     public static readonly float OPINION_PASSIVE_DELTA_PER_DAY = 0.00025f;
     public static readonly float OPINION_IMPROVED_TIMER_DAYS = 30.0f;
+    public static readonly float COLONY_DISCOUNT = 0.25f;
 
     public long Id { get; private set; }
     public string Name { get; private set; }
@@ -53,7 +54,7 @@ public class ForeignCity {
         }
         Opinion_Resting_Point = -1.0f;
         Update_Opinion_Resting_Point();
-        City_Type = RNG.Instance.Item(Enum.GetValues(typeof(CityType)).Cast<CityType>().ToList());
+        City_Type = RNG.Instance.Item(Enum.GetValues(typeof(CityType)).Cast<CityType>().Where(x => x != CityType.Colony).ToList());
         Dictionary<TradeRouteType, int> trade_route_chances = new Dictionary<TradeRouteType, int>() { { TradeRouteType.Land, 40 }, { TradeRouteType.Water, 40 }, { TradeRouteType.Both, 20 } };
 
         Preferred_Imports = new List<Resource>();
@@ -184,6 +185,26 @@ public class ForeignCity {
         }
     }
 
+    public ForeignCity(ColonyLocation colony_data)
+    {
+        Id = current_id;
+        current_id++;
+        Name = colony_data.Name;
+        Opinion = 1.0f;
+        Opinion_Resting_Point = -1.0f;
+        Update_Opinion_Resting_Point();
+        City_Type = CityType.Colony;
+        Trade_Route_Type = colony_data.Trade_Route_Type;
+
+        Preferred_Imports = colony_data.Preferred_Imports;
+        Disliked_Imports = colony_data.Disliked_Imports;
+        Unaccepted_Imports = colony_data.Unaccepted_Imports;
+        Exports = colony_data.Exports;
+        Cheap_Exports = colony_data.Cheap_Exports;
+        Expensive_Exports = colony_data.Expensive_Exports;
+
+    }
+
     public ForeignCity(ForeignCitySaveData data)
     {
         Id = data.Id;
@@ -206,7 +227,12 @@ public class ForeignCity {
     public float? Discount
     {
         get {
-            return Opinion < 0.0f ? (float?)null : (Opinion > 0.5f ? (Opinion - 0.5f) / 2.0f : 0.0f);
+            float? base_discount = Opinion < 0.0f ? (float?)null : (Opinion > 0.5f ? (Opinion - 0.5f) / 2.0f : 0.0f);
+            if(City_Type != CityType.Colony) {
+                return base_discount;
+            }
+            float discount = base_discount.HasValue ? base_discount.Value * 0.4f : 0.0f;
+            return discount + (COLONY_DISCOUNT * City.Instance.Colony_Effectiveness);
         }
     }
 

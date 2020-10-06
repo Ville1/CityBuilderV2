@@ -100,7 +100,7 @@ public class ContactsGUIManager : MonoBehaviour {
                 current_row_id = 0;
             }
 
-            GameObject.Find(string.Format("{0}/NameText", row.name)).GetComponent<Text>().text = city.Name;
+            GameObject.Find(string.Format("{0}/NameText", row.name)).GetComponent<Text>().text = city.City_Type == ForeignCity.CityType.Colony ? string.Format("(C) {0}", city.Name) : city.Name;
             GameObject.Find(string.Format("{0}/RelationsText", row.name)).GetComponent<Text>().text = Helper.Float_To_String(city.Opinion * 100.0f, 0, true) + "%";
 
             Button.ButtonClickedEvent click = new Button.ButtonClickedEvent();

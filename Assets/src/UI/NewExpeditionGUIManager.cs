@@ -173,15 +173,18 @@ public class NewExpeditionGUIManager : MonoBehaviour {
 
     public void Create()
     {
+        if(Selected_Goal == Expedition.ExpeditionGoal.Establish_Colony) {
+            NewColonyGUIManager.Instance.Show(harbor);
+            Active = false;
+            return;
+        }
         Resource resource = null;
         if (Resource_Dropdown.interactable) {
             List<Resource> resources = Resource.All.Where(x => x.Tags.Contains(Resource.ResourceTag.Basic)).OrderBy(x => x.UI_Name).ToList();
             resource = resources[Resource_Dropdown.value];
         }
         Expedition expedition = new Expedition(Selected_Goal, Selected_Lenght, harbor.Id, resource);
-        City.Instance.Take_Cash(Expedition.COSTS[Selected_Goal][Selected_Lenght]);
-        City.Instance.Add_Expedition(expedition);
-        harbor.Lock_Workers = true;
+        expedition.Launch(harbor);
         Active = false;
     }
 

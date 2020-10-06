@@ -34,6 +34,7 @@ public class RowScrollView<T>
     public void Clear()
     {
         Helper.Delete_All(rows);
+        Content.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Row_Spacing + PADDING);
     }
 
     public GameObject Add(T key, List<UIElementData> data)
