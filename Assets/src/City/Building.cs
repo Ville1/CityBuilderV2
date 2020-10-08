@@ -27,7 +27,7 @@ public class Building {
     public enum UI_Category { Admin, Infrastructure, Housing, Services, Forestry, Agriculture, Textile, Coastal, Industry, Unbuildable }
     public enum Resident { Peasant, Citizen, Noble }
     public enum BuildingSize { s1x1, s2x2, s3x3 }
-    public enum Tag { Undeletable, Does_Not_Block_Wind, Bridge, Land_Trade, Water_Trade, Unique, Does_Not_Disrupt_Hunting, No_Notification_On_Build, Creates_Expeditions, Dock, Random_Sprite }
+    public enum Tag { Undeletable, Does_Not_Block_Wind, Bridge, Land_Trade, Water_Trade, Unique, Does_Not_Disrupt_Hunting, No_Notification_On_Build, Creates_Expeditions, Dock, Random_Sprite, Road_Block, Blocked_By_Road_Blocks }
 
     public long Id { get; protected set; }
     public string Name { get; private set; }
@@ -1400,16 +1400,16 @@ public class Building {
         Is_Connected = connected;
     }
 
-    public Dictionary<Building, int> Get_Connected_Buildings(int range = -1)
+    public Dictionary<Building, int> Get_Connected_Buildings(int range = -1, bool? blocked_by_road_blocks = null)
     {
         Dictionary<Building, int> connected = new Dictionary<Building, int>();
         foreach(Building b in Map.Instance.Get_Buildings_Around(this)) {
-            Get_Connected_Buildings_Recursive(b, this, ref connected, range, 0, true);
+            Get_Connected_Buildings_Recursive(b, this, ref connected, range, 0, true, blocked_by_road_blocks.HasValue ? blocked_by_road_blocks.Value : Tags.Contains(Tag.Blocked_By_Road_Blocks));
         }
         return connected;
     }
 
-    private void Get_Connected_Buildings_Recursive(Building building, Building previous, ref Dictionary<Building, int> connected, int range, int distance, bool first)
+    private void Get_Connected_Buildings_Recursive(Building building, Building previous, ref Dictionary<Building, int> connected, int range, int distance, bool first, bool blocked_by_road_blocks)
     {
         if ((connected.ContainsKey(building) && connected[building] <= distance) || (!building.Is_Road && !previous.Is_Road)) {
             return;
@@ -1422,11 +1422,11 @@ public class Building {
         } else {
             connected[building] = distance;
         }
-        if(!(building.Is_Road && building.Is_Complete)) {
+        if(!(building.Is_Road && building.Is_Complete) || (building.Tags.Contains(Tag.Road_Block) && blocked_by_road_blocks)) {
             return;
         }
         foreach(Building b in Map.Instance.Get_Buildings_Around(building)) {
-            Get_Connected_Buildings_Recursive(b, building, ref connected, range, distance + 1, false);
+            Get_Connected_Buildings_Recursive(b, building, ref connected, range, distance + 1, false, blocked_by_road_blocks);
         }
     }
 

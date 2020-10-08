@@ -320,6 +320,14 @@ public class BuildingPrototypes {
         prototypes.First(x => x.Internal_Name == "cobblestone_road").Tags.Add(Building.Tag.Does_Not_Block_Wind);
         prototypes.First(x => x.Internal_Name == "cobblestone_road").Tags.Add(Building.Tag.No_Notification_On_Build);
 
+        prototypes.Add(new Building("Neighborhood Divider Plaza", "neighborhood_divider_plaza", Building.UI_Category.Infrastructure, "neighborhood_divider_plaza", Building.BuildingSize.s1x1, 20, new Dictionary<Resource, int>() {
+            { Resource.Stone, 15 }, { Resource.Lumber, 5 }, { Resource.Tools, 1 }
+        }, 20, new List<Resource>(), 0, 0.0f, 20, new Dictionary<Resource, float>() { { Resource.Stone, 0.01f } }, 0.02f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, true, true, 0.0f, 0, null, null,
+        null, null, new List<Resource>(), new List<Resource>(), 0.01f, 3.0f));
+        prototypes.First(x => x.Internal_Name == "neighborhood_divider_plaza").Tags.Add(Building.Tag.Does_Not_Block_Wind);
+        prototypes.First(x => x.Internal_Name == "neighborhood_divider_plaza").Tags.Add(Building.Tag.No_Notification_On_Build);
+        prototypes.First(x => x.Internal_Name == "neighborhood_divider_plaza").Tags.Add(Building.Tag.Road_Block);
+
         prototypes.Add(new Building("Wooden Bridge", "wooden_bridge", Building.UI_Category.Infrastructure, "bridge_ew", Building.BuildingSize.s1x1, 10, new Dictionary<Resource, int>() { { Resource.Lumber, 10 }, { Resource.Wood, 10 }, { Resource.Stone, 1 }, { Resource.Tools, 1 } }, 25,
             new List<Resource>(), 0, 0.0f, 50, new Dictionary<Resource, float>() { { Resource.Lumber, 0.01f }, { Resource.Wood, 0.01f } }, 0.01f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, true, true, 0.0f, 0, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "wooden_bridge").Tags.Add(Building.Tag.Does_Not_Block_Wind);
@@ -545,6 +553,7 @@ public class BuildingPrototypes {
             float herbs_needed = 0.0f;
             float salt_needed = 0.0f;
             float clothes_needed = 0.0f;
+            float milk_needed = 0.0f;
             foreach (Building building in market.Get_Connected_Buildings(market.Road_Range).Select(x => x.Key).ToArray()) {
                 if(!(building is Residence)) {
                     continue;
@@ -555,9 +564,10 @@ public class BuildingPrototypes {
                 herbs_needed += residence.Service_Needed(Residence.ServiceType.Herbs) * resources_for_full_service;
                 salt_needed += residence.Service_Needed(Residence.ServiceType.Salt) * resources_for_full_service;
                 clothes_needed += residence.Service_Needed(Residence.ServiceType.Clothes) * resources_for_full_service;
+                milk_needed += residence.Service_Needed(Residence.ServiceType.Milk) * resources_for_full_service;
                 residences.Add(residence);
             }
-            if(residences.Count == 0 || (food_needed == 0.0f && fuel_needed == 0.0f && herbs_needed == 0.0f && salt_needed == 0.0f && clothes_needed == 0.0f)) {
+            if(residences.Count == 0 || (food_needed == 0.0f && fuel_needed == 0.0f && herbs_needed == 0.0f && salt_needed == 0.0f && clothes_needed == 0.0f && milk_needed == 0.0f)) {
                 return;
             }
 
@@ -694,6 +704,21 @@ public class BuildingPrototypes {
                 market.Check_Input_Storage(Resource.Leather_Clothes);
             }
 
+            float milk = market.Input_Storage.ContainsKey(Resource.Milk) ? market.Input_Storage[Resource.Milk] : 0.0f;
+            if (milk_needed != 0.0f && milk != 0.0f) {
+                float milk_ratio = Math.Min(milk / milk_needed, 1.0f);
+                float milk_used = 0.0f;
+                foreach (Residence residence in residences) {
+                    float milk_for_residence = (residence.Service_Needed(Residence.ServiceType.Milk) * resources_for_full_service) * milk_ratio;
+                    milk_used += milk_for_residence;
+                    residence.Serve(Residence.ServiceType.Milk, residence.Service_Needed(Residence.ServiceType.Milk) * milk_ratio, efficency_multiplier);
+                }
+                market.Input_Storage[Resource.Milk] -= milk_used;
+                market.Check_Input_Storage(Resource.Milk);
+                income += milk_used * Resource.Milk.Value;
+                market.Update_Delta(Resource.Milk, (-milk_used / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f));
+            }
+
             if (income != 0.0f) {
                 market.Per_Day_Cash_Delta += (income / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f);
                 City.Instance.Add_Cash(income);
@@ -712,6 +737,8 @@ public class BuildingPrototypes {
         prototypes.First(x => x.Internal_Name == "marketplace").Special_Settings.Add(new SpecialSetting(Resource.Salt.ToString().ToLower(), Resource.Salt.UI_Name, SpecialSetting.SettingType.Toggle, 0.0f, true));
         prototypes.First(x => x.Internal_Name == "marketplace").Special_Settings.Add(new SpecialSetting(Resource.Simple_Clothes.ToString().ToLower(), Resource.Simple_Clothes.UI_Name, SpecialSetting.SettingType.Toggle, 0.0f, true));
         prototypes.First(x => x.Internal_Name == "marketplace").Special_Settings.Add(new SpecialSetting(Resource.Leather_Clothes.ToString().ToLower(), Resource.Leather_Clothes.UI_Name, SpecialSetting.SettingType.Toggle, 0.0f, true));
+        prototypes.First(x => x.Internal_Name == "marketplace").Tags.Add(Building.Tag.Blocked_By_Road_Blocks);
+        prototypes.First(x => x.Internal_Name == "marketplace").Tags.Add(Building.Tag.Does_Not_Block_Wind);
 
         prototypes.Add(new Building("Hunting Lodge", "hunting_lodge", Building.UI_Category.Forestry, "hunting_lodge", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
             { Resource.Wood, 85 }, { Resource.Stone, 10 }, { Resource.Tools, 10 }
@@ -1566,6 +1593,7 @@ public class BuildingPrototypes {
                 prototypes.First(x => x.Internal_Name == "tavern").Special_Settings.Add(new SpecialSetting(resource.ToString().ToLower(), string.Format("Serve {0}", resource.UI_Name.ToLower()), SpecialSetting.SettingType.Toggle, 0.0f, (resource.Tags.Contains(Resource.ResourceTag.Alcohol) || (resource.Is_Food && resource.Food_Type != Resource.FoodType.Delicacy))));
             }
         }
+        prototypes.First(x => x.Internal_Name == "tavern").Tags.Add(Building.Tag.Blocked_By_Road_Blocks);
 
         prototypes.Add(new Building("Chapel", "chapel", Building.UI_Category.Services, "chapel", Building.BuildingSize.s2x2, 250, new Dictionary<Resource, int>() {
             { Resource.Lumber, 60 }, { Resource.Stone, 175 }, { Resource.Glass, 25 }, { Resource.Tools, 20 }
@@ -1580,6 +1608,7 @@ public class BuildingPrototypes {
                 }
             }
         }, null, null, new List<Resource>(), new List<Resource>(), 0.05f, 5.0f));
+        prototypes.First(x => x.Internal_Name == "chapel").Tags.Add(Building.Tag.Blocked_By_Road_Blocks);
 
         prototypes.Add(new Building("Shepherd's Hut", "shepherds_hut", Building.UI_Category.Agriculture, "shepherds_hut", Building.BuildingSize.s2x2, 85, new Dictionary<Resource, int>() {
             { Resource.Wood, 25 }, { Resource.Lumber, 20 }, { Resource.Stone, 10 }, { Resource.Tools, 10 }
@@ -1751,6 +1780,7 @@ public class BuildingPrototypes {
         }, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "tax_office").Special_Settings.Add(new SpecialSetting("tax_rate", "Tax rate", SpecialSetting.SettingType.Dropdown, 0.0f, false, new List<string>() { "Very low", "Low", "Medium", "High", "Very high" }, 2));
         prototypes.First(x => x.Internal_Name == "tax_office").Sprites.Add(new SpriteData("tax_office_1"));
+        prototypes.First(x => x.Internal_Name == "tax_office").Tags.Add(Building.Tag.Blocked_By_Road_Blocks);
 
         prototypes.Add(new Building("Weaver's Workshop", "weavers_workshop", Building.UI_Category.Textile, "weavers_workshop", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
             { Resource.Lumber, 80 }, { Resource.Stone, 10 }, { Resource.Tools, 10 }
@@ -2502,6 +2532,7 @@ public class BuildingPrototypes {
                 prototypes.First(x => x.Internal_Name == "coffeehouse").Special_Settings.Add(new SpecialSetting(resource.ToString().ToLower(), string.Format("Serve {0}", resource.UI_Name.ToLower()), SpecialSetting.SettingType.Toggle, 0.0f, true));
             }
         }
+        prototypes.First(x => x.Internal_Name == "coffeehouse").Tags.Add(Building.Tag.Blocked_By_Road_Blocks);
 
         prototypes.Add(new Building("Homeware Shop", "homeware_shop", Building.UI_Category.Services, "homeware_shop", Building.BuildingSize.s2x2, 125, new Dictionary<Resource, int>() {
             { Resource.Bricks, 80 }, { Resource.Lumber, 65 }, { Resource.Stone, 20 }, { Resource.Tools, 15 }, { Resource.Glass, 10 } }, 160, new List<Resource>(), 0, 0.0f, 175, new Dictionary<Resource, float>() {
@@ -2572,11 +2603,11 @@ public class BuildingPrototypes {
                     City.Instance.Add_Cash(income);
                 }
         }, null, null, new List<Resource>() { Resource.Pewterware, Resource.Glassware, Resource.Furniture }, new List<Resource>(), 0.0f, 0.0f));
-
         prototypes.First(x => x.Internal_Name == "homeware_shop").Special_Settings.Add(new SpecialSetting("tableware", "Tableware", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() {
             Resource.Pewterware.UI_Name + " (100%Q)",
             Resource.Glassware.UI_Name + " (50%Q)"
         }, 0));
+        prototypes.First(x => x.Internal_Name == "homeware_shop").Tags.Add(Building.Tag.Blocked_By_Road_Blocks);
 
         prototypes.Add(new Building("Salting House", "salting_house", Building.UI_Category.Agriculture, "salting_house", Building.BuildingSize.s2x2, 100, new Dictionary<Resource, int>() {
             { Resource.Lumber, 145 }, { Resource.Stone, 20 }, { Resource.Tools, 15 }
@@ -2761,6 +2792,8 @@ public class BuildingPrototypes {
             prototypes.First(x => x.Internal_Name == "luxury_goods_market").Consumes.Add(resource);
             prototypes.First(x => x.Internal_Name == "luxury_goods_market").Special_Settings.Add(new SpecialSetting(resource.ToString().ToLower(), resource.UI_Name, SpecialSetting.SettingType.Toggle, 0.0f, true));
         }
+        prototypes.First(x => x.Internal_Name == "luxury_goods_market").Tags.Add(Building.Tag.Blocked_By_Road_Blocks);
+        prototypes.First(x => x.Internal_Name == "luxury_goods_market").Tags.Add(Building.Tag.Does_Not_Block_Wind);
 
         prototypes.Add(new Building("Clothier's Shop", "clothiers_shop", Building.UI_Category.Textile, "clothiers_shop", Building.BuildingSize.s2x2, 150, new Dictionary<Resource, int>() {
             { Resource.Lumber, 100 }, { Resource.Stone, 20 }, { Resource.Bricks, 80 }, { Resource.Tools, 25 }, { Resource.Glass, 15 }
@@ -3020,6 +3053,7 @@ public class BuildingPrototypes {
                 }
             }
         }, null, null, new List<Resource>(), new List<Resource>(), 0.01f, 5.0f));
+        prototypes.First(x => x.Internal_Name == "theatre").Tags.Add(Building.Tag.Blocked_By_Road_Blocks);
 
         prototypes.Add(new Building("School House", "school_house", Building.UI_Category.Services, "school_house", Building.BuildingSize.s2x2, 125, new Dictionary<Resource, int>() {
             { Resource.Lumber, 45 }, { Resource.Bricks, 90 }, { Resource.Stone, 20 }, { Resource.Glass, 10 }, { Resource.Tools, 15 }
@@ -3035,6 +3069,7 @@ public class BuildingPrototypes {
             }
         }, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "school_house").Sprites.Add(new SpriteData("school_house_1"));
+        prototypes.First(x => x.Internal_Name == "school_house").Tags.Add(Building.Tag.Blocked_By_Road_Blocks);
 
         prototypes.Add(new Building("Shore House", "shore_house", Building.UI_Category.Coastal, "shore_house", Building.BuildingSize.s2x2, 90, new Dictionary<Resource, int>() {
             { Resource.Wood, 35 }, { Resource.Lumber, 25 }, { Resource.Stone, 10 }, { Resource.Tools, 10 }
