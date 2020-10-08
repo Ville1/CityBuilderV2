@@ -940,6 +940,9 @@ public class Building {
                 Map.Instance.Update_Ship_Access();
                 break;
             }
+            foreach(Entity entity in t.Entities) {
+                Map.Instance.Delete_Entity(entity);
+            }
         }
         Dictionary<Resource, float> added = new Dictionary<Resource, float>();
         foreach(KeyValuePair<Resource, float> pair in Storage) {
