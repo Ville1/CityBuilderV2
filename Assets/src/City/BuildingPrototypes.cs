@@ -134,6 +134,47 @@ public class BuildingPrototypes {
         return water_front;
     }
 
+    private string Pasture_Linking(Building building)
+    {
+        List<string> parture_joining = new List<string>() { "pasture", "chicken_coop", "pigsty", "cow_shelter" };
+        Tile tile = building.Tile;
+        if (tile == null) {
+            tile = Map.Instance.Get_Tile_At(new Coordinates((int)building.GameObject.transform.position.x, (int)building.GameObject.transform.position.y));
+            if (tile == null) {
+                return "pasture_nesw";
+            }
+        }
+        StringBuilder sprite = new StringBuilder("pasture_");
+        foreach (KeyValuePair<Coordinates.Direction, Tile> pair in Map.Instance.Get_Adjanced_Tiles(tile).OrderBy(x => (int)x.Key)) {
+            if (pair.Value != null && pair.Value.Building != null && parture_joining.Contains(pair.Value.Building.Internal_Name)) {
+                sprite.Append(pair.Key.ToString()[0].ToString().ToLower());
+            }
+        }
+        return sprite.ToString();
+    }
+
+    private bool Livestock_Building_On_Build_Check(Building building, Tile tile, string main_building, out string message)
+    {
+        Tile.WorkData work = tile.Worked_By.FirstOrDefault(x => x.Type == Tile.Work_Type.Farm);
+        if (work == null) {
+            message = null;
+            return true;
+        }
+        if (work.Building.Internal_Name != main_building) {
+            message = "Invalid farm building";
+            return false;
+        }
+        foreach (Tile t in work.Building.Get_Tiles_In_Circle()) {
+            if (tile.Worked_By.FirstOrDefault(x => x.Type == Tile.Work_Type.Farm) != null && tile.Worked_By.First(x => x.Type == Tile.Work_Type.Farm).Building.Id == work.Building.Id &&
+                t.Building != null && t.Building.Internal_Name == building.Internal_Name) {
+                message = string.Format("Only one {0} is needed per {1}", building.Name, work.Building.Name);
+                return false;
+            }
+        }
+        message = null;
+        return true;
+    }
+
     private BuildingPrototypes()
     {
         Building.OnDeconstructDelegate unreserve_tiles = delegate (Building building) {
@@ -350,7 +391,7 @@ public class BuildingPrototypes {
         prototypes.Add(new Building("Cellar", "cellar", Building.UI_Category.Infrastructure, "cellar", Building.BuildingSize.s1x1, 100, new Dictionary<Resource, int>() {
             { Resource.Wood, 15 }, { Resource.Stone, 50 }, { Resource.Tools, 10 }, { Resource.Lumber, 50 }
         }, 100, new List<Resource>() { Resource.Roots, Resource.Berries, Resource.Mushrooms, Resource.Herbs, Resource.Game, Resource.Potatoes, Resource.Bread, Resource.Ale, Resource.Mutton, Resource.Corn, Resource.Fish, Resource.Bananas, Resource.Oranges, Resource.Beer, Resource.Rum,
-            Resource.Wine, Resource.Pretzels, Resource.Cake, Resource.Salted_Fish, Resource.Salted_Meat, Resource.Grapes, Resource.Lobsters },
+            Resource.Wine, Resource.Pretzels, Resource.Cake, Resource.Salted_Fish, Resource.Salted_Meat, Resource.Grapes, Resource.Lobsters, Resource.Eggs, Resource.Chicken, Resource.Pork, Resource.Milk, Resource.Beef },
         1000, 50.0f, 110, new Dictionary<Resource, float>() { { Resource.Wood, 0.05f } }, 0.5f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 5 } }, 5, false, false, true, 0.0f, 14, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "cellar").Tags.Add(Building.Tag.Does_Not_Block_Wind);
 
@@ -658,7 +699,7 @@ public class BuildingPrototypes {
                 City.Instance.Add_Cash(income);
             }//                                  v unnecessary list v special settings adds and removes stuff from consumption list MIGHT ACTUALLY BE NECESSARY, DONT REMOVE
         }, null, null, new List<Resource>() { Resource.Berries, Resource.Roots, Resource.Mushrooms, Resource.Herbs, Resource.Firewood, Resource.Charcoal, Resource.Coal, Resource.Game, Resource.Bread, Resource.Potatoes, Resource.Salt, Resource.Mutton, Resource.Corn, Resource.Fish, Resource.Bananas,
-            Resource.Oranges, Resource.Grapes, Resource.Pretzels, Resource.Cake, Resource.Simple_Clothes, Resource.Leather_Clothes, Resource.Salted_Fish, Resource.Salted_Meat, Resource.Lobsters }, new List<Resource>(), 0.05f, 5.0f));
+            Resource.Oranges, Resource.Grapes, Resource.Pretzels, Resource.Cake, Resource.Simple_Clothes, Resource.Leather_Clothes, Resource.Salted_Fish, Resource.Salted_Meat, Resource.Lobsters, Resource.Eggs, Resource.Chicken, Resource.Pork, Resource.Milk, Resource.Beef }, new List<Resource>(), 0.05f, 5.0f));
         Resource prefered_fuel = Resource.All.Where(x => x.Is_Fuel).OrderByDescending(x => x.Value / x.Fuel_Value).FirstOrDefault();
         foreach(Resource resource in Resource.All) {
             if (resource.Is_Food) {
@@ -1176,6 +1217,14 @@ public class BuildingPrototypes {
             Resource.Mechanisms.UI_Name + " (i) (5/day)"
         }, 0));
 
+        prototypes.Add(new Building("Pasture", "pasture", Building.UI_Category.Agriculture, "pasture_", Building.BuildingSize.s1x1, 25, new Dictionary<Resource, int>() {
+            { Resource.Wood, 10 }, { Resource.Tools, 1 }
+        }, 10, new List<Resource>(), 0, 0.0f, 10, new Dictionary<Resource, float>(), 0.0f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 0, null, null, null, null,
+        new List<Resource>(), new List<Resource>(), -0.025f, 2.5f));
+        prototypes.First(x => x.Internal_Name == "pasture").Sprite.Add_Logic(delegate (Building building) { return Pasture_Linking(building); });
+        prototypes.First(x => x.Internal_Name == "pasture").Tags.Add(Building.Tag.Does_Not_Block_Wind);
+        prototypes.First(x => x.Internal_Name == "pasture").Tags.Add(Building.Tag.No_Notification_On_Build);
+
         prototypes.Add(new Building("Small Farm", "small_farm", Building.UI_Category.Agriculture, "small_farm", Building.BuildingSize.s2x2, 125, new Dictionary<Resource, int>() {
             { Resource.Lumber, 110 }, { Resource.Stone, 15 }, { Resource.Tools, 10 }
         }, 100, new List<Resource>(), 0, 0.0f, 135, new Dictionary<Resource, float>() { { Resource.Lumber, 0.05f } }, 1.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 10 } }, 10, true, false, true, 5.0f, 0, Reserve_Tiles(Tile.Work_Type.Farm),
@@ -1184,25 +1233,140 @@ public class BuildingPrototypes {
                 return;
             }
             float potatoes = 0.0f;
+            float hay = 0.0f;
+            float pastures = 0.0f;
+            bool has_chickens = false;
+            bool has_pigs = false;
+            List<Tile> pasture_spawns = new List<Tile>();
+
             foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                if (tile.Building != null && tile.Building.Internal_Name == "potato_field" && tile.Can_Work(building, Tile.Work_Type.Farm)) {
-                    if (tile.Internal_Name == "grass") {
-                        potatoes += 0.10f;
-                    } else if (tile.Internal_Name == "fertile_ground") {
-                        potatoes += 0.15f;
+                if (tile.Building != null && tile.Building.Is_Complete && tile.Can_Work(building, Tile.Work_Type.Farm)) {
+                    switch (tile.Building.Internal_Name) {
+                        case "potato_field":
+                            if (tile.Internal_Name == "grass") {
+                                potatoes += 0.10f;
+                            } else if (tile.Internal_Name == "fertile_ground") {
+                                potatoes += 0.15f;
+                            }
+                            break;
+                        case "hay_field":
+                            if (tile.Internal_Name == "grass") {
+                                hay += 0.10f;
+                            } else if (tile.Internal_Name == "fertile_ground") {
+                                hay += 0.15f;
+                            }
+                            break;
+                        case "chicken_coop":
+                            has_chickens = true;
+                            pastures += 1.0f;
+                            break;
+                        case "pigsty":
+                            has_pigs = true;
+                            pastures += 1.0f;
+                            break;
+                        case "pasture":
+                            pastures += 1.0f;
+                            if(tile.Entities.Count == 0) {
+                                pasture_spawns.Add(tile);
+                            }
+                            break;
                     }
                 }
             }
-            float multiplier = 1.045f;
+            //Potatoes
+            float multiplier = 1.045f;//Farmhouse float small_farm_multiplier = 1.045f;
             building.Produce(Resource.Potatoes, potatoes * multiplier, delta_time);
-        }, unreserve_tiles, Highlight_Tiles(Tile.Work_Type.Farm), new List<Resource>(), new List<Resource>() { Resource.Potatoes }, 0.0f, 0.0f));
 
+            //Hay & livestock
+            building.Produces.Remove(Resource.Hay);
+            building.Consumes.Remove(Resource.Hay);
+            float total_hay = hay * multiplier;
+            float pork_base = (pastures * 0.25f) * multiplier;
+            float eggs_base = (pastures * 0.20f) * multiplier;
+            float chicken_base = (pastures * 0.10f) * multiplier;
+
+            if (has_chickens || has_pigs) {
+                total_hay -= (pastures * multiplier) * 0.3f;
+            }
+
+            if (total_hay >= 0.0f) {
+                building.Produces.Add(Resource.Hay);
+                building.Produce(Resource.Hay, total_hay, delta_time);
+            } else {
+                building.Consumes.Add(Resource.Hay);
+            }
+            if (has_chickens || has_pigs) {
+                if (total_hay >= 0.0f) {
+                    if (has_chickens) {
+                        building.Produce(Resource.Eggs, (has_pigs ? 0.5f : 1.0f) * eggs_base, delta_time);
+                        building.Produce(Resource.Chicken, (has_pigs ? 0.5f : 1.0f) * chicken_base, delta_time);
+                    }
+                    if (has_pigs) {
+                        building.Produce(Resource.Pork, (has_chickens ? 0.5f : 1.0f) * pork_base, delta_time);
+                    }
+                } else {
+                    Dictionary<Resource, float> outputs = new Dictionary<Resource, float>();
+                    if (has_chickens) {
+                        outputs.Add(Resource.Eggs, (has_pigs ? 0.5f : 1.0f) * eggs_base);
+                        outputs.Add(Resource.Chicken, (has_pigs ? 0.5f : 1.0f) * chicken_base);
+                    }
+                    if (has_pigs) {
+                        outputs.Add(Resource.Pork, (has_chickens ? 0.5f : 1.0f) * pork_base);
+                    }
+                    building.Process(new Dictionary<Resource, float>() {
+                        { Resource.Hay, -total_hay }
+                    }, outputs, delta_time);
+                }
+                //Entities
+                if (has_chickens) {
+                    int max_chickens = Mathf.RoundToInt((pastures * (has_pigs ? 0.15f : 0.30f)) * building.Efficency);
+                    while (pasture_spawns.Count > 0 && building.Entities_Spawned.Where(x => x.Internal_Name == "chicken").ToList().Count < max_chickens) {
+                        Tile spawn = RNG.Instance.Item(pasture_spawns);
+                        Entity chicken = new Entity(EntityPrototypes.Instance.Get("chicken"), spawn, building);
+                        pasture_spawns.Remove(spawn);
+                    }
+                }
+                if (has_pigs) {
+                    int max_pigs = Mathf.RoundToInt((pastures * (has_chickens ? 0.15f : 0.30f)) * building.Efficency);
+                    while (pasture_spawns.Count > 0 && building.Entities_Spawned.Where(x => x.Internal_Name == "pig").ToList().Count < max_pigs) {
+                        Tile spawn = RNG.Instance.Item(pasture_spawns);
+                        Entity pig = new Entity(EntityPrototypes.Instance.Get("pig"), spawn, building);
+                        pasture_spawns.Remove(spawn);
+                    }
+                }
+            }
+        }, unreserve_tiles, Highlight_Tiles(Tile.Work_Type.Farm), new List<Resource>(), new List<Resource>() { Resource.Potatoes, Resource.Hay, Resource.Eggs, Resource.Chicken, Resource.Pork }, 0.0f, 0.0f));
+        
         prototypes.Add(new Building("Potato Field", "potato_field", Building.UI_Category.Agriculture, "potato_field", Building.BuildingSize.s1x1, 50, new Dictionary<Resource, int>() {
             { Resource.Tools, 1 }
         }, 10, new List<Resource>(), 0, 0.0f, 20, new Dictionary<Resource, float>(), 0.0f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 0, null, null, null, null,
         new List<Resource>(), new List<Resource>(), -0.05f, 3.0f));
         prototypes.First(x => x.Internal_Name == "potato_field").Tags.Add(Building.Tag.Does_Not_Block_Wind);
         prototypes.First(x => x.Internal_Name == "potato_field").Tags.Add(Building.Tag.No_Notification_On_Build);
+
+        prototypes.Add(new Building("Hay Field", "hay_field", Building.UI_Category.Agriculture, "hay_field", Building.BuildingSize.s1x1, 50, new Dictionary<Resource, int>() {
+            { Resource.Tools, 1 }
+        }, 5, new List<Resource>(), 0, 0.0f, 10, new Dictionary<Resource, float>(), 0.0f, 0.0f, 0, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 0, null, null, null, null,
+        new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
+        prototypes.First(x => x.Internal_Name == "hay_field").Tags.Add(Building.Tag.Does_Not_Block_Wind);
+        prototypes.First(x => x.Internal_Name == "hay_field").Tags.Add(Building.Tag.No_Notification_On_Build);
+
+        prototypes.Add(new Building("Chicken Coop", "chicken_coop", Building.UI_Category.Agriculture, "chicken_coop", Building.BuildingSize.s1x1, 35, new Dictionary<Resource, int>() {
+            { Resource.Lumber, 40 }, { Resource.Wood, 10 }, { Resource.Stone, 5 }, { Resource.Tools, 5 }
+        }, 75, new List<Resource>(), 0, 0.0f, 55, new Dictionary<Resource, float>() { { Resource.Lumber, 0.01f } }, 0.10f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 0, null, null, null, null,
+        new List<Resource>(), new List<Resource>(), -0.025f, 2.5f));
+        prototypes.First(x => x.Internal_Name == "chicken_coop").Sprite.Add_Logic(delegate (Building building) { return Pasture_Linking(building); });
+        prototypes.First(x => x.Internal_Name == "chicken_coop").Extra_Sprite = new SpriteData("chicken_coop", SpriteManager.SpriteType.Building);
+        //TODO: These checks only work if farm is not only built first, but it must also be completed first
+        prototypes.First(x => x.Internal_Name == "chicken_coop").On_Build_Check = delegate (Building building, Tile tile, out string message) { return Livestock_Building_On_Build_Check(building, tile, "small_farm", out message); };
+
+        prototypes.Add(new Building("Pigsty", "pigsty", Building.UI_Category.Agriculture, "pigsty", Building.BuildingSize.s1x1, 50, new Dictionary<Resource, int>() {
+            { Resource.Lumber, 50 }, { Resource.Wood, 10 }, { Resource.Stone, 5 }, { Resource.Tools, 5 }
+        }, 85, new List<Resource>(), 0, 0.0f, 65, new Dictionary<Resource, float>() { { Resource.Lumber, 0.01f } }, 0.15f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 0, null, null, null, null,
+        new List<Resource>(), new List<Resource>(), -0.5f, 3.0f));
+        prototypes.First(x => x.Internal_Name == "pigsty").Sprite.Add_Logic(delegate (Building building) { return Pasture_Linking(building); });
+        prototypes.First(x => x.Internal_Name == "pigsty").Extra_Sprite = new SpriteData("pigsty", SpriteManager.SpriteType.Building);
+        prototypes.First(x => x.Internal_Name == "pigsty").On_Build_Check = delegate (Building building, Tile tile, out string message) { return Livestock_Building_On_Build_Check(building, tile, "small_farm", out message); };
 
         prototypes.Add(new Building("Brewery", "brewery", Building.UI_Category.Agriculture, "brewery", Building.BuildingSize.s2x2, 90, new Dictionary<Resource, int>() {
             { Resource.Lumber, 120 }, { Resource.Stone, 15 }, { Resource.Tools, 15 }
@@ -1393,7 +1557,9 @@ public class BuildingPrototypes {
                 tavern.Per_Day_Cash_Delta += (income / delta_time) * TimeManager.Instance.Days_To_Seconds(1.0f, 1.0f);
                 City.Instance.Add_Cash(income);
             }
-        }, null, null, new List<Resource>() { Resource.Berries, Resource.Roots, Resource.Mushrooms, Resource.Firewood, Resource.Charcoal, Resource.Coal, Resource.Game, Resource.Bread, Resource.Potatoes, Resource.Ale, Resource.Mutton, Resource.Corn, Resource.Fish, Resource.Bananas, Resource.Oranges, Resource.Grapes, Resource.Beer, Resource.Rum, Resource.Wine, Resource.Salted_Fish, Resource.Salted_Meat, Resource.Lobsters }, new List<Resource>(), 0.05f, 3.0f));
+        }, null, null, new List<Resource>() { Resource.Berries, Resource.Roots, Resource.Mushrooms, Resource.Firewood, Resource.Charcoal, Resource.Coal, Resource.Game, Resource.Bread, Resource.Potatoes, Resource.Ale,
+            Resource.Mutton, Resource.Corn, Resource.Fish, Resource.Bananas, Resource.Oranges, Resource.Grapes, Resource.Beer, Resource.Rum, Resource.Wine, Resource.Salted_Fish, Resource.Salted_Meat, Resource.Lobsters,
+            Resource.Eggs, Resource.Chicken, Resource.Pork, Resource.Beef }, new List<Resource>(), 0.05f, 3.0f));
         prototypes.First(x => x.Internal_Name == "tavern").Special_Settings.Add(new SpecialSetting("fuel", "Fuel", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() { Resource.Firewood.UI_Name + " (0.5/day)", Resource.Charcoal.UI_Name +  " (0.25/day)", Resource.Coal.UI_Name + " (0.25/day)" }, 0));
         foreach (Resource resource in Resource.All.OrderByDescending(x => x.Tags.Contains(Resource.ResourceTag.Alcohol) ? 1.0f : 0.0f).ToArray()) {
             if (resource.Is_Food || resource.Tags.Contains(Resource.ResourceTag.Alcohol)) {
@@ -1484,7 +1650,7 @@ public class BuildingPrototypes {
             float wood = 0.0f;
             float fish = 0.0f;
             foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                if (tile.Building != null && tile.Building.Internal_Name == "potato_field" && tile.Can_Work(building, Tile.Work_Type.Farm)) {
+                if (tile.Building != null && tile.Building.Is_Complete && tile.Building.Internal_Name == "potato_field" && tile.Can_Work(building, Tile.Work_Type.Farm)) {
                     if (tile.Internal_Name == "grass") {
                         potatoes += 0.10f;
                     } else if (tile.Internal_Name == "fertile_ground") {
@@ -1705,8 +1871,11 @@ public class BuildingPrototypes {
             float potatoes = 0.0f;
             float wheat = 0.0f;
             float corn = 0.0f;
+            float pastures = 0.0f;
+            bool has_cows = false;
+            List<Tile> pasture_spawns = new List<Tile>();
             foreach (Tile tile in building.Get_Tiles_In_Circle(building.Range)) {
-                if (tile.Building != null && tile.Can_Work(building, Tile.Work_Type.Farm)) {
+                if (tile.Building != null && tile.Building.Is_Complete && tile.Can_Work(building, Tile.Work_Type.Farm)) {
                     if (tile.Building.Internal_Name == "potato_field") {
                         if (tile.Internal_Name == "grass") {
                             potatoes += 0.10f;
@@ -1725,6 +1894,14 @@ public class BuildingPrototypes {
                         } else if (tile.Internal_Name == "fertile_ground") {
                             corn += 0.2025f;
                         }
+                    } else if(tile.Building.Internal_Name == "pasture") {
+                        pastures += 1.0f;
+                        if(tile.Entities.Count == 0) {
+                            pasture_spawns.Add(tile);
+                        }
+                    } else if(tile.Building.Internal_Name == "cow_shelter") {
+                        pastures += 1.0f;
+                        has_cows = true;
                     }
                 }
             }
@@ -1732,7 +1909,27 @@ public class BuildingPrototypes {
             building.Produce(Resource.Potatoes, potatoes * multiplier, delta_time);
             building.Produce(Resource.Wheat, wheat * multiplier, delta_time);
             building.Produce(Resource.Corn, corn * multiplier, delta_time);
-        }, unreserve_tiles, Highlight_Tiles(Tile.Work_Type.Farm), new List<Resource>(), new List<Resource>() { Resource.Potatoes, Resource.Wheat, Resource.Corn }, 0.0f, 0.0f));
+
+            building.Consumes.Remove(Resource.Hay);
+            if (has_cows) {
+                float small_farm_multiplier = 1.045f;
+                building.Consumes.Add(Resource.Hay);
+                building.Process(new Dictionary<Resource, float>() {
+                    { Resource.Hay, (pastures * 0.3f) * small_farm_multiplier }
+                }, new Dictionary<Resource, float>() {
+                    { Resource.Milk, (pastures * 0.15f) * small_farm_multiplier },
+                    { Resource.Beef, (pastures * 0.20f) * small_farm_multiplier },
+                    { Resource.Hide, (pastures * 0.10f) * small_farm_multiplier }
+                }, delta_time);
+                //Entities
+                int max_cows = Mathf.RoundToInt((pastures * 0.30f) * building.Efficency);
+                while (pasture_spawns.Count > 0 && building.Entities_Spawned.Count < max_cows) {
+                    Tile spawn = RNG.Instance.Item(pasture_spawns);
+                    Entity cow = new Entity(EntityPrototypes.Instance.Get("cow"), spawn, building);
+                    pasture_spawns.Remove(spawn);
+                }
+            }
+        }, unreserve_tiles, Highlight_Tiles(Tile.Work_Type.Farm), new List<Resource>() { Resource.Hay }, new List<Resource>() { Resource.Potatoes, Resource.Wheat, Resource.Corn, Resource.Milk, Resource.Beef, Resource.Hide }, 0.0f, 0.0f));
 
         prototypes.Add(new Building("Wheat Field", "wheat_field", Building.UI_Category.Agriculture, "wheat_field", Building.BuildingSize.s1x1, 50, new Dictionary<Resource, int>() {
             { Resource.Tools, 1 }
@@ -1747,10 +1944,19 @@ public class BuildingPrototypes {
         new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "corn_field").Tags.Add(Building.Tag.Does_Not_Block_Wind);
         prototypes.First(x => x.Internal_Name == "corn_field").Tags.Add(Building.Tag.No_Notification_On_Build);
+        
+        prototypes.Add(new Building("Cow Shelter", "cow_shelter", Building.UI_Category.Agriculture, "cow_shelter", Building.BuildingSize.s1x1, 25, new Dictionary<Resource, int>() {
+            { Resource.Lumber, 15 }, { Resource.Wood, 10 }, { Resource.Stone, 5 }, { Resource.Tools, 5 }
+        }, 125, new List<Resource>(), 0, 0.0f, 30, new Dictionary<Resource, float>() { { Resource.Lumber, 0.01f } }, 0.25f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>(), 0, false, false, false, 0.0f, 0, null, null, null, null,
+        new List<Resource>(), new List<Resource>(), -0.5f, 3.0f));
+        prototypes.First(x => x.Internal_Name == "cow_shelter").Sprite.Add_Logic(delegate (Building building) { return Pasture_Linking(building); });
+        prototypes.First(x => x.Internal_Name == "cow_shelter").Extra_Sprite = new SpriteData("cow_shelter", SpriteManager.SpriteType.Building);
+        //TODO: These checks only work if farm is not only built first, but it must also be completed first
+        prototypes.First(x => x.Internal_Name == "cow_shelter").On_Build_Check = delegate (Building building, Tile tile, out string message) { return Livestock_Building_On_Build_Check(building, tile, "farmhouse", out message); };
 
         prototypes.Add(new Building("Silo", "silo", Building.UI_Category.Infrastructure, "silo", Building.BuildingSize.s2x2, 150, new Dictionary<Resource, int>() {
             { Resource.Lumber, 75 }, { Resource.Stone, 110 }, { Resource.Tools, 15 }
-        }, 100, new List<Resource>() { Resource.Wheat, Resource.Flour, Resource.Corn },
+        }, 100, new List<Resource>() { Resource.Wheat, Resource.Flour, Resource.Corn, Resource.Hay },
         2500, 75.0f, 190, new Dictionary<Resource, float>() { { Resource.Stone, 0.025f }, { Resource.Lumber, 0.01f } }, 0.5f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 5 } }, 5, false, false, true, 0.0f, 17, null, null, null, null, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "silo").Sprites.Add(new SpriteData("silo_1"));
 
@@ -2368,15 +2574,28 @@ public class BuildingPrototypes {
                     inputs.Add(Resource.Mutton, 5.0f);
                     outputs.Add(Resource.Salted_Meat, 5.0f);
                     break;
+                case 3:
+                    inputs.Add(Resource.Beef, 5.0f);
+                    outputs.Add(Resource.Salted_Meat, 5.0f);
+                    break;
+                case 4:
+                    inputs.Add(Resource.Pork, 5.0f);
+                    outputs.Add(Resource.Salted_Meat, 7.5f);
+                    break;
             }
             building.Update_Consumes_Produces(inputs, outputs);
             if (!building.Is_Operational) {
                 return;
             }
             building.Process(inputs, outputs, delta_time);
-        }, null, null, new List<Resource>() { Resource.Salt, Resource.Barrels, Resource.Fish, Resource.Game, Resource.Mutton }, new List<Resource>() { Resource.Salted_Fish, Resource.Salted_Meat }, 0.0f, 0.0f));
+        }, null, null, new List<Resource>() { Resource.Salt, Resource.Barrels, Resource.Fish, Resource.Game, Resource.Mutton, Resource.Pork, Resource.Beef }, new List<Resource>() { Resource.Salted_Fish, Resource.Salted_Meat }, 0.0f, 0.0f));
         prototypes.First(x => x.Internal_Name == "salting_house").Special_Settings.Add(new SpecialSetting("production", "Production", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() {
-            Resource.Salted_Fish.UI_Name + " (5/day)", string.Format("{0} ({1}) (5/day)", Resource.Salted_Meat.UI_Name, Resource.Game.UI_Name), string.Format("{0} ({1}) (5/day)", Resource.Salted_Meat.UI_Name, Resource.Mutton.UI_Name) }, 0));
+            Resource.Salted_Fish.UI_Name + " (5/day)",
+            string.Format("{0} ({1}) (5/day)", Resource.Salted_Meat.UI_Name, Resource.Game.UI_Name),
+            string.Format("{0} ({1}) (5/day)", Resource.Salted_Meat.UI_Name, Resource.Mutton.UI_Name),
+            string.Format("{0} ({1}) (5/day)", Resource.Salted_Meat.UI_Name, Resource.Beef.UI_Name),
+            string.Format("{0} ({1}) (7.5/day)", Resource.Salted_Meat.UI_Name, Resource.Pork.UI_Name)
+        }, 0));
 
         prototypes.Add(new Residence("Manor", "manor", Building.UI_Category.Housing, "manor", Building.BuildingSize.s3x3, 150, new Dictionary<Resource, int>() {
             { Resource.Lumber, 290 }, { Resource.Marble, 50 }, { Resource.Glass, 25 }, { Resource.Stone, 25 }, { Resource.Tools, 15 }
@@ -2817,6 +3036,7 @@ public class BuildingPrototypes {
             return worked_tiles;
         },
         new List<Resource>(), new List<Resource>() { Resource.Sand }, 0.0f, 0.0f));
+        prototypes.First(x => x.Internal_Name == "shore_house").Tags.Add(Building.Tag.Does_Not_Disrupt_Hunting);
         prototypes.First(x => x.Internal_Name == "shore_house").On_Build_Check = Waterfront_Check;
 
         prototypes.Add(new Building("Fishing Harbor", "fishing_harbor", Building.UI_Category.Coastal, "fishing_harbor", Building.BuildingSize.s3x3, 175, new Dictionary<Resource, int>() {
@@ -2859,14 +3079,7 @@ public class BuildingPrototypes {
                     outputs.Add(Resource.Glassware, 2.5f);
                     break;
             }
-            building.Consumes.Clear();
-            building.Produces.Clear();
-            foreach (KeyValuePair<Resource, float> pair in inputs) {
-                building.Consumes.Add(pair.Key);
-            }
-            foreach (KeyValuePair<Resource, float> pair in outputs) {
-                building.Produces.Add(pair.Key);
-            }
+            building.Update_Consumes_Produces(inputs, outputs);
             if (!building.Is_Operational) {
                 return;
             }
@@ -2874,6 +3087,8 @@ public class BuildingPrototypes {
         }, null, null, new List<Resource>() { Resource.Charcoal, Resource.Coal, Resource.Firewood, Resource.Sand, Resource.Potash }, new List<Resource>() { Resource.Glass, Resource.Glassware }, -1.25f, 5.0f));
         prototypes.First(x => x.Internal_Name == "glassworks").Special_Settings.Add(new SpecialSetting("fuel", "Fuel", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() { Resource.Firewood.UI_Name + " (5/day)", Resource.Charcoal.UI_Name + " (2.5/day)", Resource.Coal.UI_Name + " (2.5/day)" }, 0));
         prototypes.First(x => x.Internal_Name == "glassworks").Special_Settings.Add(new SpecialSetting("production", "Production", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() { Resource.Glass.UI_Name + " (10/day)", Resource.Glassware.UI_Name + " (2.5/day)"}, 0));
+        
+
     }
 
     public static BuildingPrototypes Instance

@@ -11,6 +11,12 @@ public class EntityPrototypes {
         prototypes = new List<Entity>();
         prototypes.Add(new Entity("sheep", Entity.EntityType.Static, new List<SpriteData>() { new SpriteData("sheep_1", SpriteManager.SpriteType.Entity), new SpriteData("sheep_2", SpriteManager.SpriteType.Entity) },
             10, 60));
+        prototypes.Add(new Entity("chicken", Entity.EntityType.Static, new List<SpriteData>() { new SpriteData("chickens_1", SpriteManager.SpriteType.Entity), new SpriteData("chickens_2", SpriteManager.SpriteType.Entity) },
+            10, 50));
+        prototypes.Add(new Entity("pig", Entity.EntityType.Static, new List<SpriteData>() { new SpriteData("pigs_1", SpriteManager.SpriteType.Entity), new SpriteData("pigs_2", SpriteManager.SpriteType.Entity) },
+            15, 60));
+        prototypes.Add(new Entity("cow", Entity.EntityType.Static, new List<SpriteData>() { new SpriteData("cows_1", SpriteManager.SpriteType.Entity), new SpriteData("cows_2", SpriteManager.SpriteType.Entity) },
+            15, 65));
         prototypes.Add(new Entity("fishing_boat", Entity.EntityType.Static, new List<SpriteData> {
             new SpriteData(SpriteManager.SpriteType.Entity, new List<string>() { "fishing_boat_1", "fishing_boat_2", "fishing_boat_3" }, 3.0f),
             new SpriteData(SpriteManager.SpriteType.Entity, new List<string>() { "fishing_boat_b_1", "fishing_boat_b_2", "fishing_boat_b_3" }, 3.0f)

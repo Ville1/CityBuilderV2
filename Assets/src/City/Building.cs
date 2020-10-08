@@ -101,6 +101,7 @@ public class Building {
     public string Special_Status_Text_1 { get; set; }
     public string Special_Status_Text_2 { get; set; }
     public bool Lock_Workers { get; set; }
+    public SpriteData Extra_Sprite { get; set; }
 
     public GameObject GameObject { get; private set; }
     public SpriteRenderer Renderer { get { return GameObject != null ? GameObject.GetComponent<SpriteRenderer>() : null; } }
@@ -118,6 +119,7 @@ public class Building {
     private float animation_cooldown;
     private bool animation_initialized;
     private int selected_sprite;
+    private GameObject extra_sprite_gameobject;
 
     public Building(Building prototype, Tile tile, List<Tile> tiles, bool is_preview)
     {
@@ -224,6 +226,8 @@ public class Building {
         Data = new Dictionary<string, string>();
         Special_Status_Text_1 = null;
         Special_Status_Text_2 = null;
+        Extra_Sprite = prototype.Extra_Sprite != null ? prototype.Extra_Sprite.Clone() : null;
+        extra_sprite_gameobject = null;
 
         animation_index = 0;
         animation_cooldown = Sprite.Animation_Frame_Time;
@@ -308,6 +312,8 @@ public class Building {
         Appeal = appeal;
         Appeal_Range = appeal_range;
         Data = new Dictionary<string, string>();
+        Extra_Sprite = null;
+        extra_sprite_gameobject = null;
     }
 
     public Building(BuildingSaveData data) : this(BuildingPrototypes.Instance.Get(data.Internal_Name), Map.Instance.Get_Tile_At(data.X, data.Y),
@@ -1221,6 +1227,10 @@ public class Building {
                 entity.Spawner = null;
                 Map.Instance.Delete_Entity(entity);
             }
+            if(extra_sprite_gameobject != null) {
+                GameObject.Destroy(extra_sprite_gameobject);
+                extra_sprite_gameobject = null;
+            }
         }
     }
 
@@ -1458,6 +1468,38 @@ public class Building {
                 if (!building.Sprite.Simple) {
                     building.Update_Sprite(true);
                 }
+            }
+        }
+        if(Extra_Sprite != null) {
+            if(Is_Deconstructing && extra_sprite_gameobject != null) {
+                GameObject.Destroy(extra_sprite_gameobject);
+                extra_sprite_gameobject = null;
+            } else if(extra_sprite_gameobject == null && !Is_Preview && Is_Built) {
+                GameObject prefab = null;
+                switch (Size) {
+                    case BuildingSize.s1x1:
+                        prefab = PrefabManager.Instance.Building_1x1;
+                        break;
+                    case BuildingSize.s2x2:
+                        prefab = PrefabManager.Instance.Building_2x2;
+                        break;
+                    case BuildingSize.s3x3:
+                        prefab = PrefabManager.Instance.Building_3x3;
+                        break;
+                }
+                extra_sprite_gameobject = GameObject.Instantiate(
+                    prefab,
+                    new Vector3(
+                        GameObject.transform.position.x,
+                        GameObject.transform.position.y,
+                        GameObject.transform.position.z
+                    ),
+                    GameObject.transform.rotation,
+                    GameObject.transform
+                );
+                extra_sprite_gameobject.name = "ExtraComponent";
+                extra_sprite_gameobject.GetComponentInChildren<SpriteRenderer>().sprite = SpriteManager.Instance.Get(Extra_Sprite.Name, Extra_Sprite.Type);
+                extra_sprite_gameobject.GetComponentInChildren<SpriteRenderer>().sortingLayerName = "Components";
             }
         }
         if ((Is_Built || Is_Town_Hall || Is_Preview) && !Is_Deconstructing) {
