@@ -735,6 +735,7 @@ public class BuildingPrototypes {
         }
         prototypes.First(x => x.Internal_Name == "marketplace").Special_Settings.Add(new SpecialSetting(Resource.Herbs.ToString().ToLower(), Resource.Herbs.UI_Name, SpecialSetting.SettingType.Toggle, 0.0f, true));
         prototypes.First(x => x.Internal_Name == "marketplace").Special_Settings.Add(new SpecialSetting(Resource.Salt.ToString().ToLower(), Resource.Salt.UI_Name, SpecialSetting.SettingType.Toggle, 0.0f, true));
+        prototypes.First(x => x.Internal_Name == "marketplace").Special_Settings.Add(new SpecialSetting(Resource.Milk.ToString().ToLower(), Resource.Milk.UI_Name, SpecialSetting.SettingType.Toggle, 0.0f, true));
         prototypes.First(x => x.Internal_Name == "marketplace").Special_Settings.Add(new SpecialSetting(Resource.Simple_Clothes.ToString().ToLower(), Resource.Simple_Clothes.UI_Name, SpecialSetting.SettingType.Toggle, 0.0f, true));
         prototypes.First(x => x.Internal_Name == "marketplace").Special_Settings.Add(new SpecialSetting(Resource.Leather_Clothes.ToString().ToLower(), Resource.Leather_Clothes.UI_Name, SpecialSetting.SettingType.Toggle, 0.0f, true));
         prototypes.First(x => x.Internal_Name == "marketplace").Tags.Add(Building.Tag.Blocked_By_Road_Blocks);

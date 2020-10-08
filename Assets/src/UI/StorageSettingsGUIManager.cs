@@ -11,6 +11,8 @@ public class StorageSettingsGUIManager : MonoBehaviour {
     public GameObject Scroll_Content;
     public GameObject Row_Prototype;
     public Text Total_Text;
+    public InputField Set_All_Input;
+    public Dropdown Set_All_Dropdown;
 
     private Dictionary<Resource, GameObject> rows;
     private Building building;
@@ -92,10 +94,10 @@ public class StorageSettingsGUIManager : MonoBehaviour {
                 row_id = 0;
             }
 
-            GameObject resource_text = GameObject.Find(string.Format("{0}/ResourceNameText", row.name));
-            resource_text.GetComponentInChildren<Text>().text = setting.Resource.UI_Name;
+            Helper.Set_Image(row.name, "IconImage", setting.Resource.Has_Sprite ? setting.Resource.Sprite_Name : "empty", setting.Resource.Has_Sprite ? setting.Resource.Sprite_Type : SpriteManager.SpriteType.UI);
+            Helper.Set_Text(row.name, "ResourceNameText", setting.Resource.UI_Name);
             GameObject current_text = GameObject.Find(string.Format("{0}/CurrentAmountText", row.name));
-            current_text.GetComponentInChildren<Text>().text = Helper.Float_To_String(building.Storage.ContainsKey(setting.Resource) ? building.Storage[setting.Resource] : 0.0f, 1);
+            Helper.Set_Text(row.name, "CurrentAmountText", Helper.Float_To_String(building.Storage.ContainsKey(setting.Resource) ? building.Storage[setting.Resource] : 0.0f, 1));
             row.GetComponentInChildren<InputField>().text = setting.Limit.ToString();
             Dropdown dropdown = row.GetComponentInChildren<Dropdown>();
             dropdown.ClearOptions();
@@ -110,6 +112,14 @@ public class StorageSettingsGUIManager : MonoBehaviour {
         }
         Total_Text.text = string.Format("Total: {0} / {1}", Helper.Float_To_String(building.Current_Storage_Amount, 1), building.Storage_Limit);
         Scroll_Content.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 25.0f * rows.Count);
+        Set_All_Input.text = (building.Storage_Limit / 2).ToString();
+        Set_All_Dropdown.ClearOptions();
+        List<Dropdown.OptionData> set_all_option_data = new List<Dropdown.OptionData>();
+        foreach (StorageSetting.StoragePriority priority in Enum.GetValues(typeof(StorageSetting.StoragePriority))) {
+            set_all_option_data.Add(new Dropdown.OptionData(Helper.Snake_Case_To_UI(priority.ToString(), true)));
+        }
+        Set_All_Dropdown.AddOptions(set_all_option_data);
+        Set_All_Dropdown.value = (int)StorageSetting.StoragePriority.Medium;
     }
 
     public void Allow_All()
@@ -129,6 +139,23 @@ public class StorageSettingsGUIManager : MonoBehaviour {
         }
         foreach (KeyValuePair<Resource, GameObject> pair in rows) {
             pair.Value.GetComponentInChildren<InputField>().text = "0";
+        }
+    }
+
+    public void Set_All()
+    {
+        if (!Active) {
+            return;
+        }
+        int limit = 0;
+        if(!int.TryParse(Set_All_Input.text, out limit)) {
+            limit = building.Storage_Limit / 2;
+        }
+        limit = Mathf.Clamp(limit, 0, building.Storage_Limit);
+        Set_All_Input.text = limit.ToString();
+        foreach (KeyValuePair<Resource, GameObject> pair in rows) {
+            pair.Value.GetComponentInChildren<InputField>().text = limit.ToString();
+            pair.Value.GetComponentInChildren<Dropdown>().value = Set_All_Dropdown.value;
         }
     }
 
