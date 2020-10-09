@@ -42,6 +42,8 @@ public class MouseManager : MonoBehaviour
                 Tile tile = Tile_Under_Cursor;
                 if(tile != null && BuildMenuManager.Instance.Preview_Active) {
                     BuildMenuManager.Instance.Build();
+                } else if (tile != null && tile.Building != null && DistributionDepotGUI.Instance.Waiting_For_Target) {
+                    DistributionDepotGUI.Instance.Select_Target(tile.Building);
                 } else if(tile != null) {
                     InspectorManager.Instance.Building = tile.Building;
                     MasterUIManager.Instance.Close_Others(typeof(InspectorManager).Name);

@@ -529,7 +529,8 @@ public class InspectorManager : MonoBehaviour {
             Pause_Button.GetComponentInChildren<Text>().text = building.Is_Paused ? "Unpause" : "Pause";
             Delete_Button.interactable = building.Can_Be_Deleted;
             Settings_Button.interactable = building.Is_Complete && (building.Is_Storehouse || building.Special_Settings.Count > 0 || building.Tags.Contains(Building.Tag.Land_Trade) ||
-                building.Tags.Contains(Building.Tag.Water_Trade) || (building.Tags.Contains(Building.Tag.Creates_Expeditions) && building.Has_Functional_Dock() && building.Is_Operational));
+                building.Tags.Contains(Building.Tag.Water_Trade) || building.Tags.Contains(Building.Tag.Is_Distribution_Depot) || (building.Tags.Contains(Building.Tag.Creates_Expeditions) &&
+                building.Has_Functional_Dock() && building.Is_Operational));
 
             //Highlights
             float range = Mathf.Max(new float[3] { building.Range, building.Construction_Range, (building is Residence) ? ((building as Residence).Peasants_Only ? 0.0f : Residence.DIRT_ROAD_RANGE) : 0.0f });
@@ -631,6 +632,8 @@ public class InspectorManager : MonoBehaviour {
             TradeGUIManager.Instance.Show(building);
         } else if (building.Tags.Contains(Building.Tag.Creates_Expeditions)) {
             NewExpeditionGUIManager.Instance.Show(building);
+        } else if (building.Tags.Contains(Building.Tag.Is_Distribution_Depot)) {
+            DistributionDepotGUI.Instance.Show(building);
         }
     }
 

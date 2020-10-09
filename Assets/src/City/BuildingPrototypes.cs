@@ -3150,7 +3150,88 @@ public class BuildingPrototypes {
         prototypes.First(x => x.Internal_Name == "glassworks").Special_Settings.Add(new SpecialSetting("fuel", "Fuel", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() { Resource.Firewood.UI_Name + " (5/day)", Resource.Charcoal.UI_Name + " (2.5/day)", Resource.Coal.UI_Name + " (2.5/day)" }, 0));
         prototypes.First(x => x.Internal_Name == "glassworks").Special_Settings.Add(new SpecialSetting("production", "Production", SpecialSetting.SettingType.Dropdown, 0, false, new List<string>() { Resource.Glass.UI_Name + " (10/day)", Resource.Glassware.UI_Name + " (2.5/day)"}, 0));
         
+        prototypes.Add(new Building("Distribution Depot", "distribution_depot", Building.UI_Category.Infrastructure, "distribution_depot_1", Building.BuildingSize.s1x1, 90, new Dictionary<Resource, int>() {
+            { Resource.Bricks, 50 }, { Resource.Lumber, 25 }, { Resource.Stone, 5 }, { Resource.Tools, 10 }
+        }, 200, new List<Resource>(), 0, 50.0f, 80, new Dictionary<Resource, float>() { { Resource.Bricks, 0.01f } }, 0.50f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 5 }, { Building.Resident.Citizen, 5 } }, 5,
+        true, false, true, 0.0f, 30, null,
+        delegate (Building building, float delta_time) {
+            if (!building.Data.ContainsKey(DistributionDepotGUI.TARGET_ID_KEY)) {
+                return;
+            }
+            int id = int.Parse(building.Data[DistributionDepotGUI.TARGET_ID_KEY]);
+            Building target = City.Instance.Buildings.FirstOrDefault(x => x.Id == id);
+            if(target == null) {
+                building.Data.Remove(DistributionDepotGUI.TARGET_ID_KEY);
+            }
+            List<Building> input_storehouses = new List<Building>();
+            foreach(Building b in Map.Instance.Get_Buildings_Around(building).Where(x => x.Is_Storehouse).ToList()) {
+                input_storehouses.Add(b);
+            }
+            if (!building.Is_Operational  || target == null || !target.Is_Operational || input_storehouses.Count == 0) {
+                return;
+            }
 
+            //Get input building
+            int input_index = 0;
+            Building input = input_storehouses[input_index];
+            string last_input_index_key = "last_input_index";
+            if (input_storehouses.Count > 1 && building.Data.ContainsKey(last_input_index_key)) {
+                input_index = int.Parse(building.Data[last_input_index_key]);
+                input_index = input_index >= input_storehouses.Count - 1 ? 0 : input_index + 1;
+                input = input_storehouses[input_index];
+            }
+            if (building.Data.ContainsKey(last_input_index_key)) {
+                building.Data[last_input_index_key] = input_index.ToString();
+            } else {
+                building.Data.Add(last_input_index_key, input_index.ToString());
+            }
+            float delta_days = TimeManager.Instance.Seconds_To_Days(delta_time, 1.0f);
+            float max_transfer = building.Efficency * building.Transfer_Speed * delta_days;
+            float resources_transfered = 0.0f;
+            foreach (KeyValuePair<string, string> pair in building.Data) {
+                Resource resource = Resource.All.FirstOrDefault(x => x.Type.ToString().ToLower() == pair.Key);
+                int min = 0;
+                if(!int.TryParse(pair.Value, out min)) {
+                    min = 0;
+                }
+                if (resource == null || !input.Storage.ContainsKey(resource) || input.Storage[resource] < min || !target.Allowed_Resources.Contains(resource)) {
+                    continue;
+                }
+                float resources_to_transfer = Math.Min(max_transfer - resources_transfered, input.Storage[resource] - min);
+                if(resources_to_transfer != 0.0f) {
+                    float transfered = target.Store_Resources(resource, resources_to_transfer);
+                    float check = input.Take_Resources(resource, transfered);
+                    if(check != transfered) {
+                        CustomLogger.Instance.Error("distribution_depot: check != transfered");
+                    }
+                    resources_transfered += transfered;
+                }
+            }
+        }, null,
+        delegate (Building building) {
+            List<Tile> tiles = new List<Tile>();
+            foreach(Building storehouse in Map.Instance.Get_Buildings_Around(building).Where(x => x.Is_Operational && x.Is_Storehouse).ToList()) {
+                foreach(Tile t in storehouse.Tiles) {
+                    if (!tiles.Contains(t)) {
+                        tiles.Add(t);
+                    }
+                }
+            }
+            if (building.Data.ContainsKey(DistributionDepotGUI.TARGET_ID_KEY)) {
+                int id = int.Parse(building.Data[DistributionDepotGUI.TARGET_ID_KEY]);
+                Building target = City.Instance.Buildings.FirstOrDefault(x => x.Id == id);
+                if (target != null) {
+                    foreach (Tile t in target.Tiles) {
+                        if (!tiles.Contains(t)) {
+                            tiles.Add(t);
+                        }
+                    }
+                }
+            }
+            return tiles;
+        }, new List<Resource>(), new List<Resource>(), 0.0f, 0.0f));
+        prototypes.First(x => x.Internal_Name == "distribution_depot").Sprites.Add(new SpriteData("distribution_depot_2", SpriteManager.SpriteType.Building));
+        prototypes.First(x => x.Internal_Name == "distribution_depot").Tags.Add(Building.Tag.Is_Distribution_Depot);
     }
 
     public static BuildingPrototypes Instance

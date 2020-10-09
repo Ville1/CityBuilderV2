@@ -39,6 +39,8 @@ public class KeyboardManager : MonoBehaviour
                 BuildMenuManager.Instance.Active = false;
             } else if (MainMenuManager.Instance.Active) {
                 MainMenuManager.Instance.Active = false;
+            } else if(DistributionDepotGUI.Instance.Waiting_For_Target) {
+                DistributionDepotGUI.Instance.Waiting_For_Target = false;
             } else {
                 MainMenuManager.Instance.Active = true;
             }

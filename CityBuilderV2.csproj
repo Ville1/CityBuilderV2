@@ -126,6 +126,7 @@
     <Compile Include="Assets\src\UI\ConfirmationDialogManager.cs" />
     <Compile Include="Assets\src\UI\ConsoleManager.cs" />
     <Compile Include="Assets\src\UI\ContactsGUIManager.cs" />
+    <Compile Include="Assets\src\UI\DistributionDepotGUI.cs" />
     <Compile Include="Assets\src\UI\InspectorManager.cs" />
     <Compile Include="Assets\src\UI\KeyboardManager.cs" />
     <Compile Include="Assets\src\UI\LoadGUIManager.cs" />

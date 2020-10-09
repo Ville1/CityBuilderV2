@@ -73,6 +73,9 @@ public class MasterUIManager : MonoBehaviour {
         if (NewColonyGUIManager.Instance != null && typeof(NewColonyGUIManager).Name != type_name) {
             NewColonyGUIManager.Instance.Active = false;
         }
+        if (DistributionDepotGUI.Instance != null && typeof(DistributionDepotGUI).Name != type_name) {
+            DistributionDepotGUI.Instance.Active = false;
+        }
         MenuManager.Instance.Close_Views_Panel();
     }
 
