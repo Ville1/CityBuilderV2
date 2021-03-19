@@ -26,6 +26,7 @@ public class DistributionDepotGUI : MonoBehaviour {
     private Resource selected_resource;
     private bool waiting_for_target;
     private bool ignore_input_update;
+    private List<long> connected_ids;
 
     /// <summary>
     /// Initializiation
@@ -40,6 +41,7 @@ public class DistributionDepotGUI : MonoBehaviour {
         scroll_view = new RowScrollView<Resource.ResourceType>("resource_scroll_view", Scroll_Content, Scroll_Row_Prototype, 20.0f);
         waiting_for_target = false;
         ignore_input_update = false;
+        connected_ids = new List<long>();
         Active = false;
     }
 
@@ -109,6 +111,7 @@ public class DistributionDepotGUI : MonoBehaviour {
                 settings.Add(resource, null);
             }
         }
+        connected_ids = depot.Get_Connected_Buildings().Select(x => x.Key.Id).ToList();
         Active = true;
         Selected_Resource_Container.SetActive(false);
     }
@@ -141,6 +144,10 @@ public class DistributionDepotGUI : MonoBehaviour {
     {
         if (!target.Is_Storehouse) {
             MessageManager.Instance.Show_Message(string.Format("{0} is not a storehouse. Press esc to cancel.", target.Name));
+            return;
+        }
+        if (!connected_ids.Contains(target.Id)) {
+            MessageManager.Instance.Show_Message(string.Format("{0} is not connected to depot, or is too far away. Press esc to cancel.", target.Name));
             return;
         }
         this.target = target;

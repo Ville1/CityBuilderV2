@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
 
@@ -23,6 +24,8 @@ public class Building {
     public static float TOOL_REFUND = 0.10f;
     public static float DISREPAIR_SPEED = 1.0f;//HP / day
     public static float PAUSE_UPKEEP_MULTIPLIER = 0.5f;
+    public static int STOREHOUSE_TRANSFER_MAX_QUEUE = 10;
+    public static int STOREHOUSE_TRANSFER_MAX_MILLISECONDS = 10;
 
     public enum UI_Category { Admin, Infrastructure, Housing, Services, Forestry, Agriculture, Textile, Coastal, Industry, Unbuildable }
     public enum Resident { Peasant, Citizen, Noble }
@@ -79,6 +82,7 @@ public class Building {
     public bool Is_Complete { get { return Is_Built && !Is_Deconstructing; } }
     public bool Requires_Connection { get { return requires_connection && Is_Built && !Is_Deconstructing; } set { requires_connection = value; } }
     public bool Requires_Workers { get { return Max_Workers_Total != 0; } }
+    public bool Has_Storage { get { return Storage_Limit > 0 || Input_Storage.Count != 0 || Output_Storage.Count != 0; } }
     public float Range { get; private set; }
     public int Road_Range { get; private set; }
     public OnBuiltDelegate On_Built { get; private set; }
@@ -121,6 +125,7 @@ public class Building {
     private bool animation_initialized;
     private int selected_sprite;
     private GameObject extra_sprite_gameobject;
+    private List<StorehouseTransferData> storehouse_transfer_data;
 
     public Building(Building prototype, Tile tile, List<Tile> tiles, bool is_preview)
     {
@@ -250,6 +255,7 @@ public class Building {
         alerts = new List<GameObject>();
         active_alerts = new List<string>();
         alert_change_cooldown = ALERT_CHANGE_INTERVAL;
+        storehouse_transfer_data = new List<StorehouseTransferData>();
 
         if (Is_Built && !Is_Preview) {
             Build_Completed();
@@ -315,6 +321,7 @@ public class Building {
         Data = new Dictionary<string, string>();
         Extra_Sprite = null;
         extra_sprite_gameobject = null;
+        storehouse_transfer_data = new List<StorehouseTransferData>();
     }
 
     public Building(BuildingSaveData data) : this(BuildingPrototypes.Instance.Get(data.Internal_Name), Map.Instance.Get_Tile_At(data.X, data.Y),
@@ -405,7 +412,21 @@ public class Building {
             On_Update(this, 0.0f);
         }
 
+        storehouse_transfer_data = new List<StorehouseTransferData>();
+
         Update_Sprite();
+    }
+    
+    public void Finalize_Load(BuildingSaveData data)
+    {
+        if(data.Storehouse_Transfer_Data != null) {
+            storehouse_transfer_data = data.Storehouse_Transfer_Data.Select(x => new StorehouseTransferData() {
+                Remaining_Connected_Buildings = City.Instance.Buildings.Where(y => x.Remaining_Connected_Buildings.Contains(y.Id)).ToList(),
+                Max_Transfer = x.Max_Transfer,
+                Resources_Collected = x.Resources_Collected,
+                Resources_Distributed = x.Resources_Distributed
+            }).ToList();
+        }
     }
 
     public void Move(Tile tile)
@@ -587,6 +608,7 @@ public class Building {
 
     public void Update(float delta_time)
     {
+        Storehouse_Transfer();
         update_cooldown -= delta_time;
         if(update_cooldown > 0.0f) {
             update_on_last_call = false;
@@ -597,6 +619,8 @@ public class Building {
             update_on_last_call = false;
             return;
         }
+        DiagnosticsManager.Instance.Start(GetType(), "total", "Total");
+        DiagnosticsManager.Instance.Start(GetType(), "start", "Start");
         float realtime_delta_time = update_cooldown;
         delta_time = update_cooldown * TimeManager.Instance.Multiplier;
         update_on_last_call = true;
@@ -701,8 +725,11 @@ public class Building {
                 }
             }
         }
+        
+        DiagnosticsManager.Instance.End(GetType(), "start");
+        DiagnosticsManager.Instance.Start(GetType(), "construction", "Construction");
 
-        if(Is_Operational && Construction_Speed > 0.0f && Construction_Range > 0.0f) {
+        if (Is_Operational && Construction_Speed > 0.0f && Construction_Range > 0.0f) {
             float construction_progress = Efficency * Construction_Speed * delta_time;
             foreach(Building building in City.Instance.Buildings) {
                 if (!building.Is_Built) {
@@ -734,84 +761,44 @@ public class Building {
             }
         }
 
-        //Collecting resources
-        if(Is_Operational && (Is_Storehouse || (Transfer_Speed > 0.0f && Road_Range > 0 && Consumes.Count != 0))) {
-            List<Building> connected_buildings = Get_Connected_Buildings(Road_Range).Select(x => x.Key).ToList();
-            float resources_transfered = 0.0f;
-            float max_transfer = Transfer_Speed * delta_days * Efficency;
-            if (Is_Storehouse) {
-                foreach(Building building in connected_buildings) {
-                    if(building.Id == Id) {
-                        continue;
-                    }
-                    foreach(Resource resource in Allowed_Resources) {
-                        float take = Math.Min(max_transfer - resources_transfered, Storage_Settings.Get(resource).Limit - Storage[resource]);
-                        take = Math.Max(0.0f, Math.Min(take, Storage_Limit - Current_Storage_Amount));
-                        if (building.Produces.Contains(resource) && building.Output_Storage.ContainsKey(resource)) {
-                            float resources_taken = Mathf.Min(building.Output_Storage[resource], take);
-                            building.Output_Storage[resource] -= resources_taken;
-                            resources_transfered += resources_taken;
-                            Storage[resource] += resources_taken;
-                        } else if(!building.Consumes.Contains(resource) && building.Input_Storage.ContainsKey(resource) && building.Input_Storage[resource] > 0.0f) {
-                            float resources_taken = Mathf.Min(building.Input_Storage[resource], take);
-                            building.Input_Storage[resource] -= resources_taken;
-                            resources_transfered += resources_taken;
-                            Storage[resource] += resources_taken;
-                        } else if (building.Is_Storehouse && building.Allowed_Resources.Contains(resource) && (int)Storage_Settings.Get(resource).Priority > (int)building.Storage_Settings.Get(resource).Priority) {
-                            float resources_taken = building.Take_Resources(resource, take);
-                            resources_transfered += resources_taken;
-                            Storage[resource] += resources_taken;
-                        }
-                    }
-                }
-            } else {
-                foreach(Building building in connected_buildings) {
-                    if (building.Id == Id) {
-                        continue;
-                    }
-                    foreach (Resource resource in Consumes) {
-                        float take = Math.Min(max_transfer - resources_transfered, INPUT_OUTPUT_STORAGE_LIMIT - Input_Storage[resource]);
-                        if (building.Produces.Contains(resource)) {
-                            float resources_taken = Mathf.Min(building.Output_Storage[resource], take);
-                            building.Output_Storage[resource] -= resources_taken;
-                            resources_transfered += resources_taken;
-                            Input_Storage[resource] += resources_taken;
-                        } else {
-                            float resources_taken = building.Take_Resources(resource, take);
-                            resources_transfered += resources_taken;
-                            Input_Storage[resource] += resources_taken;
-                        }
-                    }
-                }
-            }
-        }
+        DiagnosticsManager.Instance.End(GetType(), "construction");
+        DiagnosticsManager.Instance.Start(GetType(), "collecting", "Collecting");
 
-        //Distributing resources
-        if (Is_Operational && Is_Storehouse) {
-            List<Building> connected_buildings = Get_Connected_Buildings(Road_Range).Select(x => x.Key).ToList();
+        //Collecting resources (non-storehouse building)
+        if (Is_Operational && !Is_Storehouse && Transfer_Speed > 0.0f && Road_Range > 0 && Consumes.Count != 0) {
+            List<Building> connected_buildings = Get_Connected_Buildings(Road_Range).Where(x => x.Key.Has_Storage).Select(x => x.Key).ToList();
             float resources_transfered = 0.0f;
             float max_transfer = Transfer_Speed * delta_days * Efficency;
+            DiagnosticsManager.Instance.Start(GetType(), "collecting_2b", "Collecting 2B");
             foreach (Building building in connected_buildings) {
-                if (building.Id == Id || !building.Is_Complete) {
+                if (building.Id == Id) {
                     continue;
                 }
-                foreach (Resource resource in building.Consumes) {
-                    if (!Storage.ContainsKey(resource)) {
-                        continue;
+                foreach (Resource resource in Consumes) {
+                    float take = Math.Min(max_transfer - resources_transfered, INPUT_OUTPUT_STORAGE_LIMIT - Input_Storage[resource]);
+                    if (building.Produces.Contains(resource)) {
+                        float resources_taken = Mathf.Min(building.Output_Storage[resource], take);
+                        building.Output_Storage[resource] -= resources_taken;
+                        resources_transfered += resources_taken;
+                        Input_Storage[resource] += resources_taken;
+                    } else {
+                        float resources_taken = building.Take_Resources(resource, take);
+                        resources_transfered += resources_taken;
+                        Input_Storage[resource] += resources_taken;
                     }
-                    if (!building.Input_Storage.ContainsKey(resource)) {
-                        building.Input_Storage.Add(resource, 0.0f);
-                    }
-                    float give = Math.Min(max_transfer - resources_transfered, INPUT_OUTPUT_STORAGE_LIMIT - building.Input_Storage[resource]);
-                    float resources_given = Mathf.Min(Storage[resource], give);
-                    building.Input_Storage[resource] += resources_given;
-                    resources_transfered += resources_given;
-                    Storage[resource] -= resources_given;
                 }
             }
+            DiagnosticsManager.Instance.End(GetType(), "collecting_2b");
+        } else if (Is_Storehouse) {
+            //Queue storehouse transfers
+            storehouse_transfer_data.Add(new StorehouseTransferData(Get_Connected_Buildings(Road_Range).Where(x => x.Key.Has_Storage).Select(x => x.Key).ToList(), Transfer_Speed * delta_days * Efficency));
         }
 
-        if((Tags.Contains(Tag.Land_Trade) || Tags.Contains(Tag.Water_Trade)) && Trade_Route_Settings.Set) {
+
+        DiagnosticsManager.Instance.End(GetType(), "collecting");
+        DiagnosticsManager.Instance.Start(GetType(), "update", "Update");
+
+        if ((Tags.Contains(Tag.Land_Trade) || Tags.Contains(Tag.Water_Trade)) && Trade_Route_Settings.Set) {
             Per_Day_Cash_Delta += Trade_Route_Settings.Cash_Delta;
             Update_Delta(Trade_Route_Settings.Resource, Trade_Route_Settings.Resource_Delta);
         }
@@ -828,6 +815,86 @@ public class Building {
         }
         
         Refresh_Alerts(realtime_delta_time);
+
+        DiagnosticsManager.Instance.End(GetType(), "update");
+        DiagnosticsManager.Instance.End(GetType(), "total");
+    }
+
+    private void Storehouse_Transfer()
+    {
+        if (!Is_Storehouse || storehouse_transfer_data.Count == 0) {
+            return;
+        }
+        DiagnosticsManager.Instance.Start(GetType(), "storehouse_transfer", "Storehouse transfer");
+        if (storehouse_transfer_data.Count > STOREHOUSE_TRANSFER_MAX_QUEUE) {
+            //Queue has backed up -> clear it all
+            CustomLogger.Instance.Warning("Building {0} #{1} has over {2} items in it's transfer data queue", Name, Id.ToString(), STOREHOUSE_TRANSFER_MAX_QUEUE.ToString());
+            while(Process_Storehouse_Transfer()) { }
+        } else {
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            while(stopwatch.ElapsedMilliseconds <= STOREHOUSE_TRANSFER_MAX_MILLISECONDS) {
+                if (!Process_Storehouse_Transfer()) {
+                    break;
+                }
+            }
+        }
+        DiagnosticsManager.Instance.End(GetType(), "storehouse_transfer");
+    }
+
+    private bool Process_Storehouse_Transfer()
+    {
+        if(storehouse_transfer_data[0].Remaining_Connected_Buildings.Count == 0) {
+            storehouse_transfer_data = storehouse_transfer_data.Skip(1).ToList();
+            return false;
+        }
+
+        StorehouseTransferData data = storehouse_transfer_data[0];
+        Building building = data.Remaining_Connected_Buildings[0];
+        data.Remaining_Connected_Buildings = data.Remaining_Connected_Buildings.Skip(1).ToList();
+
+        if(building.Id == Id) {
+            return true;
+        }
+        
+        //Collect resources
+        foreach (Resource resource in Allowed_Resources) {
+            float take = Math.Min(data.Max_Transfer - data.Resources_Collected, Storage_Settings.Get(resource).Limit - Storage[resource]);
+            take = Math.Max(0.0f, Math.Min(take, Storage_Limit - Current_Storage_Amount));
+            if (building.Produces.Contains(resource) && building.Output_Storage.ContainsKey(resource)) {
+                float resources_taken = Mathf.Min(building.Output_Storage[resource], take);
+                building.Output_Storage[resource] -= resources_taken;
+                data.Resources_Collected += resources_taken;
+                Storage[resource] += resources_taken;
+            } else if (!building.Consumes.Contains(resource) && building.Input_Storage.ContainsKey(resource) && building.Input_Storage[resource] > 0.0f) {
+                float resources_taken = Mathf.Min(building.Input_Storage[resource], take);
+                building.Input_Storage[resource] -= resources_taken;
+                data.Resources_Collected += resources_taken;
+                Storage[resource] += resources_taken;
+            } else if (building.Is_Storehouse && building.Allowed_Resources.Contains(resource) && (int)Storage_Settings.Get(resource).Priority > (int)building.Storage_Settings.Get(resource).Priority) {
+                float resources_taken = building.Take_Resources(resource, take);
+                data.Resources_Collected += resources_taken;
+                Storage[resource] += resources_taken;
+            }
+        }
+
+        //Distribute resources
+        if (building.Is_Complete) {
+            foreach (Resource resource in building.Consumes) {
+                if (!Storage.ContainsKey(resource)) {
+                    continue;
+                }
+                if (!building.Input_Storage.ContainsKey(resource)) {
+                    building.Input_Storage.Add(resource, 0.0f);
+                }
+                float give = Math.Min(data.Max_Transfer - data.Resources_Distributed, INPUT_OUTPUT_STORAGE_LIMIT - building.Input_Storage[resource]);
+                float resources_given = Mathf.Min(Storage[resource], give);
+                building.Input_Storage[resource] += resources_given;
+                data.Resources_Distributed += resources_given;
+                Storage[resource] -= resources_given;
+            }
+        }
+
+        return true;
     }
 
     public float Efficency
@@ -924,9 +991,11 @@ public class Building {
         foreach(KeyValuePair<Resource, float> resource in Input_Storage) {
             Store_Resources(resource.Key, resource.Value);
         }
+        Input_Storage.Clear();
         foreach (KeyValuePair<Resource, float> resource in Output_Storage) {
             Store_Resources(resource.Key, resource.Value);
         }
+        Output_Storage.Clear();
         foreach (Building b in Map.Instance.Get_Buildings_Around(this)) {
             if (Is_Road && b.Is_Connected && b.Is_Complete) {
                 b.Update_Connectivity();
@@ -1000,7 +1069,13 @@ public class Building {
             Storage_Settings = new List<StorageSettingSaveData>(),
             Selected_Sprite = Selected_Sprite,
             Data = new List<BuildingDictionaryData>(),
-            Lock_Workers = Lock_Workers
+            Lock_Workers = Lock_Workers,
+            Storehouse_Transfer_Data = storehouse_transfer_data.Select(x => new StorehouseTransferSaveData() {
+                Remaining_Connected_Buildings = x.Remaining_Connected_Buildings.Select(y => y.Id).ToList(),
+                Max_Transfer = x.Max_Transfer,
+                Resources_Collected = x.Resources_Collected,
+                Resources_Distributed = x.Resources_Distributed
+            }).ToList()
         };
         foreach(KeyValuePair<Resource, float> pair in Storage) {
             data.Storage.Add(new ResourceSaveData() { Resource = pair.Key.Id, Amount = pair.Value });
@@ -1579,5 +1654,23 @@ public class Building {
     public static void Reset_Current_Id()
     {
         current_id = 0;
+    }
+
+    private class StorehouseTransferData
+    {
+        public List<Building> Remaining_Connected_Buildings { get; set; }
+        public float Resources_Collected { get; set; }
+        public float Resources_Distributed { get; set; }
+        public float Max_Transfer { get; set; }
+
+        public StorehouseTransferData() { }
+
+        public StorehouseTransferData(List<Building> connected_buildings, float max_transfer)
+        {
+            Remaining_Connected_Buildings = connected_buildings.Select(x => x).ToList();
+            Resources_Collected = 0.0f;
+            Resources_Distributed = 0.0f;
+            Max_Transfer = max_transfer;
+        }
     }
 }

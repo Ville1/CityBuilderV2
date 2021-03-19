@@ -235,7 +235,27 @@ public class ConsoleManager : MonoBehaviour
             City.Instance.Ignore_Citizen_Needs = val;
             return val.ToString();
         });
-        
+
+        commands.Add("log_diagnostics", (string[] arguments) => {
+            bool val = !DiagnosticsManager.Instance.Log;
+            DiagnosticsManager.Instance.Log = val;
+            return val.ToString();
+        });
+
+        commands.Add("print_diagnostics", (string[] arguments) => {
+            if (!DiagnosticsManager.Instance.Log) {
+                return "Diagnostics logging is off, turn it on with log_diagnostics - command first";
+            }
+            DiagnosticsManager.Instance.Print();
+            return null;
+        });
+
+        commands.Add("disable_walkers", (string[] arguments) => {
+            bool val = !City.Instance.Spawn_Walkers;
+            City.Instance.Spawn_Walkers = val;
+            return (!val).ToString();
+        });
+
         commands.Add("finish_expeditions", (string[] arguments) => {
             foreach(Expedition expedition in City.Instance.Expeditions) {
                 expedition.Cheat_Finish();

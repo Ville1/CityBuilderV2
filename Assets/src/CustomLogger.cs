@@ -25,11 +25,29 @@ public class CustomLogger
     /// Log debug message
     /// </summary>
     /// <param name="message"></param>
+    public void Debug(string format, params string[] arguments)
+    {
+        Debug(string.Format(format, arguments));
+    }
+
+    /// <summary>
+    /// Log debug message
+    /// </summary>
+    /// <param name="message"></param>
     public void Debug(string message)
     {
         StackTrace trace = new StackTrace();
         StackFrame frame = trace.GetFrame(1);
         UnityEngine.Debug.Log("DEBUG - " + frame.GetMethod().ReflectedType.Name + " -> " + Parse_Method_Name(frame.GetMethod()) + ": " + message);
+    }
+
+    /// <summary>
+    /// Log warning message
+    /// </summary>
+    /// <param name="message"></param>
+    public void Warning(string format, params string[] arguments)
+    {
+        Warning(string.Format(format, arguments));
     }
 
     /// <summary>
@@ -45,6 +63,15 @@ public class CustomLogger
         if (ConsoleManager.Instance != null) {
             ConsoleManager.Instance.Run_Command("echo " + log);
         }
+    }
+
+    /// <summary>
+    /// Log error message
+    /// </summary>
+    /// <param name="message"></param>
+    public void Error(string format, params string[] arguments)
+    {
+        Error(string.Format(format, arguments));
     }
 
     /// <summary>

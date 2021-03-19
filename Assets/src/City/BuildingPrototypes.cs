@@ -3121,8 +3121,8 @@ public class BuildingPrototypes {
 
         prototypes.Add(new Building("Glassworks", "glassworks", Building.UI_Category.Industry, "glassworks", Building.BuildingSize.s2x2, 225, new Dictionary<Resource, int>() {
             { Resource.Lumber, 70 }, { Resource.Bricks, 130 }, { Resource.Stone, 35 }, { Resource.Tools, 35 }
-        }, 235, new List<Resource>(), 0, 50.0f, 235, new Dictionary<Resource, float>() { { Resource.Bricks, 0.05f }, { Resource.Lumber, 0.01f } }, 2.00f, 0.0f, 0, new Dictionary<Building.Resident, int>() {
-        { Building.Resident.Citizen, 10 } }, 10, true, false, true, 0.0f, 7, null, delegate (Building building, float delta_time) {
+        }, 235, new List<Resource>(), 0, 50.0f, 235, new Dictionary<Resource, float>() { { Resource.Bricks, 0.05f }, { Resource.Lumber, 0.01f } }, 2.00f, 0.0f, 0, new Dictionary<Building.Resident, int>()
+        { { Building.Resident.Peasant, 5 }, { Building.Resident.Citizen, 10 } }, 10, true, false, true, 0.0f, 7, null, delegate (Building building, float delta_time) {
             List<Resource> fuel_types = new List<Resource>() { Resource.Firewood, Resource.Charcoal, Resource.Coal };
             Resource selected_fuel = fuel_types[building.Special_Settings.First(x => x.Name == "fuel").Dropdown_Selection];
             int production = building.Special_Settings.First(x => x.Name == "production").Dropdown_Selection;
@@ -3153,7 +3153,7 @@ public class BuildingPrototypes {
         prototypes.Add(new Building("Distribution Depot", "distribution_depot", Building.UI_Category.Infrastructure, "distribution_depot_1", Building.BuildingSize.s1x1, 90, new Dictionary<Resource, int>() {
             { Resource.Bricks, 50 }, { Resource.Lumber, 25 }, { Resource.Stone, 5 }, { Resource.Tools, 10 }
         }, 200, new List<Resource>(), 0, 50.0f, 80, new Dictionary<Resource, float>() { { Resource.Bricks, 0.01f } }, 0.50f, 0.0f, 0.0f, new Dictionary<Building.Resident, int>() { { Building.Resident.Peasant, 5 }, { Building.Resident.Citizen, 5 } }, 5,
-        true, false, true, 0.0f, 30, null,
+        true, false, true, 0.0f, 50, null,
         delegate (Building building, float delta_time) {
             if (!building.Data.ContainsKey(DistributionDepotGUI.TARGET_ID_KEY)) {
                 return;
@@ -3167,7 +3167,7 @@ public class BuildingPrototypes {
             foreach(Building b in Map.Instance.Get_Buildings_Around(building).Where(x => x.Is_Storehouse).ToList()) {
                 input_storehouses.Add(b);
             }
-            if (!building.Is_Operational  || target == null || !target.Is_Operational || input_storehouses.Count == 0) {
+            if (!building.Is_Operational  || target == null || !target.Is_Operational || building.Get_Connected_Buildings().Select(x => x.Key).FirstOrDefault(x => x.Id == target.Id) == null || input_storehouses.Count == 0) {
                 return;
             }
 
@@ -3197,7 +3197,7 @@ public class BuildingPrototypes {
                 if (resource == null || !input.Storage.ContainsKey(resource) || input.Storage[resource] < min || !target.Allowed_Resources.Contains(resource)) {
                     continue;
                 }
-                float resources_to_transfer = Math.Min(max_transfer - resources_transfered, input.Storage[resource] - min);
+                float resources_to_transfer = Math.Max(0.0f, Math.Min(Math.Min(max_transfer - resources_transfered, input.Storage[resource] - min), target.Storage_Limit - target.Current_Storage_Amount));
                 if(resources_to_transfer != 0.0f) {
                     float transfered = target.Store_Resources(resource, resources_to_transfer);
                     float check = input.Take_Resources(resource, transfered);

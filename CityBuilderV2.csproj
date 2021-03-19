@@ -96,6 +96,7 @@
     <Compile Include="Assets\src\ConsoleScriptManager.cs" />
     <Compile Include="Assets\src\Coordinates.cs" />
     <Compile Include="Assets\src\CustomLogger.cs" />
+    <Compile Include="Assets\src\DiagnosticsManager.cs" />
     <Compile Include="Assets\src\Helper.cs" />
     <Compile Include="Assets\src\LogMessages.cs" />
     <Compile Include="Assets\src\Main.cs" />

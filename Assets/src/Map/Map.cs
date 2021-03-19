@@ -52,7 +52,7 @@ public class Map : MonoBehaviour
         { Mineral.Coal, "coal" },
         { Mineral.Salt, "salt" },
         { Mineral.Clay, "clay" },
-        { Mineral.Marble, "placeholder" },
+        { Mineral.Marble, "marble" },
         { Mineral.Copper, "copper_ore" },
         { Mineral.Tin, "tin_ore" },
         { Mineral.Silver, "silver_ore" },
@@ -849,6 +849,8 @@ public class Map : MonoBehaviour
                 tiles[x][y].Water_Flow = save_data.Water_Flow != -1 ? (Coordinates.Direction)save_data.Water_Flow : (Coordinates.Direction?)null;
             }
         }
+
+        City.Instance.Finalize_Load(SaveManager.Instance.Data.City);
 
         Ship_Spawns = new List<Tile>();
         foreach(CoordinateSaveData spawn in SaveManager.Instance.Data.Map.Ship_Spawns) {

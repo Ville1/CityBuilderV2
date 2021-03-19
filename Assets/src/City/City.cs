@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
 
@@ -33,6 +34,7 @@ public class City {
     public List<Expedition> Expeditions { get; private set; }
     public List<Entity> Walkers { get; private set; }
     public List<ColonyLocation> Colony_Locations { get; private set; }
+    public bool Spawn_Walkers { get; set; }
 
     public bool Ignore_Citizen_Needs { get; set; }
     public bool Ignore_All_Needs { get; set; }
@@ -73,6 +75,7 @@ public class City {
         ship_spawn_cooldown = 0.0f;
         Colony_Locations = new List<ColonyLocation>();
         noble_count = 0;
+        Spawn_Walkers = true;
     }
 
     public void Start_New(string name)
@@ -113,6 +116,13 @@ public class City {
         }
     }
 
+    public void Finalize_Load(CitySaveData data)
+    {
+        foreach(Building building in Buildings) {
+            building.Finalize_Load(data.Buildings.First(x => x.Id == building.Id));
+        }
+    }
+
     public void Update_Grace_Time(float total_days)
     {
         if(total_days >= GRACE_TIME) {
@@ -134,21 +144,29 @@ public class City {
 
     public void Update(float delta_time)
     {
-        if(grace_time_remaining > 0.0f) {
+        DiagnosticsManager.Instance.Message(GetType(), "--- UPDATE STARTS ---");
+        DiagnosticsManager.Instance.Start(GetType(), "total", "Total");
+        DiagnosticsManager.Instance.Start(GetType(), "expeditions", "Expeditions");
+        
+        if (grace_time_remaining > 0.0f) {
             grace_time_remaining = Math.Max(grace_time_remaining - TimeManager.Instance.Seconds_To_Days(delta_time), 0.0f);
         }
         //TODO: Add stopwatch?
-        foreach(Expedition expedition in Expeditions) {
+        //Expeditions
+        foreach (Expedition expedition in Expeditions) {
             expedition.Update(delta_time);
         }
-        foreach(Building building in Buildings) {
+        DiagnosticsManager.Instance.End(GetType(), "expeditions");
+        DiagnosticsManager.Instance.Start(GetType(), "buildings", "Buildings");
+
+        //Buildings
+        foreach (Building building in Buildings) {
             if (building is Residence) {
                 (building as Residence).Update(delta_time);
             } else {
                 building.Update(delta_time);
             }
         }
-
         foreach(Building building in removed_buildings) {
             Buildings.Remove(building);
         }
@@ -166,6 +184,9 @@ public class City {
             Expeditions.Add(expedition);
         }
         added_expeditions.Clear();
+        
+        DiagnosticsManager.Instance.End(GetType(), "buildings");
+        DiagnosticsManager.Instance.Start(GetType(), "statistics", "Update statistics");
 
         //Update statistics
         foreach (Resource resource in Resource.All) {
@@ -249,6 +270,8 @@ public class City {
                 }
             }
         }
+        DiagnosticsManager.Instance.End(GetType(), "statistics");
+        DiagnosticsManager.Instance.Start(GetType(), "workers", "Allocate workers");
 
         //Allocate workers
         Dictionary<Building.Resident, float> worker_ratios = new Dictionary<Building.Resident, float>();
@@ -307,9 +330,11 @@ public class City {
                 CustomLogger.Instance.Error("Worker allocation mismatch, allocated > population");
             }
         }
+        DiagnosticsManager.Instance.End(GetType(), "workers");
+        DiagnosticsManager.Instance.Start(GetType(), "walkers", "Spawn walkers");
 
         //Spawn walkers
-        int max = Mathf.Min(Mathf.RoundToInt((current_population[Building.Resident.Peasant] + current_population[Building.Resident.Citizen] + current_population[Building.Resident.Noble]) / 30.0f) + 1, 10);
+        int max = Spawn_Walkers ? Mathf.Min(Mathf.RoundToInt((current_population[Building.Resident.Peasant] + current_population[Building.Resident.Citizen] + current_population[Building.Resident.Noble]) / 30.0f) + 1, 10) : 0;
         if (Walkers.Count < max) {
             List<Building> possible_buildings = Buildings.Where(x => x.Is_Connected && x.Requires_Connection && x.Is_Operational && !x.Is_Road && x.Entities_Spawned.Count == 0).ToList();
             if (possible_buildings.Count > 1) {
@@ -342,6 +367,8 @@ public class City {
                 }
             }
         }
+        DiagnosticsManager.Instance.End(GetType(), "walkers");
+        DiagnosticsManager.Instance.Start(GetType(), "ships", "Spawn ships");
 
         //Spawn ships
         if (Map.Instance.Ship_Spawns.Count > 0) {
@@ -380,6 +407,8 @@ public class City {
                 }
             }
         }
+        DiagnosticsManager.Instance.End(GetType(), "ships");
+        DiagnosticsManager.Instance.Start(GetType(), "gui", "Update GUI");
 
         //GUI
         int peasant_current = current_population[Building.Resident.Peasant];
@@ -414,6 +443,9 @@ public class City {
             Mathf.RoundToInt(Usable_Resource_Totals[Resource.Bricks]), Mathf.RoundToInt(Usable_Resource_Totals[Resource.Tools]), Mathf.RoundToInt(Usable_Resource_Totals[Resource.Marble]), Mathf.RoundToInt(Usable_Resource_Totals[Resource.Mechanisms]),
             Mathf.RoundToInt(Usable_Resource_Totals[Resource.Glass]), peasant_current, peasant_max, peasant_happiness, peasant_employment_relative, peasant_employment, citizen_current, citizen_max, citizen_happiness,
             citizen_employment_relative, citizen_employment, noble_current, noble_max, noble_happiness, noble_employment_relative, noble_employment);
+
+        DiagnosticsManager.Instance.End(GetType(), "gui");
+        DiagnosticsManager.Instance.End(GetType(), "total");
     }
 
     public void Add_Cash(float amount)
@@ -531,9 +563,9 @@ public class City {
             Has_Town_Hall = true;
             Building town_hall = new Building(prototype, tile, tiles, false);
             Cash = 12000.0f;
-            town_hall.Store_Resources(Resource.Wood, 850.0f);
-            town_hall.Store_Resources(Resource.Stone, 650.0f);
-            town_hall.Store_Resources(Resource.Tools, 1000.0f);
+            town_hall.Store_Resources(Resource.Wood, 800.0f);
+            town_hall.Store_Resources(Resource.Stone, 600.0f);
+            town_hall.Store_Resources(Resource.Tools, 1100.0f);
             Buildings.Add(town_hall);
             return;
         }

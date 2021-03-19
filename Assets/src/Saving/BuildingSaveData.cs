@@ -28,6 +28,7 @@ public class BuildingSaveData {
     public TradeRouteSettingsSaveData Trade_Route_Settings;
     public List<BuildingDictionaryData> Data;
     public bool Lock_Workers;
+    public List<StorehouseTransferSaveData> Storehouse_Transfer_Data;
 }
 
 [Serializable]
@@ -62,4 +63,13 @@ public class BuildingDictionaryData
 {
     public string Key;
     public string Value;
+}
+
+[Serializable]
+public class StorehouseTransferSaveData
+{
+    public List<long> Remaining_Connected_Buildings;
+    public float Resources_Collected;
+    public float Resources_Distributed;
+    public float Max_Transfer;
 }
