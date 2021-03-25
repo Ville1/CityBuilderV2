@@ -296,6 +296,48 @@ public class Entity {
         return Is_Prototype ? string.Format("{0}_prototype", Internal_Name) : string.Format("{0}_#{1}", Internal_Name, Id);
     }
 
+    //TODO: Replace this with something better
+    public static List<PathfindingNode> Find_Walker_City_Path(out Tile spawn, out Building spawner)
+    {
+        List<Building> possible_spawns = City.Instance.Buildings.Where(x => x.Is_Connected && x.Requires_Connection && x.Is_Operational && !x.Is_Road && x.Entities_Spawned.Count == 0).ToList();
+        spawn = null;
+        spawner = null;
+        if(possible_spawns.Count == 0) {
+            return null;
+        }
+        spawner = RNG.Instance.Item(possible_spawns);
+        List<Building> adjacent_roads = Map.Instance.Get_Buildings_Around(spawner).Where(x => x.Is_Road && x.Is_Built && x.Is_Connected).ToList();
+        if(adjacent_roads.Count == 0) {
+            //This should not be possible, since spawner.Is_Connected
+            return null;
+        }
+        Building road = RNG.Instance.Item(adjacent_roads);
+        spawn = road.Tile;
+        List<Building> road_path = new List<Building>();
+        if(Find_Walker_City_Path_Recursive(road, ref road_path)) {
+            return road_path.Select(x => x.Tile.Road_PathfindingNode).ToList();
+        }
+        return null;
+    }
+
+    private static bool Find_Walker_City_Path_Recursive(Building current_road, ref List<Building> road_path)
+    {
+        road_path.Add(current_road);
+        int min_distance = 7;
+        List<Building> adjacent_buildings = Map.Instance.Get_Buildings_Around(current_road);
+        if(road_path.Count >= min_distance && adjacent_buildings.Exists(x => !x.Is_Road && x.Is_Built && x.Is_Connected && x.Requires_Connection)) {
+            return true;
+        }
+
+        foreach (Building road in adjacent_buildings.Where(x => x.Is_Road && x.Is_Built && x.Is_Connected).ToList()) {
+            if (!road_path.Contains(road)) {
+                return Find_Walker_City_Path_Recursive(road, ref road_path);
+            }
+        }
+
+        return false;
+    }
+
     private void Change_Tile(Coordinates coordinates)
     {
         Tile.Entities.Remove(this);

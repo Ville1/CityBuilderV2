@@ -337,32 +337,48 @@ public class City {
         int max = Spawn_Walkers ? Mathf.Min(Mathf.RoundToInt((current_population[Building.Resident.Peasant] + current_population[Building.Resident.Citizen] + current_population[Building.Resident.Noble]) / 30.0f) + 1, 10) : 0;
         if (Walkers.Count < max) {
             List<Building> possible_buildings = Buildings.Where(x => x.Is_Connected && x.Requires_Connection && x.Is_Operational && !x.Is_Road && x.Entities_Spawned.Count == 0).ToList();
-            if (possible_buildings.Count > 1) {
-                Building spawner = RNG.Instance.Item(possible_buildings);
-                possible_buildings.Remove(spawner);
-                Building road = null;
-                foreach (Building b in Map.Instance.Get_Buildings_Around(spawner)) {
-                    if (b.Is_Road && b.Is_Built && b.Is_Connected) {
-                        road = b;
-                        break;
-                    }
-                }
-                if (road != null) {
-                    Building target_building = RNG.Instance.Item(possible_buildings);
-                    Building target_road = null;
-                    foreach (Building b in Map.Instance.Get_Buildings_Around(target_building)) {
-                        if (b.Is_Road && b.Is_Built && b.Is_Connected) {
-                            target_road = b;
-                            break;
+            if (possible_buildings.Count > 25) {//TODO
+                //TODO: Implement faster pathfinding A* ?
+                if (Buildings.Count <= 1) {
+                    //Use pathfinding for paths
+                    Building spawner = RNG.Instance.Item(possible_buildings);
+                    possible_buildings.Remove(spawner);
+                    if (possible_buildings.Count >= 1) {
+                        Building road = null;
+                        foreach (Building b in Map.Instance.Get_Buildings_Around(spawner)) {
+                            if (b.Is_Road && b.Is_Built && b.Is_Connected) {
+                                road = b;
+                                break;
+                            }
+                        }
+                        if (road != null) {
+                            Building target_building = RNG.Instance.Item(possible_buildings);//TODO: allow x.Entities_Spawned.Count != 0 in this list
+                            Building target_road = null;
+                            foreach (Building b in Map.Instance.Get_Buildings_Around(target_building)) {
+                                if (b.Is_Road && b.Is_Built && b.Is_Connected) {
+                                    target_road = b;
+                                    break;
+                                }
+                            }
+                            if (target_road != null) {
+                                List<PathfindingNode> path = Pathfinding.Path(Map.Instance.Road_Pathing, road.Tile.PathfindingNode, target_road.Tile.Road_PathfindingNode, false);
+                                if (path.Count > 2) {
+                                    Entity walker = new Entity(EntityPrototypes.Instance.Get("walker"), road.Tile, spawner);
+                                    walker.Set_Path(path, 0.5f);
+                                    Walkers.Add(walker);
+                                }
+                            }
                         }
                     }
-                    if (target_road != null) {
-                        List<PathfindingNode> path = Pathfinding.Path(Map.Instance.Road_Pathing, road.Tile.PathfindingNode, target_road.Tile.Road_PathfindingNode, false);
-                        if (path.Count > 2) {
-                            Entity walker = new Entity(EntityPrototypes.Instance.Get("walker"), road.Tile, spawner);
-                            walker.Set_Path(path, 0.5f);
-                            Walkers.Add(walker);
-                        }
+                } else {
+                    //Use connected buildings for paths
+                    Tile spawn = null;
+                    Building spawner = null;
+                    List<PathfindingNode> path = Entity.Find_Walker_City_Path(out spawn, out spawner);
+                    if(path != null) {
+                        Entity walker = new Entity(EntityPrototypes.Instance.Get("walker"), spawn, spawner);
+                        walker.Set_Path(path, 0.5f);
+                        Walkers.Add(walker);
                     }
                 }
             }
@@ -447,7 +463,7 @@ public class City {
         DiagnosticsManager.Instance.End(GetType(), "gui");
         DiagnosticsManager.Instance.End(GetType(), "total");
     }
-
+    
     public void Add_Cash(float amount)
     {
         if(amount <= 0.0f) {

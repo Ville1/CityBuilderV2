@@ -153,6 +153,11 @@ public class Coordinates
         return coordinates;
     }
 
+    public bool Is_Adjacent_To(Coordinates coordinates)
+    {
+        return Math.Abs(X - coordinates.X) == 1 || Math.Abs(Y - coordinates.Y) == 1;
+    }
+
     public static List<Direction> Directly_Adjacent_Directions
     {
         get {
